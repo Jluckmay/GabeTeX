@@ -10,6 +10,10 @@
 </p>
 
 <p align="center">
+  <img alt="Fork do gabe-rbo/GabeTeX" src="https://img.shields.io/badge/fork%20of-gabe--rbo/GabeTeX-lightgray?logo=github">
+</p>
+
+<p align="center">
   <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest"><img alt="Última versão para macOS" src="https://img.shields.io/github/v/release/gabe-rbo/GabeTeX-macOS?display_name=tag&sort=semver"></a>
   <a href="LICENSE"><img alt="Licença: MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue"></a>
   <a href="https://github.com/gabe-rbo/GabeTeX-macOS/actions/workflows/ci.yml"><img alt="CI do macOS" src="https://github.com/gabe-rbo/GabeTeX-macOS/actions/workflows/ci.yml/badge.svg"></a>
