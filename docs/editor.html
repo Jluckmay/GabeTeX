@@ -1,0 +1,171 @@
+<!doctype html>
+<!-- GabeTeX online LaTeX editor — fork of gabe-rbo/GabeTeX -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GabeTeX — online LaTeX editor</title>
+<meta name="description" content="GabeTeX online LaTeX editor. Edit LaTeX source and preview the compiled PDF in your browser. Fork of gabe-rbo/GabeTeX.">
+<link rel="canonical" href="https://gabe-rbo.github.io/GabeTeX/editor.html">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="preload" as="style" href="assets/editor.css">
+<link rel="stylesheet" href="assets/editor.css">
+<!-- Content Security Policy: only same-origin + KaTeX CDN + GitHub -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<script>
+/* Theme preference before first paint */
+(function () {
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('gabetex.editor.theme'); } catch (e) {}
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    root.classList.add('dark');
+  }
+})();
+</script>
+</head>
+<body>
+<span class="sentinel" aria-hidden="true"></span>
+<a class="skip" href="#editor-area">Skip to editor</a>
+
+<!-- Fork attribution banner -->
+<section class="fork-banner" aria-labelledby="fork-title">
+  <div class="wrap">
+    <h2 id="fork-title" class="sr-only">Fork attribution</h2>
+    <div class="fork-content" role="banner" aria-label="Fork notice">
+      <img src="assets/icon-96.png" width="28" height="28" alt="" aria-hidden="true">
+      <strong>This is a fork of <a href="https://github.com/gabe-rbo/GabeTeX" rel="noopener noreferrer">gabe-rbo/GabeTeX</a>.</strong>
+      <span>Original project by <a href="https://github.com/gabe-rbo" rel="noopener noreferrer">Gabriel Ribeiro</a>. Licensed under MIT.</span>
+      <a href="index.html" class="pill pill-fill pill-sm" aria-label="Return to GabeTeX website">Back to website</a>
+    </div>
+  </div>
+</section>
+
+<header class="nav glass">
+  <nav class="wrap wrap-wide nav-in" aria-label="Main navigation">
+    <a class="brand" href="index.html" data-route="overview">
+      <img src="assets/icon-96.png" width="96" height="96" alt="">
+      <span class="name"><span class="sr-only">GabeTeX</span><span aria-hidden="true">Gabe<span class="tex">T<span class="tex-e">E</span>X</span></span></span>
+    </a>
+    <div class="nav-end">
+      <button type="button" class="gh theme-toggle" id="theme-toggle" aria-label="Switch between light and dark theme" aria-pressed="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="6" r="2" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M2 6h12M6 2v12" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/></svg>
+      </button>
+      <a class="gh" href="https://github.com/gabe-rbo/GabeTeX" aria-label="GabeTeX on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.81.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.51-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main id="editor-area" tabindex="-1" aria-label="Online LaTeX editor">
+  <div class="wrap wrap-wide">
+
+    <!-- Editor header -->
+    <header class="editor-head" aria-labelledby="editor-title">
+      <h1 id="editor-title">GabeTeX Online Editor</h1>
+      <p class="editor-lead">Edit LaTeX source on the left, preview the compiled output on the right. Compilation happens on the backend; only LaTeX source and rendered results travel between frontend and backend.</p>
+      <div class="editor-actions">
+        <button type="button" class="pill pill-ghost pill-sm" id="btn-new" aria-label="New document">New</button>
+        <button type="button" class="pill pill-ghost pill-sm" id="btn-download" aria-label="Download compiled PDF">Download PDF</button>
+        <button type="button" class="pill pill-fill pill-sm" id="btn-compile" aria-label="Compile LaTeX document">Compile</button>
+      </div>
+    </header>
+
+    <!-- Security notice -->
+    <section class="security-notice" aria-labelledby="security-title">
+      <h2 id="security-title" class="sr-only">Security measures</h2>
+      <div class="sec-grid">
+        <div class="sec-item"><strong>Same-origin only</strong><span>Frontend and backend communicate exclusively with each other; no third-party endpoints.</span></div>
+        <div class="sec-item"><strong>CSP enforced</strong><span>Content Security Policy restricts scripts, styles, and connections to trusted sources.</span></div>
+        <div class="sec-item"><strong>Input sanitized</strong><span>LaTeX source is validated before compilation; dangerous commands are blocked.</span></div>
+        <div class="sec-item"><strong>Sandboxed compile</strong><span>Compilation runs in an isolated container with no network or filesystem access beyond the working directory.</span></div>
+        <div class="sec-item"><strong>Rate limited</strong><span>Compilation requests are throttled to prevent abuse.</span></div>
+        <div class="sec-item"><strong>No code execution</strong><span>The backend never evaluates user input as code; it only pipes LaTeX through a fixed compiler binary.</span></div>
+      </div>
+    </section>
+
+    <!-- Editor layout: sidebar + source + preview -->
+    <div class="editor-layout" role="application" aria-label="LaTeX editor workspace">
+
+      <!-- File sidebar -->
+      <aside class="editor-sidebar" aria-label="Project files">
+        <div class="sidebar-head">
+          <h3>Project</h3>
+          <button type="button" class="pill pill-ghost pill-sm" id="btn-add-file" aria-label="Add file">+</button>
+        </div>
+        <ul class="file-list" id="file-list" role="listbox" aria-label="Files">
+          <li class="file-item active" role="option" aria-selected="true" data-file="main.tex">main.tex</li>
+        </ul>
+        <div class="file-empty" hidden>No files.</div>
+      </aside>
+
+      <!-- Source editor -->
+      <section class="editor-source-pane" aria-label="LaTeX source editor">
+        <div class="source-head">
+          <label for="source" class="sr-only">LaTeX source</label>
+          <textarea id="source" spellcheck="false" wrap="soft" data-i18n-placeholder="editor.placeholder" placeholder="\\documentclass{article}
+\\begin{document}
+Hello, world!
+\\end{document}"></textarea>
+          <div class="source-status" aria-live="polite" aria-atomic="true">Ready</div>
+        </div>
+      </section>
+
+      <!-- Preview pane -->
+      <section class="editor-preview-pane" aria-label="PDF preview">
+        <div class="preview-head">
+          <h3>Preview</h3>
+          <span class="preview-status" id="preview-status" role="status" aria-live="polite">Idle</span>
+        </div>
+        <div class="preview-wrap" id="preview-wrap">
+          <iframe id="preview-frame" sandbox="allow-same-origin" title="Compiled PDF preview" src="about:blank"></iframe>
+          <div class="preview-empty" id="preview-empty">
+            <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="60" height="60" x="2" y="2" fill="none" stroke="currentColor" stroke-width="1.5" rx="4"/><path d="M20 20h24v24H20z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M32 12l8 8M40 12l-8 8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            <p>Compile to see the preview</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Compilation status / errors -->
+    <section class="compile-panel" id="compile-panel" hidden aria-label="Compilation output" aria-live="polite">
+      <div class="compile-head">
+        <h3>Compilation output</h3>
+        <button type="button" class="pill pill-ghost pill-sm" id="btn-hide-panel" aria-label="Hide output panel">Hide</button>
+      </div>
+      <pre id="compile-output"></pre>
+    </section>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <img src="assets/icon-96.png" width="34" height="34" alt="">
+        <b>GabeTeX</b><span> <span>fork of gabe-rbo/GabeTeX</span></span>
+      </div>
+      <ul>
+        <li><a href="https://github.com/gabe-rbo/GabeTeX" rel="noopener noreferrer">Original project</a></li>
+        <li><a href="https://github.com/gabe-rbo" rel="noopener noreferrer">Gabriel Ribeiro</a></li>
+        <li><a href="https://github.com/gabe-rbo/GabeTeX/blob/main/LICENSE" rel="noopener noreferrer">MIT License</a></li>
+        <li><a href="backend/" rel="noopener noreferrer">Backend example</a></li>
+      </ul>
+    </div>
+    <div class="foot-legal">
+      <p>GabeTeX is free and open source. This fork adds an online LaTeX editor with secure backend compilation.</p>
+      <p>© 2026 Gabriel Ribeiro (original). Fork modifications © 2026.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/editor.js"></script>
+</body>
+</html>
