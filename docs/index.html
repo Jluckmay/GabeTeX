@@ -620,9 +620,9 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 }
 @media (forced-colors: active) { .seg-thumb { outline: 1px solid CanvasText; } .pill { border: 1px solid ButtonText; } }
 
-/* ===== fork banner ===== */
-.fork-banner {
-  padding: 14px 0;
+/* ===== fork notice ===== */
+.fork-notice {
+  padding: 12px 0;
   background: var(--accent-tint);
   border-bottom: 1px solid var(--hairline);
 }
@@ -653,29 +653,17 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 <span class="sentinel" aria-hidden="true"></span>
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
-<!-- Fork attribution banner -->
-<section class="fork-banner" aria-labelledby="fork-title">
-  <div class="wrap">
-    <h2 id="fork-title" class="sr-only">Fork attribution</h2>
-    <div class="fork-content" role="banner" aria-label="Fork notice">
-      <img src="assets/icon-96.png" width="28" height="28" alt="" aria-hidden="true">
-      <strong>This repository is a fork of <a href="https://github.com/gabe-rbo/GabeTeX" rel="noopener noreferrer">gabe-rbo/GabeTeX</a>.</strong>
-      <span>Original project by <a href="https://github.com/gabe-rbo" rel="noopener noreferrer">Gabriel Ribeiro</a>. Licensed under MIT.</span>
-      <a href="editor.html" class="pill pill-fill pill-sm" data-i18n="fork.editor">Open online LaTeX editor</a>
-    </div>
-  </div>
-</section>
-
 <header class="nav glass">
   <nav class="wrap wrap-wide nav-in" aria-label="Main" data-i18n-attr="aria-label:nav.label">
     <a class="brand" href="#overview" data-route="overview">
       <img src="assets/icon-96.png" width="96" height="96" alt="">
       <span class="name"><span class="sr-only">GabeTeX</span><span aria-hidden="true">Gabe<span class="tex">T<span class="tex-e">E</span>X</span></span></span>
     </a>
-    <div class="seg seg-views" style="--n:2">
+    <div class="seg seg-views" style="--n:3">
       <span class="seg-thumb" aria-hidden="true"></span>
       <a href="#overview" data-route="overview" aria-current="page" data-i18n="nav.overview">Overview</a>
       <a href="#versions" data-route="versions" data-i18n="nav.versions">Versions</a>
+      <a href="editor.html" data-i18n="nav.editor">Online editor</a>
     </div>
     <div class="nav-end">
       <button type="button" class="gh theme-toggle" id="theme-toggle" aria-label="Switch between light and dark theme" aria-pressed="false" data-i18n-attr="aria-label:nav.theme">
@@ -724,6 +712,17 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
         <p class="meta"><span class="num" id="ver">v1.0.0</span><span class="num" id="size" hidden></span><span data-i18n="hero.os">macOS 26 or later (Apple Silicon)</span><span data-i18n="hero.os2">Linux and Windows</span><span data-i18n="hero.free">free and open source</span></p>
         <p class="next"><a href="#install" data-i18n="hero.next">Next: install and open GabeTeX</a></p>
       </div>
+
+      <!-- Fork attribution: between text and figure -->
+      <section class="fork-notice" aria-labelledby="fork-title">
+        <div class="fork-content" role="banner" aria-label="Fork notice">
+          <img src="assets/icon-96.png" width="24" height="24" alt="" aria-hidden="true">
+          <strong>This repository is a fork of <a href="https://github.com/gabe-rbo/GabeTeX" rel="noopener noreferrer">gabe-rbo/GabeTeX</a>.</strong>
+          <span>Original project by <a href="https://github.com/gabe-rbo" rel="noopener noreferrer">Gabriel Ribeiro</a>. Licensed under MIT.</span>
+          <a href="editor.html" class="pill pill-fill pill-sm" data-i18n="fork.editor">Open online LaTeX editor</a>
+        </div>
+      </section>
+
     </div>
     <figure class="hero-shot h-5" style="margin-bottom:0">
       <img src="assets/screenshots/project.png" width="2200" height="1381" decoding="async" fetchpriority="high"
@@ -1337,6 +1336,7 @@ Scripts/build-app.sh</code></pre>
     'js.titleVersions': 'Versões — GabeTeX',
     'js.desc': 'O GabeTeX é um editor LaTeX livre e de código aberto, nativo do macOS 26 e também disponível para Linux e Windows, feito para quem escreve matemática em projetos de vários arquivos: compila enquanto você digita, sincroniza PDF e código palavra por palavra e instala os pacotes que faltam.',
     'nav.theme': 'Alternar entre temas claro e escuro',
+    'nav.editor': 'Editor online',
     'fork.editor': 'Abrir editor LaTeX online'
   };
   var EN_JS = {
