@@ -14,8 +14,8 @@
 <meta name="color-scheme" content="light dark">
 <link rel="preload" as="style" href="assets/editor.css">
 <link rel="stylesheet" href="assets/editor.css">
-<!-- Content Security Policy: only same-origin + KaTeX CDN + GitHub -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<!-- Content Security Policy: same-origin only; iframe allowed for same-origin PDF preview -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';">
 <script>
 /* Theme preference before first paint */
 (function () {
@@ -108,7 +108,7 @@
       <section class="editor-source-pane" aria-label="LaTeX source editor">
         <div class="source-head">
           <label for="source" class="sr-only">LaTeX source</label>
-          <textarea id="source" spellcheck="false" wrap="soft" data-i18n-placeholder="editor.placeholder" placeholder="\\documentclass{article}
+          <textarea id="source" spellcheck="false" wrap="soft" placeholder="\\documentclass{article}
 \\begin{document}
 Hello, world!
 \\end{document}"></textarea>

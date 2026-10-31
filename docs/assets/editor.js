@@ -43,25 +43,6 @@
   });
   applyTheme();
 
-  /* ---------- KaTeX auto-render (client-side math preview) ---------- */
-  function renderMath(text) {
-    /* Replace inline math $...$ and display math $$...$$ with KaTeX spans.
-       This is a client-side-only preview; the backend does the real PDF compile. */
-    return text
-      .replace(/\$\$([\s\S]*?)\$\$/g, function (_, m) {
-        return '<span class="katex-display" aria-label="Display math">' + escapeHtml(m) + '</span>';
-      })
-      .replace(/\$([^$\n]+?)\$/g, function (_, m) {
-        return '<span class="katex-inline" aria-label="Inline math">' + escapeHtml(m) + '</span>';
-      });
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-
   /* ---------- file management ---------- */
   function renderFileList() {
     fileList.innerHTML = '';
@@ -127,7 +108,6 @@
   ];
   function validateSource(src) {
     var issues = [];
-    var upper = src.toUpperCase();
     DANGEROUS.forEach(function (cmd) {
       var re = new RegExp('\\\\' + cmd.replace(/\\/g, '\\\\') + '(?![a-zA-Z])', 'gi');
       if (re.test(src)) issues.push(cmd);
@@ -155,10 +135,10 @@
       state.rateLimitReset = now + 60000;
     }
     if (state.rateLimitRemaining <= 0) {
-      return Promise.reject(new Error('Rate limit exceeded. Try again in ' + Math.ceil((state.rateLimitReset - now) / 1000) + ' seconds.'));
+      return { ok: false, message: 'Rate limit exceeded. Try again in ' + Math.ceil((state.rateLimitReset - now) / 1000) + ' seconds.' };
     }
     state.rateLimitRemaining--;
-    return Promise.resolve();
+    return { ok: true };
   }
 
   /* ---------- compile ---------- */
@@ -184,13 +164,18 @@
       return;
     }
 
-    /* Security: rate limit */
-    checkRateLimit().catch(function (err) {
+    /* Security: rate limit — abort if exceeded */
+    var rateOk = checkRateLimit();
+    if (!rateOk) {
       clearOutput();
-      appendOutput(err.message, 'err');
+      appendOutput(rateOk.message, 'err');
       compilePanel.hidden = false;
+      state.compiling = false;
+      btnCompile.removeAttribute('aria-busy');
+      btnCompile.textContent = 'Compile';
+      previewStatus.textContent = 'Rate limit exceeded';
       return;
-    });
+    }
 
     state.compiling = true;
     btnCompile.setAttribute('aria-busy', 'true');

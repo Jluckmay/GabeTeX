@@ -89,6 +89,10 @@ html.dark {
   color-scheme: dark;
 }
 
+/* ===== TeX-logo wordmark: T, a lowered E, X ===== */
+.tex { white-space: nowrap; }
+.tex-e { display: inline-block; transform: translateY(.22em); margin: 0 -.1em 0 -.15em; }
+
 /* ===== base ===== */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-padding-top: calc(var(--nav-h) + 16px); font-synthesis: none; }
