@@ -28,6 +28,10 @@
   var uploadStatus = document.getElementById('upload-status');
   var btnHistory = document.getElementById('btn-history');
   var btnSplit = document.getElementById('btn-split');
+  var btnSpellcheck = document.getElementById('btn-spellcheck');
+  var spellcheckPanel = document.getElementById('spellcheck-panel');
+  var spellcheckSummary = document.getElementById('spellcheck-summary');
+  var spellcheckResults = document.getElementById('spellcheck-results');
   var btnViewMode = document.getElementById('btn-view-mode');
   var btnShare = document.getElementById('btn-share');
   var btnZoomIn = document.getElementById('btn-zoom-in');
@@ -109,11 +113,16 @@
     sourceStatusArgs: ['main.tex'],
     uploadMessages: [],
     previewStatusKey: 'editor.idle',
-    previewStatusArgs: []
+    previewStatusArgs: [],
+    spellcheckEnabled: false,
+    spellcheckIgnored: Object.create(null)
   };
   var compileWorker = null;
   var compileRequestId = 0;
   var pdfJsPromise = null;
+  var spellWorker = null;
+  var spellcheckRequestId = 0;
+  var spellcheckTimer = null;
 
   function setSourceStatus(key, values) {
     state.sourceStatusKey = key;
@@ -177,6 +186,9 @@
     updateHistoryButton();
   }
   document.addEventListener('gabetex:languagechange', updateTranslatedUI);
+  document.addEventListener('gabetex:languagechange', function () {
+    if (state.spellcheckEnabled) scheduleSpellcheck();
+  });
 
   function commitHistorySnapshot() {
     var history = state.history[state.activeFile] || [];
@@ -206,6 +218,7 @@
     updateOutline();
     updateCursor();
     updateMathPreview();
+    scheduleSpellcheck();
     setSourceStatus('editor.historyRestored');
     updateHistoryButton();
   }
@@ -296,6 +309,7 @@
     setSourceStatus('editor.opened', [name]);
     updateCursor();
     updateHistoryButton();
+    scheduleSpellcheck();
   }
   function closeFile(name) {
     var index = state.openFiles.indexOf(name);
@@ -515,6 +529,7 @@
     updateCursor();
     scheduleHistorySnapshot();
     updateOutline();
+    scheduleSpellcheck();
     clearTimeout(source._mathTimer);
     source._mathTimer = setTimeout(updateMathPreview, 300);
   });
@@ -534,6 +549,363 @@
     var hasMath = /\$/.test(text);
     setPreviewStatus(hasMath ? 'editor.mathDetected' : 'editor.ready');
   }
+
+  /* ---------- prose spell checking ---------- */
+  var skippedTexCommands = {
+    documentclass: 1, usepackage: 1, RequirePackage: 1, input: 1, include: 1,
+    subfile: 1, includeonly: 1, label: 1, ref: 1, pageref: 1, eqref: 1,
+    autoref: 1, cref: 1, Cref: 1, cite: 1, citep: 1, citet: 1,
+    citeauthor: 1, nocite: 1, bibliography: 1, bibliographystyle: 1,
+    bibitem: 1, includegraphics: 1, graphicspath: 1, url: 1, path: 1,
+    nolinkurl: 1, verbatiminput: 1, lstinputlisting: 1, tag: 1, tagform: 1,
+    ensuremath: 1, texttt: 1, lstinline: 1, mintinline: 1
+  };
+  var mathEnvironments = {
+    math: true, displaymath: true, equation: true, align: true, alignat: true,
+    flalign: true, gather: true, multline: true, eqnarray: true, split: true
+  };
+  var literalEnvironments = {
+    verbatim: true, 'verbatim*': true, Verbatim: true, 'Verbatim*': true,
+    lstlisting: true, minted: true, comment: true, alltt: true
+  };
+
+  function skipTexGroup(text, index, open, close) {
+    if (text[index] !== open) return index;
+    var depth = 1;
+    index++;
+    while (index < text.length && depth) {
+      if (text[index] === '\\') {
+        index += 2;
+      } else if (text[index] === open) {
+        depth++;
+        index++;
+      } else if (text[index] === close) {
+        depth--;
+        index++;
+      } else {
+        index++;
+      }
+    }
+    return index;
+  }
+
+  function skipTexWhitespace(text, index) {
+    while (index < text.length && /\s/.test(text[index])) index++;
+    return index;
+  }
+
+  function skipTexOptions(text, index) {
+    index = skipTexWhitespace(text, index);
+    while (text[index] === '[') {
+      index = skipTexGroup(text, index, '[', ']');
+      index = skipTexWhitespace(text, index);
+    }
+    return index;
+  }
+
+  function readTexGroup(text, index) {
+    if (text[index] !== '{') return null;
+    var end = skipTexGroup(text, index, '{', '}');
+    return { value: text.slice(index + 1, Math.max(index + 1, end - 1)), end: end };
+  }
+
+  function skipMathDelimiter(text, index, delimiter) {
+    var closing = delimiter === '\\(' ? '\\)' : delimiter === '\\[' ? '\\]' : delimiter;
+    var cursor = index + delimiter.length;
+    while (cursor < text.length) {
+      var found = text.indexOf(closing, cursor);
+      if (found === -1) return text.length;
+      var slashes = 0;
+      for (var back = found - 1; back >= 0 && text[back] === '\\'; back--) slashes++;
+      var isPartOfDisplayMath = delimiter === '$' && (text[found - 1] === '$' || text[found + 1] === '$');
+      if (slashes % 2 === 0 && !isPartOfDisplayMath) return found + closing.length;
+      cursor = found + closing.length;
+    }
+    return text.length;
+  }
+
+  function extractTexWords(text) {
+    var words = [];
+    var segmentStart = 0;
+    var index = 0;
+
+    function flush(end) {
+      var segment = text.slice(segmentStart, end);
+      var expression = /[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*/g;
+      var match;
+      while ((match = expression.exec(segment))) {
+        words.push({
+          word: match[0],
+          start: segmentStart + match.index,
+          end: segmentStart + match.index + match[0].length
+        });
+      }
+    }
+
+    while (index < text.length) {
+      if (text[index] === '%') {
+        flush(index);
+        var newline = text.indexOf('\n', index);
+        index = newline === -1 ? text.length : newline + 1;
+        segmentStart = index;
+        continue;
+      }
+
+      if (text[index] === '$') {
+        flush(index);
+        var mathDelimiter = text[index + 1] === '$' ? '$$' : '$';
+        index = skipMathDelimiter(text, index, mathDelimiter);
+        segmentStart = index;
+        continue;
+      }
+
+      if (text[index] !== '\\') {
+        index++;
+        continue;
+      }
+
+      flush(index);
+      var commandStart = index;
+      index++;
+      var commandMatch = /^[A-Za-z@]+/.exec(text.slice(index));
+      var command = commandMatch ? commandMatch[0] : text[index] || '';
+      index += command.length;
+      if (text[index] === '*' && /^(verb|lstinline|mintinline|newcommand|renewcommand|providecommand|newenvironment|renewenvironment)$/.test(command)) {
+        index++;
+      }
+
+      if (command === '(' || command === '[') {
+        index = skipMathDelimiter(text, commandStart, '\\' + command);
+        segmentStart = index;
+        continue;
+      }
+      if (command === 'verb' || command === 'lstinline' || command === 'mintinline') {
+        index = skipTexOptions(text, index);
+        if (command === 'mintinline') {
+          var languageGroup = readTexGroup(text, index);
+          if (languageGroup) index = languageGroup.end;
+        }
+        var verbatimDelimiter = text[index];
+        if (verbatimDelimiter) {
+          var verbatimEnd = text.indexOf(verbatimDelimiter, index + 1);
+          index = verbatimEnd === -1 ? text.length : verbatimEnd + 1;
+        }
+        segmentStart = index;
+        continue;
+      }
+
+      if (command === 'begin' || command === 'end') {
+        index = skipTexWhitespace(text, index);
+        var environmentGroup = readTexGroup(text, index);
+        if (environmentGroup) {
+          index = environmentGroup.end;
+          var environment = environmentGroup.value.trim();
+          var baseEnvironment = environment.replace(/\*$/, '');
+          if (command === 'begin' && (mathEnvironments[baseEnvironment] || literalEnvironments[environment])) {
+            var escapedEnvironment = environment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            var closingEnvironment = new RegExp('\\\\end\\s*\\{\\s*' + escapedEnvironment + '\\s*\\}');
+            var closingMatch = closingEnvironment.exec(text.slice(index));
+            index = closingMatch
+              ? index + closingMatch.index + closingMatch[0].length
+              : text.length;
+          }
+        }
+        segmentStart = index;
+        continue;
+      }
+
+      if (command === 'href') {
+        index = skipTexOptions(text, index);
+        var urlGroup = readTexGroup(text, index);
+        if (urlGroup) index = urlGroup.end;
+        segmentStart = index;
+        continue;
+      }
+      if (command === 'foreignlanguage') {
+        index = skipTexOptions(text, index);
+        var languageArgument = readTexGroup(text, index);
+        if (languageArgument) index = languageArgument.end;
+        segmentStart = index;
+        continue;
+      }
+      if (command === 'newcommand' || command === 'renewcommand' || command === 'providecommand') {
+        index = skipTexOptions(text, index);
+        index = skipTexGroup(text, index, '{', '}');
+        index = skipTexOptions(text, index);
+        index = skipTexGroup(text, index, '{', '}');
+        segmentStart = index;
+        continue;
+      }
+      if (command === 'newenvironment' || command === 'renewenvironment') {
+        index = skipTexOptions(text, index);
+        index = skipTexGroup(text, index, '{', '}');
+        index = skipTexOptions(text, index);
+        index = skipTexGroup(text, index, '{', '}');
+        index = skipTexGroup(text, index, '{', '}');
+        segmentStart = index;
+        continue;
+      }
+
+      if (skippedTexCommands[command]) {
+        index = skipTexOptions(text, index);
+        for (var argument = 0; argument < skippedTexCommands[command]; argument++) {
+          index = skipTexWhitespace(text, index);
+          index = skipTexGroup(text, index, '{', '}');
+        }
+        segmentStart = index;
+        continue;
+      }
+
+      segmentStart = index;
+    }
+
+    flush(text.length);
+    return words;
+  }
+
+  function renderSpellcheckResults(issues, occurrences, language, fileName) {
+    spellcheckResults.replaceChildren();
+    spellcheckPanel.hidden = false;
+    if (!issues.length) {
+      spellcheckSummary.textContent = translate('editor.spellcheckClean');
+      return;
+    }
+
+    spellcheckSummary.textContent = translate('editor.spellcheckIssues', [issues.length, occurrences]);
+    issues.forEach(function (issue) {
+      var item = document.createElement('li');
+      item.className = 'spellcheck-item';
+      var word = document.createElement('span');
+      word.className = 'spellcheck-word';
+      word.textContent = issue.word;
+      item.appendChild(word);
+
+      issue.positions.forEach(function (position) {
+        var location = document.createElement('button');
+        location.type = 'button';
+        location.className = 'spellcheck-location';
+        location.textContent = translate('editor.spellcheckLine', [position.line]);
+        location.addEventListener('click', function () {
+          if (source.value.slice(position.start, position.end) !== issue.word) {
+            scheduleSpellcheck();
+            return;
+          }
+          source.focus();
+          source.setSelectionRange(position.start, position.end);
+          var lineHeight = parseFloat(window.getComputedStyle(source).lineHeight) || 20;
+          source.scrollTop = Math.max(0, (position.line - 1) * lineHeight);
+          updateCursor();
+        });
+        item.appendChild(location);
+      });
+
+      issue.suggestions.forEach(function (suggestion) {
+        var replace = document.createElement('button');
+        replace.type = 'button';
+        replace.className = 'spellcheck-suggestion';
+        replace.textContent = translate('editor.spellcheckReplace', [suggestion]);
+        replace.addEventListener('click', function () {
+          var position = issue.positions[0];
+          if (source.value.slice(position.start, position.end) !== issue.word) {
+            scheduleSpellcheck();
+            return;
+          }
+          source.value = source.value.slice(0, position.start) + suggestion + source.value.slice(position.end);
+          source.setSelectionRange(position.start + suggestion.length, position.start + suggestion.length);
+          source.dispatchEvent(new Event('input', { bubbles: true }));
+          source.focus();
+        });
+        item.appendChild(replace);
+      });
+
+      var ignore = document.createElement('button');
+      ignore.type = 'button';
+      ignore.className = 'spellcheck-ignore';
+      ignore.textContent = translate('editor.spellcheckIgnore');
+      ignore.addEventListener('click', function () {
+        var ignoredKey = language + '|' + fileName;
+        var ignored = state.spellcheckIgnored[ignoredKey] || (state.spellcheckIgnored[ignoredKey] = Object.create(null));
+        ignored[issue.word.toLocaleLowerCase(language === 'pt' ? 'pt-BR' : 'en-US')] = true;
+        scheduleSpellcheck();
+      });
+      item.appendChild(ignore);
+      spellcheckResults.appendChild(item);
+    });
+  }
+
+  function getSpellWorker() {
+    if (spellWorker) return spellWorker;
+    spellWorker = new Worker(new URL('spellcheck-worker.js', editorScriptUrl));
+    spellWorker.addEventListener('message', function (event) {
+      var message = event.data;
+      if (!message || message.id !== spellcheckRequestId || !state.spellcheckEnabled) return;
+      if (message.type === 'error') {
+        spellcheckSummary.textContent = translate('editor.spellcheckFailed', [message.message]);
+      } else if (message.type === 'result') {
+        if (message.fileName !== state.activeFile ||
+            message.language !== (document.documentElement.lang.indexOf('pt') === 0 ? 'pt' : 'en')) return;
+        var occurrences = message.occurrences;
+        renderSpellcheckResults(message.issues, occurrences, message.language, message.fileName);
+      }
+    });
+    spellWorker.addEventListener('error', function (event) {
+      spellcheckSummary.textContent = translate('editor.spellcheckFailed', [event.message || 'Worker failed.']);
+      spellWorker.terminate();
+      spellWorker = null;
+    });
+    return spellWorker;
+  }
+
+  function runSpellcheck() {
+    if (!state.spellcheckEnabled) return;
+    var requestId = ++spellcheckRequestId;
+    var language = document.documentElement.lang.indexOf('pt') === 0 ? 'pt' : 'en';
+    var fileName = state.activeFile;
+    var sourceText = source.value;
+    spellcheckPanel.hidden = false;
+    spellcheckResults.replaceChildren();
+    spellcheckSummary.textContent = translate('editor.spellcheckLoading');
+
+    var tokens = [];
+    var line = 1;
+    var nextLineBreak = sourceText.indexOf('\n');
+    extractTexWords(sourceText).forEach(function (token) {
+      while (nextLineBreak !== -1 && token.start > nextLineBreak) {
+        line++;
+        nextLineBreak = sourceText.indexOf('\n', nextLineBreak + 1);
+      }
+      tokens.push({ word: token.word, start: token.start, end: token.end, line: line });
+    });
+    var ignored = state.spellcheckIgnored[language + '|' + fileName] || Object.create(null);
+    try {
+      getSpellWorker().postMessage({
+        type: 'check',
+        id: requestId,
+        language: language,
+        fileName: fileName,
+        words: tokens,
+        ignoredWords: Object.keys(ignored)
+      });
+    } catch (error) {
+      spellcheckSummary.textContent = translate('editor.spellcheckFailed', [error.message]);
+    }
+  }
+
+  function scheduleSpellcheck() {
+    clearTimeout(spellcheckTimer);
+    if (state.spellcheckEnabled) {
+      spellcheckRequestId++;
+      spellcheckTimer = setTimeout(runSpellcheck, 350);
+    }
+  }
+
+  btnSpellcheck.addEventListener('click', function () {
+    state.spellcheckEnabled = !state.spellcheckEnabled;
+    btnSpellcheck.setAttribute('aria-pressed', state.spellcheckEnabled ? 'true' : 'false');
+    spellcheckPanel.hidden = !state.spellcheckEnabled;
+    if (state.spellcheckEnabled) runSpellcheck();
+    else spellcheckRequestId++;
+  });
 
   /* ---------- compile ---------- */
   function appendOutput(text, cls) {
@@ -816,6 +1188,55 @@
         undoEdit();
       }
     }
+
+    if (event.key !== 'Tab') return;
+    event.preventDefault();
+
+    var value = source.value;
+    var selectionStart = source.selectionStart;
+    var selectionEnd = source.selectionEnd;
+    var indent = '  ';
+    if (selectionStart === selectionEnd && !event.shiftKey) {
+      source.value = value.slice(0, selectionStart) + indent + value.slice(selectionEnd);
+      source.setSelectionRange(selectionStart + indent.length, selectionStart + indent.length);
+    } else {
+      var firstLineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+      var lastLineStart = value.lastIndexOf('\n', Math.max(selectionStart, selectionEnd - 1)) + 1;
+      var lineStarts = [firstLineStart];
+      while (lineStarts[lineStarts.length - 1] < lastLineStart) {
+        lineStarts.push(value.indexOf('\n', lineStarts[lineStarts.length - 1]) + 1);
+      }
+
+      if (event.shiftKey) {
+        var removedAt = [];
+        for (var removeIndex = lineStarts.length - 1; removeIndex >= 0; removeIndex--) {
+          var lineStart = lineStarts[removeIndex];
+          var lineIndent = value.slice(lineStart).match(/^(?: {1,2}|\t)/);
+          if (!lineIndent) continue;
+          value = value.slice(0, lineStart) + value.slice(lineStart + lineIndent[0].length);
+          removedAt.push({ position: lineStart, length: lineIndent[0].length });
+        }
+        var removedBeforeStart = removedAt.reduce(function (total, removal) {
+          return total + (removal.position < selectionStart ? removal.length : 0);
+        }, 0);
+        var removedBeforeEnd = removedAt.reduce(function (total, removal) {
+          return total + (removal.position < selectionEnd ? removal.length : 0);
+        }, 0);
+        source.value = value;
+        source.setSelectionRange(selectionStart - removedBeforeStart, selectionEnd - removedBeforeEnd);
+      } else {
+        for (var addIndex = lineStarts.length - 1; addIndex >= 0; addIndex--) {
+          var indentPosition = lineStarts[addIndex];
+          value = value.slice(0, indentPosition) + indent + value.slice(indentPosition);
+        }
+        var addedBeforeStart = lineStarts.filter(function (position) { return position <= selectionStart; }).length * indent.length;
+        var addedBeforeEnd = lineStarts.filter(function (position) { return position < selectionEnd; }).length * indent.length;
+        source.value = value;
+        source.setSelectionRange(selectionStart + addedBeforeStart, selectionEnd + addedBeforeEnd);
+      }
+    }
+    source.dispatchEvent(new Event('input', { bubbles: true }));
+    updateCursor();
   });
 
   /* ---------- download ---------- */

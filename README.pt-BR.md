@@ -89,8 +89,11 @@ o PDF.js é carregado pelo jsDelivr. Por isso, é necessária uma conexão com a
 
 Atualmente, o editor no navegador aceita XeLaTeX e os pacotes incluídos no bundle do Tectonic; ele não instala outros
 pacotes TeX sob demanda. Isso é separado dos aplicativos de desktop descritos acima.
-O editor de código usa o corretor ortográfico integrado ao navegador e o idioma selecionado na interface; os
-dicionários disponíveis dependem do navegador e do sistema operacional.
+O editor inclui um corretor ortográfico opcional para prosa em inglês e português brasileiro. Ele ignora comandos
+LaTeX, comentários, matemática e ambientes literais; a verificação acontece localmente no navegador. Na primeira
+verificação, [Typo.js](https://www.npmjs.com/package/typo-js) e o dicionário Hunspell selecionado
+([inglês](https://www.npmjs.com/package/dictionary-en), [português](https://www.npmjs.com/package/dictionary-pt))
+são baixados do jsDelivr. O texto do projeto não é enviado.
 Em documentos matemáticos convencionais que ainda não carregam `unicode-math`, o editor seleciona a fonte matemática
 OpenType Latin Modern incluída no bundle para evitar símbolos ausentes nas fórmulas. O build WebAssembly upstream
 ainda tem uma limitação conhecida com fontes TeX Font Metric (TFM), como Computer Modern, então alguns documentos

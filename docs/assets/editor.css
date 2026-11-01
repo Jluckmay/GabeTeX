@@ -427,6 +427,30 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 }
 .editor-textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .editor-textarea::placeholder { color: var(--ink-3); }
+.spellcheck-panel {
+  flex: none; max-height: 190px; overflow: auto;
+  border-top: 1px solid var(--hairline); background: var(--raised);
+}
+.spellcheck-head {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; background: var(--alt); border-bottom: 1px solid var(--hairline);
+}
+.spellcheck-head h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.spellcheck-head span { color: var(--ink-2); font-size: 12px; }
+.spellcheck-results { display: grid; gap: 6px; margin: 0; padding: 8px 16px; list-style: none; }
+.spellcheck-item { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: 12px; }
+.spellcheck-word { color: var(--err); font-weight: 600; }
+.spellcheck-location, .spellcheck-suggestion, .spellcheck-ignore {
+  border: 1px solid var(--hairline); border-radius: var(--r-sm); padding: 3px 7px;
+  background: var(--canvas); color: var(--ink); font: inherit; cursor: pointer;
+}
+.spellcheck-location { color: var(--ink-2); }
+.spellcheck-suggestion { border-color: var(--accent); }
+.spellcheck-ignore { color: var(--ink-2); }
+.spellcheck-location:focus-visible, .spellcheck-suggestion:focus-visible, .spellcheck-ignore:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 1px;
+}
 .source-status {
   font-size: 12px; color: var(--ink-2); padding: 8px 20px; border-top: 1px solid var(--hairline);
   background: var(--alt); flex: none;

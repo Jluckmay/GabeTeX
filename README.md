@@ -88,8 +88,11 @@ jsDelivr. An internet connection is therefore required for the first compile.
 
 The browser editor currently supports XeLaTeX and the packages included in Tectonic's bundle; it does not install
 additional TeX packages on demand. This is separate from the desktop apps described above.
-The source editor uses the browser's built-in spell checker and the selected interface language; available dictionaries
-depend on the browser and operating system.
+The source editor includes an opt-in prose spell checker for English and Brazilian Portuguese. It ignores LaTeX
+commands, comments, math, and verbatim environments; checking happens locally in the browser. The first check downloads
+pinned [Typo.js](https://www.npmjs.com/package/typo-js) and the selected Hunspell dictionary
+([English](https://www.npmjs.com/package/dictionary-en), [Portuguese](https://www.npmjs.com/package/dictionary-pt))
+from jsDelivr. The source text is never sent.
 For conventional math documents that do not already load `unicode-math`, the editor selects the bundled Latin Modern
 OpenType math font to avoid missing formula glyphs. The upstream WebAssembly build still has a known limitation with
 TeX Font Metric (TFM) fonts such as Computer Modern, so some documents can report font-metric errors. The editor
