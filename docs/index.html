@@ -622,9 +622,7 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 
 /* ===== fork notice ===== */
 .fork-notice {
-  padding: 12px 0;
-  background: var(--accent-tint);
-  border-bottom: 1px solid var(--hairline);
+  padding: 8px 0;
 }
 .fork-content {
   display: flex;
@@ -719,7 +717,6 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
           <img src="assets/icon-96.png" width="24" height="24" alt="" aria-hidden="true">
           <strong>This repository is a fork of <a href="https://github.com/gabe-rbo/GabeTeX" rel="noopener noreferrer">gabe-rbo/GabeTeX</a>.</strong>
           <span>Original project by <a href="https://github.com/gabe-rbo" rel="noopener noreferrer">Gabriel Ribeiro</a>. Licensed under MIT.</span>
-          <a href="editor.html" class="pill pill-fill pill-sm" data-i18n="fork.editor">Open online LaTeX editor</a>
         </div>
       </section>
 
@@ -1336,8 +1333,7 @@ Scripts/build-app.sh</code></pre>
     'js.titleVersions': 'Versões — GabeTeX',
     'js.desc': 'O GabeTeX é um editor LaTeX livre e de código aberto, nativo do macOS 26 e também disponível para Linux e Windows, feito para quem escreve matemática em projetos de vários arquivos: compila enquanto você digita, sincroniza PDF e código palavra por palavra e instala os pacotes que faltam.',
     'nav.theme': 'Alternar entre temas claro e escuro',
-    'nav.editor': 'Editor online',
-    'fork.editor': 'Abrir editor LaTeX online'
+    'nav.editor': 'Editor online'
   };
   var EN_JS = {
     'js.latest': 'Latest',
@@ -1359,8 +1355,7 @@ Scripts/build-app.sh</code></pre>
     'js.title': document.title,
     'js.titleVersions': 'Versions — GabeTeX',
     'js.desc': (document.querySelector('meta[name="description"]') || {}).content || '',
-    'nav.theme': 'Switch between light and dark theme',
-    'fork.editor': 'Open online LaTeX editor'
+    'nav.theme': 'Switch between light and dark theme'
   };
 
   var lang = root.getAttribute('data-lang') === 'pt' ? 'pt' : 'en';
