@@ -14,18 +14,18 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest"><img alt="Última versão para macOS" src="https://img.shields.io/github/v/release/gabe-rbo/GabeTeX-macOS?display_name=tag&sort=semver"></a>
+  <a href="https://github.com/Jluckmay/GabeTeX-macOS/releases/latest"><img alt="Última versão para macOS" src="https://img.shields.io/github/v/release/Jluckmay/GabeTeX-macOS?display_name=tag&sort=semver"></a>
   <a href="LICENSE"><img alt="Licença: MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue"></a>
-  <a href="https://github.com/gabe-rbo/GabeTeX-macOS/actions/workflows/ci.yml"><img alt="CI do macOS" src="https://github.com/gabe-rbo/GabeTeX-macOS/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Jluckmay/GabeTeX-macOS/actions/workflows/ci.yml"><img alt="CI do macOS" src="https://img.shields.io/github/v/release/Jluckmay/GabeTeX-macOS?display_name=tag&sort=semver"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg"><img alt="Baixar o GabeTeX para Mac" src="https://img.shields.io/badge/Baixar%20para%20Mac-GabeTeX.dmg-0A84FF?style=for-the-badge&logo=apple&logoColor=white"></a>
+  <a href="https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg"><img alt="Baixar o GabeTeX para Mac" src="https://img.shields.io/badge/Baixar%20para%20Mac-GabeTeX.dmg-0A84FF?style=for-the-badge&logo=apple&logoColor=white"></a>
 </p>
 
 <p align="center">
-  <a href="https://gabe-rbo.github.io/GabeTeX/">Site</a> ·
-  <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases">Versões do macOS</a> ·
+  <a href="https://jluckmay.github.io/GabeTeX/">Site</a> ·
+  <a href="https://github.com/Jluckmay/GabeTeX-macOS/releases">Versões do macOS</a> ·
   <a href="CHANGELOG.md">Histórico de mudanças</a> ·
   <a href="CONTRIBUTING.md">Como contribuir</a> ·
   <a href="README.md">English</a>
@@ -44,8 +44,8 @@
 
 | Plataforma | Situação | Tecnologia | Repositório | Download |
 |---|---|---|---|---|
-| **macOS** | Disponível | Swift, SwiftUI e AppKit (macOS 26+, Apple Silicon) | [GabeTeX-macOS](https://github.com/gabe-rbo/GabeTeX-macOS) | [Versões](https://github.com/gabe-rbo/GabeTeX-macOS/releases) · [GabeTeX.dmg](https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg) |
-| **Linux e Windows** | Em desenvolvimento (interface implementada, testada no Linux; Windows só compilado no CI) | Tauri 2 (Rust + TypeScript), um único código-fonte | [GabeTeX-Linux-Windows](https://github.com/gabe-rbo/GabeTeX-Linux-Windows) | Ainda sem versão. Previstos: AppImage, `.deb`, `.exe`, `.msi` |
+| **macOS** | Disponível | Swift, SwiftUI e AppKit (macOS 26+, Apple Silicon) | [GabeTeX-macOS](https://github.com/Jluckmay/GabeTeX-macOS) | [Versões](https://github.com/Jluckmay/GabeTeX-macOS/releases) · [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg) |
+| **Linux e Windows** | Em desenvolvimento (interface implementada, testada no Linux; Windows só compilado no CI) | Tauri 2 (Rust + TypeScript), um único código-fonte | [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) | Ainda sem versão. Previstos: AppImage, `.deb`, `.exe`, `.msi` |
 
 ## Por que o GabeTeX
 
@@ -89,21 +89,21 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 
 ## Obtenha o GabeTeX
 
-- **macOS:** baixe o [GabeTeX.dmg](https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg),
+- **macOS:** baixe o [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg),
   arraste o app para Aplicativos e instale uma distribuição TeX, como o [MacTeX](https://tug.org/mactex/).
   Instruções de instalação, o passo "Abrir Mesmo Assim" do primeiro uso, atalhos e como compilar estão no
-  [README do GabeTeX-macOS](https://github.com/gabe-rbo/GabeTeX-macOS#readme).
+  [README do GabeTeX-macOS](https://github.com/Jluckmay/GabeTeX-macOS#readme).
 - **Linux e Windows:** ainda não lançados. Um único código Tauri 2 atende os dois sistemas; acompanhe o
-  [GabeTeX-Linux-Windows](https://github.com/gabe-rbo/GabeTeX-Linux-Windows) (pacotes previstos: AppImage, `.deb`, `.exe`, `.msi`).
+  [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) (pacotes previstos: AppImage, `.deb`, `.exe`, `.msi`).
 
-O [site](https://gabe-rbo.github.io/GabeTeX/) lista todas as versões do macOS, com as notas de cada uma.
+O [site](https://jluckmay.github.io/GabeTeX/) lista todas as versões do macOS, com as notas de cada uma.
 
 ## Estrutura do repositório
 
 ```text
 GabeTeX/
-├── GabeTeX-macOS/          submódulo → github.com/gabe-rbo/GabeTeX-macOS   (app Swift, versões, CI)
-├── GabeTeX-Linux-Windows/  submódulo → github.com/gabe-rbo/GabeTeX-Linux-Windows (Tauri 2, em desenvolvimento)
+├── GabeTeX-macOS/          submódulo → github.com/Jluckmay/GabeTeX-macOS   (app Swift, versões, CI)
+├── GabeTeX-Linux-Windows/  submódulo → github.com/Jluckmay/GabeTeX-Linux-Windows (Tauri 2, em desenvolvimento)
 ├── docs/              o site do GabeTeX (GitHub Pages)
 ├── .github/           modelos de issue e de pull request, workflow do Pages
 ├── CHANGELOG.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md  SECURITY.md  LICENSE
@@ -116,7 +116,7 @@ commit específico de cada um.
 Clone tudo de uma vez:
 
 ```sh
-git clone --recurse-submodules https://github.com/gabe-rbo/GabeTeX.git
+git clone --recurse-submodules https://github.com/Jluckmay/GabeTeX.git
 ```
 
 Se você já clonou sem os submódulos:
