@@ -348,11 +348,6 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
   background: var(--fill); color: var(--ink-2); font-size: 12px; overflow-wrap: anywhere;
 }
 .upload-status[hidden] { display: none; }
-.status-engine {
-  max-width: 100px; padding: 0; border: 0; border-radius: var(--r-xs);
-  background: transparent; color: var(--ink-2); font: inherit; cursor: pointer;
-}
-.status-engine:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .add-file-form {
   display: grid; gap: 8px; margin-top: 10px; padding: 10px;
   border: 1px solid var(--hairline); border-radius: var(--r-sm); background: var(--canvas);
@@ -463,7 +458,13 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
   flex: 1; position: relative; overflow: hidden;
   background: var(--paper); display: flex; align-items: center; justify-content: center;
 }
-#preview-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+#preview-frame {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: auto;
+  padding: 16px; border: 0; background: var(--paper);
+}
+.pdf-page { position: relative; flex: none; margin: 0 auto 16px; background: #fff; box-shadow: 0 2px 12px #0005; }
+.pdf-page canvas { display: block; transform-origin: top left; }
+#preview-frame[aria-busy="true"] { opacity: .8; }
 .preview-empty {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   position: relative; z-index: 1; max-width: 100%; color: var(--ink-2); font-size: 15px; padding: 40px; text-align: center;
@@ -529,6 +530,14 @@ html.js:not([data-view="editor"]) .editor-status-strip { display: none; }
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
 }
 .foot-editor-status .status-item { white-space: nowrap; }
+.foot-editor-status button.status-item {
+  padding: 0; border: 0; background: transparent; font: inherit; cursor: pointer;
+  text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 2px;
+}
+.foot-editor-status button.status-item:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px;
+}
+.foot-editor-status button.status-item:hover { text-decoration-color: currentColor; }
 .foot-editor-status .status-dot {
   width: 4px; height: 4px; border-radius: 50%; background: var(--ink-3);
   margin: 0 4px; flex: none;

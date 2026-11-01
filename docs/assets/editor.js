@@ -4,6 +4,7 @@
   'use strict';
 
   /* ---------- elements ---------- */
+  var editorScriptUrl = document.currentScript ? document.currentScript.src : new URL('assets/editor.js', window.location.href).href;
   var source = document.getElementById('editor-source');
   var gutter = document.getElementById('editor-gutter');
   var previewFrame = document.getElementById('preview-frame');
@@ -42,7 +43,6 @@
   var statusCompile = document.getElementById('status-compile');
   var statusErrors = document.getElementById('status-errors');
   var statusWarnings = document.getElementById('status-warnings');
-  var statusEngine = document.getElementById('status-engine');
   var statusCursor = document.getElementById('status-cursor');
   var sourceStatus = document.getElementById('source-status');
 
@@ -90,20 +90,18 @@
 
   /* ---------- state ---------- */
   var state = {
-    files: { 'main.tex': '\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\begin{document}\nHello, world!\n\\end{document}\n' },
+    files: { 'main.tex': '\\documentclass{article}\n\\begin{document}\nHello, world!\n\\end{document}\n' },
     openFiles: ['main.tex'],
     activeFile: 'main.tex',
-    engine: 'pdflatex',
     compiling: false,
     lastCompile: 0,
     pdfBlobUrl: null,
-    csrfToken: null,
-    rateLimitRemaining: 10,
-    rateLimitReset: 0,
+    pdfLoadingTask: null,
+    pageObserver: null,
     zoom: 1,
     errors: 0,
     warnings: 0,
-    history: { 'main.tex': ['\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\begin{document}\nHello, world!\n\\end{document}\n'] },
+    history: { 'main.tex': ['\\documentclass{article}\n\\begin{document}\nHello, world!\n\\end{document}\n'] },
     historyIndex: { 'main.tex': 0 },
     historyTimer: null,
     initialized: false,
@@ -113,7 +111,9 @@
     previewStatusKey: 'editor.idle',
     previewStatusArgs: []
   };
-  state.engine = statusEngine.value;
+  var compileWorker = null;
+  var compileRequestId = 0;
+  var pdfJsPromise = null;
 
   function setSourceStatus(key, values) {
     state.sourceStatusKey = key;
@@ -145,6 +145,13 @@
     var key = state.warnings === 1 ? 'editor.warningsOne' : 'editor.warningsMany';
     statusWarnings.textContent = translate(key, [state.warnings]);
   }
+  function showCompileOutput() {
+    compilePanel.hidden = false;
+    statusErrors.setAttribute('aria-expanded', 'true');
+    statusWarnings.setAttribute('aria-expanded', 'true');
+    compilePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    compileOutput.focus({ preventScroll: true });
+  }
   function updateCompileButton() {
     var label = translate(state.compiling ? 'editor.compiling' : 'editor.compile');
     btnCompile.setAttribute('aria-label', label);
@@ -164,7 +171,6 @@
     setPreviewStatus(state.previewStatusKey, state.previewStatusArgs);
     setSourceStatus(state.sourceStatusKey, state.sourceStatusArgs);
     setUploadStatus(state.uploadMessages);
-    statusEngine.setAttribute('aria-label', translate('editor.compiler'));
     renderTabs();
     renderFileList();
     updateCursor();
@@ -486,10 +492,6 @@
     uploadDropZone.classList.remove('is-dragover');
     importTexFiles(event.dataTransfer.files);
   });
-  statusEngine.addEventListener('change', function () {
-    state.engine = statusEngine.value;
-  });
-
   /* ---------- gutter / line numbers ---------- */
   function renderGutter() {
     var lines = source.value.split('\n');
@@ -533,57 +535,6 @@
     setPreviewStatus(hasMath ? 'editor.mathDetected' : 'editor.ready');
   }
 
-  /* ---------- security: input validation ---------- */
-  var DANGEROUS = [
-    '\\input', '\\include', '\\verbatiminput', '\\lstinputlisting',
-    '\\immediate\\write18', '\\write18', '\\shellesc', '\\shellescape',
-    '\\pdffilemoddate', '\\pdffilesize', '\\read', '\\write', '\\openout',
-    '\\closeout', '\\mkdir', '\\catcode', '\\chardef', '\\mathcode',
-    '\\countdef', '\\dimendef', '\\skipdef', '\\muskipdef', '\\toksdef',
-    '\\edef', '\\gdef', '\\xdef', '\\let', '\\futurelet', '\\ifcase',
-    '\\ifnum', '\\ifdim', '\\ifodd', '\\ifvoid', '\\ifhbox', '\\ifvbox',
-    '\\ifx', '\\if', '\\else', '\\fi', '\\loop', '\\repeat', '\\expandafter',
-    '\\noexpand', '\\romannumeral', '\\number', '\\jobname', '\\font',
-    '\\fontname', '\\externalfont', '\\pdfmapfile', '\\pdfmapline',
-    '\\pdfoutput', '\\pdfcompresslevel', '\\pdfdecodemap', '\\pdfembedfile',
-    '\\pdfcopy', '\\pdfrefxobj', '\\pdfximage', '\\pdfrefximage',
-    '\\special', '\\directlua', '\\luaexec', '\\luafunction'
-  ];
-  function validateSource(src) {
-    var issues = [];
-    DANGEROUS.forEach(function (cmd) {
-      var re = new RegExp('\\\\' + cmd.replace(/\\/g, '\\\\') + '(?![a-zA-Z])', 'gi');
-      if (re.test(src)) issues.push(cmd);
-    });
-    return issues;
-  }
-
-  /* ---------- security: CSRF token ---------- */
-  function getCsrfToken() {
-    if (state.csrfToken) return Promise.resolve(state.csrfToken);
-    return fetch('/api/csrf', { credentials: 'same-origin' })
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        state.csrfToken = data.token || null;
-        return state.csrfToken;
-      })
-      .catch(function () { return null; });
-  }
-
-  /* ---------- security: rate limit check ---------- */
-  function checkRateLimit() {
-    var now = Date.now();
-    if (now > state.rateLimitReset) {
-      state.rateLimitRemaining = 10;
-      state.rateLimitReset = now + 60000;
-    }
-    if (state.rateLimitRemaining <= 0) {
-      return { ok: false, seconds: Math.ceil((state.rateLimitReset - now) / 1000) };
-    }
-    state.rateLimitRemaining--;
-    return { ok: true };
-  }
-
   /* ---------- compile ---------- */
   function appendOutput(text, cls) {
     var line = document.createElement('div');
@@ -593,110 +544,220 @@
     compileOutput.scrollTop = compileOutput.scrollHeight;
   }
   function clearOutput() { compileOutput.innerHTML = ''; }
-  function b64toBlob(base64, contentType) {
-    var binary = window.atob(base64);
-    var bytes = new Uint8Array(binary.length);
-    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new Blob([bytes], { type: contentType });
+
+  function getPdfJs() {
+    if (!pdfJsPromise) {
+      pdfJsPromise = import('https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.mjs')
+        .then(function (pdfjs) {
+          pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.worker.mjs';
+          return pdfjs;
+        })
+        .catch(function (error) {
+          pdfJsPromise = null;
+          throw error;
+        });
+    }
+    return pdfJsPromise;
   }
 
-  function compile() {
+  function compileWithTectonic(files, mainFile) {
+    return new Promise(function (resolve, reject) {
+      var worker = new Worker(new URL('tectonic-worker.js', editorScriptUrl));
+      var requestId = ++compileRequestId;
+      compileWorker = worker;
+      var timeout = window.setTimeout(function () {
+        worker.terminate();
+        compileWorker = null;
+        reject(new Error(translate('editor.compileTimeout')));
+      }, 180000);
+
+      function finish(error, result) {
+        window.clearTimeout(timeout);
+        worker.terminate();
+        if (compileWorker === worker) compileWorker = null;
+        if (error) reject(error);
+        else resolve(result);
+      }
+
+      worker.addEventListener('message', function (event) {
+        var message = event.data;
+        if (!message || (message.id !== undefined && message.id !== requestId)) return;
+        if (message.type === 'progress') {
+          setPreviewStatus(message.key);
+        } else if (message.type === 'result') {
+          finish(null, message);
+        } else if (message.type === 'error') {
+          var error = new Error(message.message || translate('editor.compileFailed'));
+          error.log = message.log || '';
+          finish(error);
+        }
+      });
+      worker.addEventListener('error', function (event) {
+        finish(new Error(event.message || translate('editor.compileError')));
+      });
+      try {
+        worker.postMessage({ type: 'compile', id: requestId, files: files, mainFile: mainFile });
+      } catch (error) {
+        finish(error);
+      }
+    });
+  }
+
+  function applyPreviewZoom() {
+    pcZoom.textContent = Math.round(state.zoom * 100) + '%';
+    Array.prototype.forEach.call(previewFrame.querySelectorAll('.pdf-page'), function (page) {
+      var width = Number(page.getAttribute('data-width'));
+      var height = Number(page.getAttribute('data-height'));
+      page.style.width = width * state.zoom + 'px';
+      page.style.height = height * state.zoom + 'px';
+      page.querySelector('canvas').style.transform = 'scale(' + state.zoom + ')';
+    });
+  }
+
+  async function renderPdf(bytes) {
+    var pdfjs = await getPdfJs();
+    if (state.pageObserver) state.pageObserver.disconnect();
+    state.pageObserver = null;
+    previewFrame.replaceChildren();
+
+    var loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
+    state.pdfLoadingTask = loadingTask;
+    var pdf = await loadingTask.promise;
+    var availableWidth = Math.max(240, previewFrame.clientWidth - 32);
+    var firstPage = await pdf.getPage(1);
+    var firstViewport = firstPage.getViewport({ scale: 1 });
+    var fitScale = availableWidth / firstViewport.width;
+    var pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    var currentPage = 1;
+    pcPage.textContent = '1 / ' + pdf.numPages;
+
+    if ('IntersectionObserver' in window) {
+      state.pageObserver = new IntersectionObserver(function (entries) {
+        var mostVisible = null;
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting && (!mostVisible || entry.intersectionRatio > mostVisible.intersectionRatio)) {
+            mostVisible = entry;
+          }
+        });
+        if (mostVisible) {
+          currentPage = Number(mostVisible.target.getAttribute('data-page'));
+          pcPage.textContent = currentPage + ' / ' + pdf.numPages;
+        }
+      }, { root: previewFrame, threshold: [0.5, 0.75] });
+    }
+
+    for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      var page = pageNumber === 1 ? firstPage : await pdf.getPage(pageNumber);
+      var viewport = page.getViewport({ scale: fitScale });
+      var canvas = document.createElement('canvas');
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', translate('editor.pdfPage', [pageNumber, pdf.numPages]));
+      canvas.width = Math.ceil(viewport.width * pixelRatio);
+      canvas.height = Math.ceil(viewport.height * pixelRatio);
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+      canvas.style.transformOrigin = 'top left';
+      var context = canvas.getContext('2d', { alpha: false });
+      if (!context) throw new Error('The browser could not create a PDF preview canvas.');
+      var wrapper = document.createElement('div');
+      wrapper.className = 'pdf-page';
+      wrapper.setAttribute('data-page', pageNumber);
+      wrapper.setAttribute('data-width', viewport.width);
+      wrapper.setAttribute('data-height', viewport.height);
+      wrapper.style.width = viewport.width * state.zoom + 'px';
+      wrapper.style.height = viewport.height * state.zoom + 'px';
+      wrapper.appendChild(canvas);
+      previewFrame.appendChild(wrapper);
+      if (state.pageObserver) state.pageObserver.observe(wrapper);
+
+      await page.render({
+        canvasContext: context,
+        viewport: page.getViewport({ scale: fitScale * pixelRatio })
+      }).promise;
+    }
+    applyPreviewZoom();
+    previewFrame.style.display = 'block';
+    return currentPage;
+  }
+
+  async function compile() {
     if (state.compiling) return;
-    var src = state.files[state.activeFile];
     var start = Date.now();
-
-    var dangers = validateSource(src);
-    if (dangers.length > 0) {
-      clearOutput();
-      appendOutput(translate('editor.securityBlocked', [dangers.join(', ')]), 'err');
-      compilePanel.hidden = false;
-      state.errors = 1;
-      updateErrorStatus();
-      return;
-    }
-
-    var rateOk = checkRateLimit();
-    if (!rateOk) {
-      clearOutput();
-      appendOutput(translate('editor.rateLimitWait', [rateOk.seconds]), 'err');
-      compilePanel.hidden = false;
-      state.compiling = false;
-      updateCompileButton();
-      state.errors = 1;
-      updateErrorStatus();
-      setPreviewStatus('editor.rateLimit');
-      return;
-    }
+    var pdfGenerated = false;
 
     state.compiling = true;
     updateCompileButton();
     setPreviewStatus('editor.compiling');
     previewEmpty.hidden = true;
     previewFrame.style.display = 'none';
+    previewControls.hidden = true;
     clearOutput();
     compilePanel.hidden = false;
-
-    getCsrfToken().then(function (token) {
-      var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-      if (token) headers['X-CSRF-Token'] = token;
-
-      return fetch('/api/compile', {
-        method: 'POST',
-        headers: headers,
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          source: src,
-          file: state.activeFile,
-          engine: state.engine
-        })
-      });
-    })
-    .then(function (res) {
-      if (res.status === 429) throw new Error(translate('editor.rateLimit'));
-      if (!res.ok) throw new Error(translate('editor.httpError', [res.status]));
-      return res.json();
-    })
-    .then(function (data) {
-      var elapsed = ((Date.now() - start) / 1000).toFixed(1);
-      state.lastCompile = elapsed;
-      updateCompileStatus();
-      if (data.ok && data.pdf) {
-        var blob = b64toBlob(data.pdf, 'application/pdf');
-        var url = URL.createObjectURL(blob);
-        if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
-        state.pdfBlobUrl = url;
-        previewFrame.src = url;
-        previewFrame.style.display = 'block';
-        previewEmpty.hidden = true;
-        previewControls.hidden = false;
-        setPreviewStatus('editor.compiledSuccess');
-        appendOutput(translate('editor.compilationSuccess'), 'ok');
-        btnDownload.disabled = false;
-        state.errors = 0;
-        state.warnings = 0;
-      } else {
-        appendOutput(data.error || 'Compilation failed.', 'err');
-        previewEmpty.hidden = false;
-        setPreviewStatus('editor.compileFailed');
-        state.errors = 1;
+    statusErrors.setAttribute('aria-expanded', 'true');
+    statusWarnings.setAttribute('aria-expanded', 'true');
+    previewFrame.setAttribute('aria-busy', 'true');
+    if (state.pageObserver) state.pageObserver.disconnect();
+    state.pageObserver = null;
+    if (state.pdfLoadingTask) {
+      try {
+        await state.pdfLoadingTask.destroy();
+      } catch (error) {
+        appendOutput(translate('editor.compileErrorDetail', [error.message]), 'warn');
       }
-      updateErrorStatus();
-      updateWarningStatus();
-    })
-    .catch(function (err) {
-      appendOutput(translate('editor.compileErrorDetail', [err.message]), 'err');
-      previewEmpty.hidden = false;
-      setPreviewStatus('editor.compileError');
-      state.errors = 1;
-      updateErrorStatus();
-    })
-    .finally(function () {
+      state.pdfLoadingTask = null;
+    }
+    previewFrame.replaceChildren();
+    if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
+    state.pdfBlobUrl = null;
+    btnDownload.disabled = true;
+
+    try {
+      var result = await compileWithTectonic(state.files, state.activeFile);
+      var blob = new Blob([result.pdf], { type: 'application/pdf' });
+      var url = URL.createObjectURL(blob);
+      if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
+      state.pdfBlobUrl = url;
+      btnDownload.disabled = false;
+      pdfGenerated = true;
+      if (result.log) appendOutput(result.log, result.errors ? 'warn' : '');
+      appendOutput(
+        translate(result.errors ? 'editor.compiledWithErrors' : 'editor.compilationSuccess'),
+        result.errors ? 'warn' : 'ok'
+      );
+      state.errors = result.errors || 0;
+      state.warnings = result.warnings || 0;
+      previewFrame.style.display = 'block';
+      await renderPdf(result.pdf);
+      previewEmpty.hidden = true;
+      previewControls.hidden = false;
+      setPreviewStatus(result.errors ? 'editor.compiledWithErrors' : 'editor.compiledSuccess');
+      state.lastCompile = ((Date.now() - start) / 1000).toFixed(1);
+      updateCompileStatus();
+    } catch (error) {
+      if (error.log) appendOutput(error.log, 'warn');
+      appendOutput(translate('editor.compileErrorDetail', [error.message]), 'err');
+      previewEmpty.hidden = pdfGenerated;
+      previewControls.hidden = !pdfGenerated;
+      if (pdfGenerated) {
+        previewFrame.style.display = 'block';
+        setPreviewStatus('editor.previewError', [error.message]);
+      } else {
+        setPreviewStatus('editor.compileError');
+        state.errors = 1;
+        state.warnings = 0;
+      }
+    } finally {
+      previewFrame.removeAttribute('aria-busy');
       state.compiling = false;
       updateCompileButton();
-    });
+      updateErrorStatus();
+      updateWarningStatus();
+    }
   }
 
   btnCompile.addEventListener('click', compile);
+  statusErrors.addEventListener('click', showCompileOutput);
+  statusWarnings.addEventListener('click', showCompileOutput);
   btnHistory.addEventListener('click', undoEdit);
   tabFiles.addEventListener('click', function () { setSidebarTab('files'); });
   tabOutline.addEventListener('click', function () {
@@ -772,13 +833,11 @@
   /* ---------- preview zoom ---------- */
   btnZoomIn.addEventListener('click', function () {
     state.zoom = Math.min(state.zoom + 0.25, 2);
-    previewFrame.style.zoom = state.zoom;
-    pcZoom.textContent = Math.round(state.zoom * 100) + '%';
+    applyPreviewZoom();
   });
   btnZoomOut.addEventListener('click', function () {
     state.zoom = Math.max(state.zoom - 0.25, 0.5);
-    previewFrame.style.zoom = state.zoom;
-    pcZoom.textContent = Math.round(state.zoom * 100) + '%';
+    applyPreviewZoom();
   });
 
   /* ---------- init ---------- */
@@ -795,6 +854,6 @@
   updateWarningStatus();
 
   /* Expose for debugging */
-  window.gabetexEditor = { validateSource: validateSource, state: state };
+  window.gabetexEditor = { compile: compile, state: state };
 
 })();

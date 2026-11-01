@@ -79,6 +79,24 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
   palavras e páginas; Paleta de Comandos; atalhos editáveis; modo Vim opcional.
 - **Rótulos de projeto, suporte à Touch Bar e interface bilíngue** (português do Brasil e inglês).
 
+## Editor online
+
+O editor do site é estático e compila no navegador: um Web Worker executa a versão fixada do
+[Tectonic WebAssembly](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
+e o [PDF.js](https://github.com/mozilla/pdf.js) exibe o resultado. O código do projeto não é enviado a um servidor
+de compilação. Na primeira compilação, o navegador baixa o mecanismo e os pacotes TeX incluídos no bundle pelo GitHub;
+o PDF.js é carregado pelo jsDelivr. Por isso, é necessária uma conexão com a internet para compilar pela primeira vez.
+
+Atualmente, o editor no navegador aceita XeLaTeX e os pacotes incluídos no bundle do Tectonic; ele não instala outros
+pacotes TeX sob demanda. Isso é separado dos aplicativos de desktop descritos acima.
+O editor de código usa o corretor ortográfico integrado ao navegador e o idioma selecionado na interface; os
+dicionários disponíveis dependem do navegador e do sistema operacional.
+Em documentos matemáticos convencionais que ainda não carregam `unicode-math`, o editor seleciona a fonte matemática
+OpenType Latin Modern incluída no bundle para evitar símbolos ausentes nas fórmulas. O build WebAssembly upstream
+ainda tem uma limitação conhecida com fontes TeX Font Metric (TFM), como Computer Modern, então alguns documentos
+podem apresentar erros de métricas. O editor mostra esses diagnósticos em vez de tratar um PDF com erros TeX como
+uma compilação sem erros.
+
 <p align="center">
   <img src="docs/assets/screenshots/sync.png" width="800" alt="Saltando entre o PDF e o código: a palavra de destino é destacada por um instante">
 </p>

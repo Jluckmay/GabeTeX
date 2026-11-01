@@ -1301,7 +1301,7 @@ Scripts/build-app.sh</code></pre>
           </div>
           <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
             <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
-            <textarea id="editor-source" spellcheck="false" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
+            <textarea id="editor-source" spellcheck="true" autocorrect="off" autocapitalize="off" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
 \\begin{document}
 Hello, world!
 \\end{document}" aria-label="LaTeX source — main.tex"></textarea>
@@ -1329,7 +1329,7 @@ Hello, world!
             </div>
           </div>
           <div class="preview-wrap" id="preview-wrap">
-            <iframe id="preview-frame" style="display:none" sandbox="allow-same-origin" title="Compiled PDF preview" src="about:blank" data-i18n-attr="title:editor.compiledPreview"></iframe>
+            <div id="preview-frame" class="pdf-document" style="display:none" role="region" tabindex="0" aria-label="Compiled PDF preview" data-i18n-attr="aria-label:editor.compiledPreview"></div>
             <div class="preview-empty" id="preview-empty">
               <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="60" height="60" x="2" y="2" fill="none" stroke="currentColor" stroke-width="1.5" rx="4"/><path d="M20 20h24v24H20z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M32 12l8 8M40 12l-8 8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
               <p data-i18n="editor.emptyPreview">Compile to see the preview</p>
@@ -1350,17 +1350,12 @@ Hello, world!
           <div class="status-left">
             <span class="status-item" id="status-compile">Compiled in 0s</span>
             <span class="status-dot" aria-hidden="true"></span>
-            <span class="status-item status-errors" id="status-errors">0 errors</span>
+            <button type="button" class="status-item status-errors" id="status-errors" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation errors" data-i18n-attr="aria-label:editor.viewErrors">0 errors</button>
             <span class="status-dot" aria-hidden="true"></span>
-            <span class="status-item status-warnings" id="status-warnings">0 warnings</span>
+            <button type="button" class="status-item status-warnings" id="status-warnings" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation warnings" data-i18n-attr="aria-label:editor.viewWarnings">0 warnings</button>
           </div>
           <div class="status-right">
-            <label class="sr-only" for="status-engine" data-i18n="editor.compiler">Compiler</label>
-            <select class="status-engine" id="status-engine" aria-label="Compiler" data-i18n-attr="aria-label:editor.compiler">
-              <option value="pdflatex">pdfLaTeX</option>
-              <option value="xelatex">XeLaTeX</option>
-              <option value="lualatex">LuaLaTeX</option>
-            </select>
+            <span class="status-item"><span class="sr-only" data-i18n="editor.compiler">Compiler</span><span data-i18n="editor.compilerName">XeLaTeX (Tectonic WASM)</span></span>
             <span class="status-dot" aria-hidden="true"></span>
             <span class="status-item" id="status-enc">UTF-8</span>
             <span class="status-dot" aria-hidden="true"></span>
@@ -1371,7 +1366,7 @@ Hello, world!
     </div>
     <section class="compile-panel" id="compile-panel" hidden aria-label="Compilation output" style="margin:0 20px" data-i18n-attr="aria-label:editor.compilationOutput">
       <div class="compile-head"><h3 data-i18n="editor.compilationOutput">Compilation output</h3></div>
-      <pre id="compile-output" aria-live="polite"></pre>
+      <pre id="compile-output" role="log" tabindex="0" aria-live="polite" aria-relevant="additions"></pre>
     </section>
   </div>
 </div>
@@ -1448,6 +1443,7 @@ Hello, world!
     'editor.uploadReadFailed': 'Não foi possível ler %1.',
     'editor.uploadDuplicate': '%1 já existe.',
     'editor.compiler': 'Compilador',
+    'editor.compilerName': 'XeLaTeX (Tectonic WASM)',
     'editor.noOutline': 'Nenhuma estrutura disponível.',
     'editor.sourcePane': 'Editor do código LaTeX',
     'editor.sourceLabel': 'Código LaTeX — %1',
@@ -1476,26 +1472,29 @@ Hello, world!
     'editor.cursor': 'Lin. %1, Col. %2',
     'editor.mathDetected': 'Expressão matemática detectada',
     'editor.compileDuration': 'Compilado em %1s',
+    'editor.compileTimeout': 'A compilação excedeu o limite de 3 minutos.',
+    'editor.loadingEngine': 'Carregando Tectonic WASM e pacotes…',
+    'editor.previewError': 'PDF gerado, mas a pré-visualização falhou: %1',
+    'editor.pdfPage': 'Página %1 de %2 do PDF',
     'editor.errorsOne': '%1 erro',
     'editor.errorsMany': '%1 erros',
     'editor.warningsOne': '%1 aviso',
     'editor.warningsMany': '%1 avisos',
+    'editor.viewErrors': 'Ver erros da compilação',
+    'editor.viewWarnings': 'Ver avisos da compilação',
     'editor.filePrompt': 'Nome do arquivo (por exemplo, capítulo.tex):',
     'editor.fileExists': 'Esse arquivo já existe.',
     'editor.closeFileTab': 'Fechar aba de %1',
     'editor.deleteFile': 'Excluir %1',
     'editor.confirmDeleteFile': 'Excluir o arquivo %1? Esta ação não pode ser desfeita.',
     'editor.lastFile': 'O último arquivo do projeto não pode ser fechado ou excluído.',
-    'editor.securityBlocked': 'Segurança: comando(s) perigoso(s) bloqueado(s): %1',
-    'editor.rateLimitWait': 'Limite de compilações atingido. Tente novamente em %1 segundos.',
-    'editor.rateLimit': 'Limite de compilações atingido',
     'editor.compiling': 'Compilando…',
     'editor.compiledSuccess': 'Compilação concluída',
+    'editor.compiledWithErrors': 'PDF gerado com erros de compilação',
     'editor.compileFailed': 'Falha na compilação',
     'editor.compileError': 'Erro na compilação',
     'editor.compileErrorDetail': 'Erro: %1',
     'editor.compilationSuccess': 'Compilação concluída com sucesso.',
-    'editor.httpError': 'Erro HTTP %1',
     'hero.iconAlt': 'Ícone do app GabeTeX',
     'hero.lead': 'Um editor LaTeX nativo para macOS, feito para quem escreve matemática em projetos de vários arquivos.',
     'hero.download': 'Baixar para Mac',
@@ -1693,6 +1692,7 @@ Hello, world!
     'editor.uploadReadFailed': 'Could not read %1.',
     'editor.uploadDuplicate': '%1 already exists.',
     'editor.compiler': 'Compiler',
+    'editor.compilerName': 'XeLaTeX (Tectonic WASM)',
     'editor.noOutline': 'No outline available.',
     'editor.sourcePane': 'LaTeX source editor',
     'editor.sourceLabel': 'LaTeX source — %1',
@@ -1721,26 +1721,29 @@ Hello, world!
     'editor.cursor': 'Ln %1, Col %2',
     'editor.mathDetected': 'Math detected',
     'editor.compileDuration': 'Compiled in %1s',
+    'editor.compileTimeout': 'Compilation exceeded the 3-minute limit.',
+    'editor.loadingEngine': 'Loading Tectonic WASM and packages…',
+    'editor.previewError': 'PDF generated, but preview failed: %1',
+    'editor.pdfPage': 'PDF page %1 of %2',
     'editor.errorsOne': '%1 error',
     'editor.errorsMany': '%1 errors',
     'editor.warningsOne': '%1 warning',
     'editor.warningsMany': '%1 warnings',
+    'editor.viewErrors': 'View compilation errors',
+    'editor.viewWarnings': 'View compilation warnings',
     'editor.filePrompt': 'File name (e.g. chapter.tex):',
     'editor.fileExists': 'File already exists.',
     'editor.closeFileTab': 'Close %1 tab',
     'editor.deleteFile': 'Delete %1',
     'editor.confirmDeleteFile': 'Delete the file %1? This action cannot be undone.',
     'editor.lastFile': 'The last file in the project cannot be closed or deleted.',
-    'editor.securityBlocked': 'Security: blocked dangerous command(s): %1',
-    'editor.rateLimitWait': 'Rate limit exceeded. Try again in %1 seconds.',
-    'editor.rateLimit': 'Rate limit exceeded',
     'editor.compiling': 'Compiling…',
     'editor.compiledSuccess': 'Compiled successfully',
+    'editor.compiledWithErrors': 'PDF generated with TeX errors',
     'editor.compileFailed': 'Compilation failed',
     'editor.compileError': 'Compilation error',
     'editor.compileErrorDetail': 'Error: %1',
-    'editor.compilationSuccess': 'Compilation successful.',
-    'editor.httpError': 'HTTP %1'
+    'editor.compilationSuccess': 'Compilation successful.'
   };
 
   var lang = root.getAttribute('data-lang') === 'pt' ? 'pt' : 'en';

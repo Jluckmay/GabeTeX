@@ -78,6 +78,23 @@ editor that treats that as the normal case. It has three goals:
   counts; Command Palette; editable shortcuts; optional Vim mode.
 - **Project labels, Touch Bar support and a bilingual interface** (English and Brazilian Portuguese).
 
+## Online editor
+
+The website's editor is static and compiles in the browser: a Web Worker runs the pinned
+[Tectonic WebAssembly build](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
+and [PDF.js](https://github.com/mozilla/pdf.js) renders the result. Project source is not sent to a compilation
+server. The first compilation downloads the engine and its bundled TeX packages from GitHub; PDF.js is loaded from
+jsDelivr. An internet connection is therefore required for the first compile.
+
+The browser editor currently supports XeLaTeX and the packages included in Tectonic's bundle; it does not install
+additional TeX packages on demand. This is separate from the desktop apps described above.
+The source editor uses the browser's built-in spell checker and the selected interface language; available dictionaries
+depend on the browser and operating system.
+For conventional math documents that do not already load `unicode-math`, the editor selects the bundled Latin Modern
+OpenType math font to avoid missing formula glyphs. The upstream WebAssembly build still has a known limitation with
+TeX Font Metric (TFM) fonts such as Computer Modern, so some documents can report font-metric errors. The editor
+exposes those diagnostics rather than treating a PDF with TeX errors as a clean compile.
+
 <p align="center">
   <img src="docs/assets/screenshots/sync.png" width="800" alt="Jumping between the PDF and the source: the target word is highlighted briefly">
 </p>
