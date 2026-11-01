@@ -14,10 +14,8 @@
 <meta name="color-scheme" content="light dark">
 <link rel="preload" as="style" href="assets/editor.css">
 <link rel="stylesheet" href="assets/editor.css">
-<!-- Content Security Policy: same-origin only; iframe allowed for same-origin PDF preview -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self';">
 <script>
-/* Theme preference before first paint */
 (function () {
   var root = document.documentElement;
   var saved = null;
@@ -30,12 +28,12 @@
 </head>
 <body>
 <span class="sentinel" aria-hidden="true"></span>
-<a class="skip" href="#editor-area">Skip to editor</a>
+<a class="skip" href="#editor-app">Skip to editor</a>
 
 <header class="nav glass">
   <nav class="wrap wrap-wide nav-in" aria-label="Main navigation">
     <a class="brand" href="index.html" data-route="overview">
-      <img src="assets/icon-96.png" width="96" height="96" alt="">
+      <img src="assets/icon-96.png" width="34" height="34" alt="">
       <span class="name"><span class="sr-only">GabeTeX</span><span aria-hidden="true">Gabe<span class="tex">T<span class="tex-e">E</span>X</span></span></span>
     </a>
     <div class="seg seg-views" style="--n:3">
@@ -64,35 +62,86 @@
   </nav>
 </header>
 
-<main id="editor-area" tabindex="-1" aria-label="Online LaTeX editor">
-  <div class="wrap wrap-wide">
-    <div class="editor-layout" role="application" aria-label="LaTeX editor workspace">
+<div id="editor-app" role="application" aria-label="LaTeX editor workspace">
 
-      <!-- File sidebar -->
+  <div class="editor-window">
+    <div class="editor-titlebar">
+      <div class="window-controls">
+        <button class="wc wc-close" aria-label="Close"></button>
+        <button class="wc wc-min" aria-label="Minimize"></button>
+        <button class="wc wc-max" aria-label="Maximize"></button>
+      </div>
+      <div class="editor-title">
+        <span class="doc-title" id="doc-title">homologia.tex</span>
+        <span class="doc-path" id="doc-path">sections/homologia.tex</span>
+      </div>
+      <div class="editor-toolbar">
+        <button type="button" class="tb-btn tb-compile" id="btn-compile" title="Compile" aria-label="Compile">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v13m0-13L4.5 8M8 14.5l3.5-3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="tb-btn tb-view" id="btn-view-mode" title="View mode" aria-label="View mode">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><path d="M6 3v10M13 3v10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="tb-btn tb-share" id="btn-share" title="Share" aria-label="Share">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M16 8l-8-8M16 8l-8 8M8 16l-8-8M8 16l8-8" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round"/></svg>
+        </button>
+        <button type="button" class="tb-btn tb-history" id="btn-history" title="History" aria-label="History">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="12" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 8h6M8 11l2-2 2 2" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="editor-body">
       <aside class="editor-sidebar" aria-label="Project files">
-        <div class="sidebar-head">
-          <h3>Project</h3>
-          <button type="button" class="pill pill-ghost pill-sm" id="btn-add-file" aria-label="Add file">+</button>
+        <div class="sidebar-tabs">
+          <button type="button" class="tab active" id="tab-files" role="tab" aria-selected="true">Files</button>
+          <button type="button" class="tab" id="tab-outline" role="tab" aria-selected="false">Outline</button>
         </div>
-        <ul class="file-list" id="file-list" role="listbox" aria-label="Files">
-          <li class="file-item active" role="option" aria-selected="true" data-file="main.tex">main.tex</li>
-        </ul>
-        <div class="file-empty" hidden>No files.</div>
+        <div class="sidebar-content" id="sidebar-files">
+          <div class="file-tree">
+            <ul>
+              <li class="ft-item ft-folder">
+                <span class="ft-toggle">▾</span>
+                <span class="ft-name">sections</span>
+                <ul class="ft-children">
+                  <li class="ft-item ft-file active" data-file="main.tex">main.tex</li>
+                  <li class="ft-item ft-file" data-file="homologia.tex">homologia.tex</li>
+                  <li class="ft-item ft-file" data-file="introducao.tex">introducao.tex</li>
+                </ul>
+              </li>
+              <li class="ft-item ft-file" data-file="main.tex">main.tex</li>
+              <li class="ft-item ft-file" data-file="refs.bib">refs.bib</li>
+            </ul>
+          </div>
+          <button type="button" class="pill pill-ghost pill-sm" id="btn-add-file" style="width:100%;margin-top:10px" aria-label="Add file">+ Add file</button>
+        </div>
+        <div class="sidebar-content hidden" id="sidebar-outline">
+          <p class="outline-empty">No outline available.</p>
+        </div>
       </aside>
 
-      <!-- Source editor -->
       <section class="editor-source-pane" aria-label="LaTeX source editor">
-        <div class="source-head">
-          <label for="source" class="sr-only">LaTeX source</label>
-          <textarea id="source" spellcheck="false" wrap="soft" placeholder="\\documentclass{article}
+        <div class="editor-tabs">
+          <div class="tab-list" role="tablist">
+            <button type="button" class="etab active" role="tab" aria-selected="true" data-file="main.tex">main.tex <span class="etab-close" aria-hidden="true">×</span></button>
+            <button type="button" class="etab" role="tab" aria-selected="false" data-file="homologia.tex">homologia.tex <span class="etab-close" aria-hidden="true">×</span></button>
+          </div>
+          <div class="tab-actions">
+            <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="editor-code-wrap">
+          <div class="editor-gutter" id="editor-gutter"></div>
+          <textarea id="source" spellcheck="false" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
 \\begin{document}
 Hello, world!
-\\end{document}"></textarea>
-          <div class="source-status" aria-live="polite" aria-atomic="true">Ready</div>
+\\end{document}" aria-label="LaTeX source — main.tex"></textarea>
         </div>
+        <div class="source-status" id="source-status" aria-live="polite" aria-atomic="true">Ready</div>
       </section>
 
-      <!-- Preview pane -->
       <section class="editor-preview-pane" aria-label="PDF preview">
         <div class="preview-head">
           <h3>Preview</h3>
@@ -104,22 +153,36 @@ Hello, world!
             <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="60" height="60" x="2" y="2" fill="none" stroke="currentColor" stroke-width="1.5" rx="4"/><path d="M20 20h24v24H20z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M32 12l8 8M40 12l-8 8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
             <p>Compile to see the preview</p>
           </div>
+          <div class="preview-controls" id="preview-controls">
+            <button type="button" class="pc-btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+            <span class="pc-zoom" id="pc-zoom">100%</span>
+            <button type="button" class="pc-btn" id="btn-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+            <span class="pc-sep">|</span>
+            <span class="pc-page" id="pc-page">1 / 1</span>
+          </div>
         </div>
       </section>
-
     </div>
 
-    <!-- Compilation status / errors -->
-    <section class="compile-panel" id="compile-panel" hidden aria-label="Compilation output" aria-live="polite">
-      <div class="compile-head">
-        <h3>Compilation output</h3>
-        <button type="button" class="pill pill-ghost pill-sm" id="btn-hide-panel" aria-label="Hide output panel">Hide</button>
+    <div class="editor-statusbar">
+      <div class="status-left">
+        <span class="status-item" id="status-compile">Compiled in 0s</span>
+        <span class="status-dot"></span>
+        <span class="status-item status-errors" id="status-errors">0 errors</span>
+        <span class="status-dot"></span>
+        <span class="status-item status-warnings" id="status-warnings">0 warnings</span>
       </div>
-      <pre id="compile-output"></pre>
-    </section>
-
+      <div class="status-right">
+        <span class="status-item" id="status-engine">pdfLaTeX</span>
+        <span class="status-dot"></span>
+        <span class="status-item" id="status-enc">UTF-8</span>
+        <span class="status-dot"></span>
+        <span class="status-item" id="status-cursor">Ln 1, Col 1</span>
+      </div>
+    </div>
   </div>
-</main>
+
+</div>
 
 <footer class="foot">
   <div class="wrap">

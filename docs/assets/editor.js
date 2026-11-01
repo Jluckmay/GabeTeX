@@ -7,17 +7,28 @@
   var root = document.documentElement;
   var themeToggle = document.getElementById('theme-toggle');
   var source = document.getElementById('source');
+  var gutter = document.getElementById('editor-gutter');
   var previewFrame = document.getElementById('preview-frame');
   var previewEmpty = document.getElementById('preview-empty');
   var previewStatus = document.getElementById('preview-status');
+  var previewControls = document.getElementById('preview-controls');
+  var pcZoom = document.getElementById('pc-zoom');
+  var pcPage = document.getElementById('pc-page');
   var compilePanel = document.getElementById('compile-panel');
   var compileOutput = document.getElementById('compile-output');
   var btnCompile = document.getElementById('btn-compile');
   var btnDownload = document.getElementById('btn-download');
-  var btnNew = document.getElementById('btn-new');
   var btnAddFile = document.getElementById('btn-add-file');
-  var btnHidePanel = document.getElementById('btn-hide-panel');
+  var btnZoomIn = document.getElementById('btn-zoom-in');
+  var btnZoomOut = document.getElementById('btn-zoom-out');
   var fileList = document.getElementById('file-list');
+  var tabList = document.querySelector('.tab-list');
+  var statusCompile = document.getElementById('status-compile');
+  var statusErrors = document.getElementById('status-errors');
+  var statusWarnings = document.getElementById('status-warnings');
+  var statusCursor = document.getElementById('status-cursor');
+  var docTitle = document.getElementById('doc-title');
+  var docPath = document.getElementById('doc-path');
 
   /* ---------- state ---------- */
   var state = {
@@ -28,7 +39,10 @@
     pdfBlobUrl: null,
     csrfToken: null,
     rateLimitRemaining: 10,
-    rateLimitReset: 0
+    rateLimitReset: 0,
+    zoom: 1,
+    errors: 0,
+    warnings: 0
   };
 
   /* ---------- theme ---------- */
@@ -43,12 +57,43 @@
   });
   applyTheme();
 
-  /* ---------- file management ---------- */
+  /* ---------- file tabs ---------- */
+  function renderTabs() {
+    tabList.innerHTML = '';
+    Object.keys(state.files).forEach(function (name) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'etab' + (name === state.activeFile ? ' active' : '');
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', name === state.activeFile ? 'true' : 'false');
+      btn.setAttribute('data-file', name);
+      btn.innerHTML = name + ' <span class="etab-close" aria-hidden="true">×</span>';
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        setActiveFile(name);
+      });
+      tabList.appendChild(btn);
+    });
+  }
+  function setActiveFile(name) {
+    state.activeFile = name;
+    source.value = state.files[name];
+    source.setAttribute('aria-label', 'LaTeX source — ' + name);
+    docTitle.textContent = name;
+    docPath.textContent = 'sections/' + name;
+    renderTabs();
+    renderFileList();
+    renderGutter();
+    updateStatus('Opened ' + name);
+    updateCursor();
+  }
+
+  /* ---------- file tree ---------- */
   function renderFileList() {
     fileList.innerHTML = '';
     Object.keys(state.files).forEach(function (name) {
       var li = document.createElement('li');
-      li.className = 'file-item' + (name === state.activeFile ? ' active' : '');
+      li.className = 'ft-item ft-file' + (name === state.activeFile ? ' active' : '');
       li.setAttribute('role', 'option');
       li.setAttribute('aria-selected', name === state.activeFile ? 'true' : 'false');
       li.setAttribute('data-file', name);
@@ -57,40 +102,65 @@
       fileList.appendChild(li);
     });
   }
-  function setActiveFile(name) {
-    state.activeFile = name;
-    source.value = state.files[name];
-    source.setAttribute('aria-label', 'LaTeX source — ' + name);
-    renderFileList();
-    updateStatus('Opened ' + name);
-  }
+
   btnAddFile.addEventListener('click', function () {
     var name = prompt('File name (e.g. chapter.tex):', 'chapter.tex');
     if (!name) return;
     if (/\.tex$/i.test(name) === false) name += '.tex';
     if (state.files[name]) { alert('File already exists.'); return; }
     state.files[name] = '\\documentclass{article}\n\\begin{document}\n\\end{document}\n';
+    renderTabs();
     renderFileList();
     setActiveFile(name);
   });
 
-  /* ---------- source input ---------- */
+  /* ---------- gutter / line numbers ---------- */
+  function renderGutter() {
+    var lines = source.value.split('\\n');
+    var html = '';
+    for (var i = 0; i < lines.length; i++) {
+      html += '<div class="gutter-line" data-line="' + (i + 1) + '">' + (i + 1) + '</div>';
+    }
+    gutter.innerHTML = html;
+    syncGutterScroll();
+  }
+  function syncGutterScroll() {
+    gutter.scrollTop = source.scrollTop;
+  }
+  function updateGutter() {
+    renderGutter();
+  }
+  source.addEventListener('scroll', syncGutterScroll);
   source.addEventListener('input', function () {
     state.files[state.activeFile] = source.value;
-    /* Debounced client-side math preview (not a real compile) */
+    renderGutter();
+    updateCursor();
     clearTimeout(source._mathTimer);
     source._mathTimer = setTimeout(updateMathPreview, 300);
   });
+  source.addEventListener('keyup', updateCursor);
+  source.addEventListener('click', updateCursor);
+
+  function updateCursor() {
+    var val = source.value.substring(0, source.selectionStart);
+    var lines = val.split('\\n');
+    var line = lines.length;
+    var col = lines[lines.length - 1].length + 1;
+    statusCursor.textContent = 'Ln ' + line + ', Col ' + col;
+  }
+
+  /* ---------- source input (initial) ---------- */
+  source.addEventListener('input', function () {
+    state.files[state.activeFile] = source.value;
+  });
 
   function updateMathPreview() {
-    /* Lightweight client-side math hint only; does not compile LaTeX. */
     var text = source.value;
     var hasMath = /\$/.test(text);
     previewStatus.textContent = hasMath ? 'Math detected (client-side preview only)' : 'Ready';
   }
 
   /* ---------- security: input validation ---------- */
-  /* Dangerous LaTeX primitives that allow file/system access */
   var DANGEROUS = [
     '\\input', '\\include', '\\verbatiminput', '\\lstinputlisting',
     '\\immediate\\write18', '\\write18', '\\shellesc', '\\shellescape',
@@ -154,17 +224,17 @@
   function compile() {
     if (state.compiling) return;
     var src = state.files[state.activeFile];
+    var start = Date.now();
 
-    /* Security: validate input */
     var dangers = validateSource(src);
     if (dangers.length > 0) {
       clearOutput();
       appendOutput('Security: blocked dangerous command(s): ' + dangers.join(', '), 'err');
       compilePanel.hidden = false;
+      statusErrors.textContent = state.errors + ' errors';
       return;
     }
 
-    /* Security: rate limit — abort if exceeded */
     var rateOk = checkRateLimit();
     if (!rateOk) {
       clearOutput();
@@ -207,8 +277,9 @@
       return res.json();
     })
     .then(function (data) {
+      var elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      statusCompile.textContent = 'Compiled in ' + elapsed + 's';
       if (data.ok && data.pdf) {
-        /* Display PDF in iframe */
         var blob = b64toBlob(data.pdf, 'application/pdf');
         var url = URL.createObjectURL(blob);
         if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
@@ -216,17 +287,25 @@
         previewFrame.src = url;
         previewFrame.style.display = 'block';
         previewEmpty.hidden = true;
+        previewControls.hidden = false;
         previewStatus.textContent = 'Compiled successfully';
         appendOutput('Compilation successful.', 'ok');
         btnDownload.disabled = false;
+        state.errors = 0;
+        state.warnings = 0;
       } else {
         appendOutput(data.error || 'Compilation failed.', 'err');
         previewStatus.textContent = 'Compilation failed';
+        state.errors = 1;
       }
+      statusErrors.textContent = state.errors + ' errors';
+      statusWarnings.textContent = state.warnings + ' warnings';
     })
     .catch(function (err) {
       appendOutput('Error: ' + err.message, 'err');
       previewStatus.textContent = 'Compilation error';
+      state.errors = 1;
+      statusErrors.textContent = state.errors + ' errors';
     })
     .finally(function () {
       state.compiling = false;
@@ -236,52 +315,38 @@
   }
 
   btnCompile.addEventListener('click', compile);
-  btnHidePanel.addEventListener('click', function () { compilePanel.hidden = true; });
 
   /* ---------- download ---------- */
   btnDownload.addEventListener('click', function () {
     if (!state.pdfBlobUrl) return;
     var a = document.createElement('a');
     a.href = state.pdfBlobUrl;
-    a.download = state.activeFile.replace(/\.tex$/i, '') + '.pdf';
+    a.download = state.activeFile.replace(/\\.tex$/i, '') + '.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   });
   btnDownload.disabled = true;
 
-  /* ---------- new document ---------- */
-  btnNew.addEventListener('click', function () {
-    if (!confirm('Discard unsaved changes?')) return;
-    state.files = { 'main.tex': '\\documentclass{article}\n\\begin{document}\n\\end{document}\n' };
-    state.activeFile = 'main.tex';
-    renderFileList();
-    setActiveFile('main.tex');
-    clearOutput();
-    compilePanel.hidden = true;
-    previewFrame.src = 'about:blank';
-    previewFrame.style.display = 'none';
-    previewEmpty.hidden = false;
-    previewStatus.textContent = 'Ready';
-    btnDownload.disabled = true;
+  /* ---------- preview zoom ---------- */
+  btnZoomIn.addEventListener('click', function () {
+    state.zoom = Math.min(state.zoom + 0.25, 2);
+    previewFrame.style.zoom = state.zoom;
+    pcZoom.textContent = Math.round(state.zoom * 100) + '%';
+  });
+  btnZoomOut.addEventListener('click', function () {
+    state.zoom = Math.max(state.zoom - 0.25, 0.5);
+    previewFrame.style.zoom = state.zoom;
+    pcZoom.textContent = Math.round(state.zoom * 100) + '%';
   });
 
-  /* ---------- helpers ---------- */
-  function b64toBlob(b64, mime) {
-    var bin = atob(b64);
-    var buf = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-    return new Blob([buf], { type: mime });
-  }
-  function updateStatus(msg) {
-    var status = document.querySelector('.source-status');
-    if (status) status.textContent = msg;
-  }
-
   /* ---------- init ---------- */
+  renderTabs();
   renderFileList();
+  renderGutter();
   setActiveFile('main.tex');
   updateMathPreview();
+  updateCursor();
 
   /* Expose for debugging */
   window.gabetexEditor = { validateSource: validateSource, state: state };
