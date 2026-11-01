@@ -52,7 +52,7 @@
   }
   themeToggle.addEventListener('click', function () {
     var isDark = root.classList.toggle('dark');
-    try { localStorage.setItem('gabetex.editor.theme', isDark ? 'dark' : 'light'); } catch (e) {}
+    try { localStorage.setItem('gabetex.theme', isDark ? 'dark' : 'light'); } catch (e) {}
     applyTheme();
   });
   applyTheme();

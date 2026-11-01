@@ -20,10 +20,13 @@
 <script>
 (function () {
   var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
   var saved = null;
-  try { saved = localStorage.getItem('gabetex.editor.theme'); } catch (e) {}
-  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  try { saved = localStorage.getItem('gabetex.theme'); } catch (e) {}
+  var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) {
     root.classList.add('dark');
+    if (toggle) toggle.setAttribute('aria-pressed', 'true');
   }
 })();
 </script>
