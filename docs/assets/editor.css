@@ -1,33 +1,33 @@
-/* ===== GabeTeX online editor — design tokens ===== */
+/* ===== GabeTeX online editor — design tokens (jluckmay.github.io palette) ===== */
 :root {
-  --canvas: #ffffff;
-  --alt: #f5f5f7;
-  --raised: #fbfbfd;
-  --tile: #272729;
-  --tile-raised: #1d1d1f;
-  --paper: #fbfbfd;
-  --ink: #1d1d1f;
-  --ink-2: #6e6e73;
-  --ink-3: rgba(29, 29, 31, .38);
-  --on-tile: #f5f5f7;
-  --on-tile-2: #a1a1a6;
-  --accent: #0066cc;
-  --btn-fill: #0066cc;
-  --accent-hover: #005bb5;
-  --focus: #0071e3;
-  --accent-tint: rgba(0, 102, 204, .1);
-  --hairline: rgba(0, 0, 0, .08);
-  --hairline-strong: rgba(0, 0, 0, .14);
-  --fill: rgba(120, 120, 128, .12);
-  --glass-bg: rgba(255, 255, 255, .72);
-  --glass-rim: rgba(255, 255, 255, .65);
-  --warn: #bf4800;
-  --ok: #1e7a34;
-  --err: #c42b1c;
+  --canvas: #050505;
+  --alt: #080808;
+  --raised: #0d0d0d;
+  --tile: #0b0b0b;
+  --tile-raised: #050505;
+  --paper: #0d0d0d;
+  --ink: #ebebeb;
+  --ink-2: #aaa;
+  --ink-3: rgba(235, 235, 235, .38);
+  --on-tile: #080808;
+  --on-tile-2: #aaa;
+  --accent: #a30f18;
+  --btn-fill: #a30f18;
+  --accent-hover: #d51e2b;
+  --focus: #ffd21c;
+  --accent-tint: rgba(163, 15, 24, .1);
+  --hairline: #ffffff24;
+  --hairline-strong: rgba(255, 255, 255, .2);
+  --fill: rgba(170, 170, 170, .12);
+  --glass-bg: rgba(8, 8, 8, .72);
+  --glass-rim: rgba(255, 255, 255, .1);
+  --warn: #d51e2b;
+  --ok: #ffd21c;
+  --err: #a30f18;
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Display", "Inter", "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, "DejaVu Sans Mono", monospace;
+  --font-sans: "Inter", sans-serif;
+  --font-display: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Liberation Mono", "DejaVu Sans Mono", monospace;
 
   --gutter: clamp(16px, 4vw, 48px);
   --max-wide: 1400px;
@@ -35,57 +35,62 @@
   --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-pill: 999px;
   --ease-out: cubic-bezier(.22, 1, .36, 1);
   --ease-spring: cubic-bezier(.32, .72, 0, 1);
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --canvas: #000000;
-    --alt: #161617;
-    --raised: #1c1c1e;
-    --tile: #1d1d1f;
-    --tile-raised: #000000;
-    --ink: #f5f5f7;
-    --ink-2: #a1a1a6;
-    --ink-3: rgba(245, 245, 247, .36);
-    --accent: #2997ff;
-    --btn-fill: #0071e3;
-    --accent-hover: #0066cc;
-    --focus: #2997ff;
-    --accent-tint: rgba(41, 151, 255, .16);
-    --hairline: rgba(255, 255, 255, .12);
-    --hairline-strong: rgba(255, 255, 255, .2);
-    --fill: rgba(120, 120, 128, .24);
-    --glass-bg: rgba(22, 22, 23, .72);
-    --glass-rim: rgba(255, 255, 255, .1);
-    --warn: #ff9f0a;
-    --ok: #34d358;
-    --err: #f87171;
+    --canvas: #f5f5f7;
+    --alt: #eaeaea;
+    --raised: #ffffff;
+    --tile: #d9d9d9;
+    --tile-raised: #f5f5f7;
+    --paper: #ffffff;
+    --ink: #1a1a1a;
+    --ink-2: #666;
+    --ink-3: rgba(26, 26, 26, .38);
+    --on-tile: #eaeaea;
+    --on-tile-2: #666;
+    --accent: #7f0b13;
+    --btn-fill: #7f0b13;
+    --accent-hover: #a30f18;
+    --focus: #765b00;
+    --accent-tint: rgba(127, 11, 19, .1);
+    --hairline: rgba(0, 0, 0, .08);
+    --hairline-strong: rgba(0, 0, 0, .14);
+    --fill: rgba(102, 102, 102, .12);
+    --glass-bg: rgba(245, 245, 247, .72);
+    --glass-rim: rgba(0, 0, 0, .08);
+    --warn: #a30f18;
+    --ok: #765b00;
+    --err: #7f0b13;
+    color-scheme: light;
   }
 }
 
 html.dark {
-  --canvas: #000000;
-  --alt: #161617;
-  --raised: #1c1c1e;
-  --tile: #1d1d1f;
-  --tile-raised: #000000;
-  --ink: #f5f5f7;
-  --ink-2: #a1a1a6;
-  --ink-3: rgba(245, 245, 247, .36);
-  --accent: #2997ff;
-  --btn-fill: #0071e3;
-  --accent-hover: #0066cc;
-  --focus: #2997ff;
-  --accent-tint: rgba(41, 151, 255, .16);
-  --hairline: rgba(255, 255, 255, .12);
+  --canvas: #050505;
+  --alt: #080808;
+  --raised: #0d0d0d;
+  --tile: #0b0b0b;
+  --tile-raised: #050505;
+  --paper: #0d0d0d;
+  --ink: #ebebeb;
+  --ink-2: #aaa;
+  --ink-3: rgba(235, 235, 235, .38);
+  --accent: #a30f18;
+  --btn-fill: #a30f18;
+  --accent-hover: #d51e2b;
+  --focus: #ffd21c;
+  --accent-tint: rgba(163, 15, 24, .1);
+  --hairline: #ffffff24;
   --hairline-strong: rgba(255, 255, 255, .2);
-  --fill: rgba(120, 120, 128, .24);
-  --glass-bg: rgba(22, 22, 23, .72);
+  --fill: rgba(170, 170, 170, .12);
+  --glass-bg: rgba(8, 8, 8, .72);
   --glass-rim: rgba(255, 255, 255, .1);
-  --warn: #ff9f0a;
-  --ok: #34d358;
-  --err: #f87171;
+  --warn: #d51e2b;
+  --ok: #ffd21c;
+  --err: #a30f18;
   color-scheme: dark;
 }
 
