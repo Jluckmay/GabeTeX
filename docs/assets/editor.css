@@ -430,6 +430,7 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
   background: var(--canvas); border: 0; padding: 16px 20px; resize: none; outline: none;
   overflow: auto;
 }
+.editor-textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .editor-textarea::placeholder { color: var(--ink-3); }
 .source-status {
   font-size: 12px; color: var(--ink-2); padding: 8px 20px; border-top: 1px solid var(--hairline);
@@ -537,12 +538,21 @@ html.js:not([data-view="editor"]) .editor-status-strip { display: none; }
 
 /* ===== responsive ===== */
 @media (max-width: 1068px) {
-  .editor-sidebar { display: none; }
-  .editor-preview-pane { width: 320px; }
+  .editor-sidebar { width: 180px; }
+  .editor-preview-pane { width: 280px; }
 }
-@media (max-width: 834px) {
-  .editor-preview-pane { display: none; }
-  .editor-window { height: calc(100vh - var(--nav-h) - 20px); }
+@media (max-width: 900px) {
+  .editor-body { flex-direction: column; }
+  .editor-sidebar {
+    width: 100%; height: min(25vh, 180px); min-height: 132px; flex: none;
+    border-right: 0; border-bottom: 1px solid var(--hairline);
+  }
+  .editor-source-pane { min-height: 140px; }
+  .editor-window.is-split-view .editor-preview-pane {
+    display: flex; width: auto; min-height: 140px; flex: 1;
+    border-top: 1px solid var(--hairline); border-left: 0;
+  }
+  .editor-window { height: calc(100svh - var(--nav-h) - 20px); max-height: none; }
 }
 @media (max-width: 640px) {
   body { font-size: 16px; }
@@ -550,6 +560,7 @@ html.js:not([data-view="editor"]) .editor-status-strip { display: none; }
   .preview-head { gap: 5px; padding-right: 4px; padding-left: 8px; }
   .preview-head .editor-toolbar { gap: 0; }
   .preview-head .tb-btn { width: 24px; }
+  .editor-sidebar { height: min(25vh, 180px); }
 }
 
 /* ===== forced colors ===== */

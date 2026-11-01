@@ -571,7 +571,6 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 /* ===== versions ===== */
 .vh { padding: clamp(48px, 6vw, 88px) 0 0; }
 .vh h1 { margin: 0; font: 600 var(--t-title)/1.1 var(--font-display); letter-spacing: -.008em; }
-.vh h1:focus { outline: none; }
 .vh-sub { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-top: 10px; color: var(--ink-2); }
 .timeline { position: relative; margin: 48px 0 0; padding: 0 0 8px; list-style: none; }
 .timeline::before { content: ""; position: absolute; left: 5px; top: 10px; bottom: 0; width: 1px; background: var(--hairline-strong); }
@@ -685,11 +684,17 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 }
 @media (max-width: 640px) {
   body { font-size: 16px; }
-  .brand .name, .gh { display: none; }
-  .nav-in { grid-template-columns: auto 1fr auto; gap: 8px; }
-  .nav .seg-views { justify-self: center; }
-  .seg a, .seg button { padding: 0 11px; font-size: 13px; }
-  .seg-sm a, .seg-sm button { padding: 0 9px; }
+  :root { --nav-h: 88px; }
+  .brand .name, .nav .gh:not(.theme-toggle) { display: none; }
+  .nav-in {
+    height: auto; min-height: var(--nav-h); grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 36px 36px; gap: 4px 8px; padding-top: 6px; padding-bottom: 6px;
+  }
+  .brand { grid-area: 1 / 1; }
+  .nav-end { grid-area: 1 / 2; gap: 6px; }
+  .nav .seg-views { grid-area: 2 / 1 / 3 / 3; justify-self: stretch; width: 100%; min-width: 0; }
+  .nav .seg-views a { min-width: 0; padding: 0 6px; font-size: 12px; }
+  .seg-sm a, .seg-sm button { padding: 0 8px; }
   .hero-mark { --icon: 128px; }
   .meta { gap: 2px 14px; }
   .meta span + span::before { content: none; }
@@ -718,8 +723,8 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
   }
 }
 @media (max-width: 420px) {
-  .seg a, .seg button { padding: 0 9px; }
-  .seg-sm a, .seg-sm button { padding: 0 8px; }
+  .nav .seg-views a { padding: 0 4px; font-size: 11px; }
+  .seg-sm a, .seg-sm button { padding: 0 7px; }
 }
 @media (forced-colors: active) { .seg-thumb { outline: 1px solid CanvasText; } .pill { border: 1px solid ButtonText; } }
 
@@ -805,7 +810,7 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
         <svg class="hero-diagram" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264.33 21.61"><defs><g><g id="hr-g0-0"><path d="M1.88-2.45C1.88-2.73 1.64-2.97 1.36-2.97C1.08-2.97 0.84-2.73 0.84-2.45C0.84-2.16 1.08-1.92 1.36-1.92C1.64-1.92 1.88-2.16 1.88-2.45ZM1.88-2.45"/></g><g id="hr-g1-0"><path d="M7.44-6.8C7.44-6.83 7.42-6.89 7.33-6.89C7.3-6.89 7.28-6.89 7.17-6.78L6.5-6.03C6.41-6.16 5.95-6.89 4.88-6.89C2.69-6.89 0.48-4.73 0.48-2.47C0.48-0.84 1.64 0.22 3.14 0.22C3.98 0.22 4.73-0.17 5.25-0.62C6.16-1.42 6.33-2.31 6.33-2.34C6.33-2.45 6.23-2.45 6.22-2.45C6.16-2.45 6.11-2.42 6.08-2.34C6-2.06 5.77-1.38 5.09-0.8C4.42-0.25 3.81-0.09 3.3-0.09C2.42-0.09 1.38-0.59 1.38-2.12C1.38-2.69 1.58-4.27 2.56-5.41C3.16-6.11 4.08-6.59 4.95-6.59C5.95-6.59 6.53-5.84 6.53-4.7C6.53-4.31 6.5-4.3 6.5-4.2C6.5-4.11 6.61-4.11 6.64-4.11C6.77-4.11 6.77-4.12 6.81-4.3ZM7.44-6.8"/></g><g id="hr-g2-0"><path d="M0.83-0.44C0.81-0.34 0.77-0.17 0.77-0.16C0.77 0 0.89 0.06 1 0.06C1.12 0.06 1.23-0.02 1.27-0.08C1.3-0.14 1.36-0.36 1.39-0.5C1.42-0.64 1.5-0.95 1.55-1.12C1.58-1.27 1.62-1.42 1.66-1.58C1.73-1.86 1.75-1.92 1.94-2.2C2.14-2.47 2.45-2.83 2.97-2.83C3.36-2.83 3.38-2.48 3.38-2.34C3.38-1.94 3.08-1.17 2.97-0.89C2.89-0.7 2.88-0.64 2.88-0.52C2.88-0.16 3.17 0.06 3.52 0.06C4.2 0.06 4.5-0.88 4.5-0.98C4.5-1.06 4.42-1.06 4.39-1.06C4.3-1.06 4.3-1.03 4.27-0.95C4.11-0.41 3.81-0.12 3.53-0.12C3.39-0.12 3.36-0.22 3.36-0.36C3.36-0.52 3.41-0.61 3.53-0.92C3.61-1.12 3.89-1.86 3.89-2.23C3.89-2.91 3.36-3.02 3-3.02C2.42-3.02 2.05-2.67 1.84-2.39C1.8-2.88 1.39-3.02 1.11-3.02C0.81-3.02 0.66-2.81 0.56-2.66C0.42-2.39 0.33-2 0.33-1.97C0.33-1.88 0.42-1.88 0.44-1.88C0.53-1.88 0.55-1.91 0.59-2.09C0.69-2.48 0.83-2.83 1.09-2.83C1.27-2.83 1.31-2.67 1.31-2.48C1.31-2.36 1.25-2.11 1.2-1.92C1.16-1.73 1.09-1.45 1.05-1.31ZM0.83-0.44"/></g><g id="hr-g2-1"><path d="M3.59-2.31C3.5-2.7 3.19-3.12 2.55-3.12C1.59-3.12 0.8-2.41 0.55-1.78C0.5-1.67 0.41-1.39 0.41-1.11C0.41-0.64 0.78 0.14 1.84 0.14C3.62 0.14 4.34-2.08 4.34-3.05C4.34-4.22 3.58-4.89 2.66-4.89C1.55-4.89 1.23-4 1.23-3.78C1.23-3.73 1.27-3.53 1.5-3.53C1.75-3.53 1.89-3.75 1.89-3.92C1.89-4.09 1.75-4.16 1.62-4.17C1.97-4.69 2.53-4.69 2.64-4.69C3.16-4.69 3.77-4.36 3.77-3.39C3.77-3.09 3.73-2.86 3.59-2.31ZM1.86-0.08C1.09-0.08 1-0.66 1-0.88C1-1.14 1.19-1.81 1.25-1.98C1.38-2.3 1.8-2.92 2.58-2.92C3.23-2.92 3.45-2.41 3.45-2C3.45-1.55 3.02-0.08 1.86-0.08ZM1.86-0.08"/></g><g id="hr-g3-0"><path d="M3.17-1.55L5.27-1.55C5.36-1.55 5.52-1.55 5.52-1.72C5.52-1.88 5.36-1.88 5.27-1.88L3.17-1.88L3.17-3.98C3.17-4.08 3.17-4.23 3-4.23C2.83-4.23 2.83-4.08 2.83-3.98L2.83-1.88L0.73-1.88C0.64-1.88 0.48-1.88 0.48-1.72C0.48-1.55 0.64-1.55 0.73-1.55L2.83-1.55L2.83 0.55C2.83 0.64 2.83 0.81 3 0.81C3.17 0.81 3.17 0.66 3.17 0.55ZM3.17-1.55"/></g><g id="hr-g3-1"><path d="M2.3-4.36C2.3-4.53 2.28-4.55 2.09-4.55C1.66-4.11 1.03-4.11 0.75-4.11L0.75-3.86C0.91-3.86 1.36-3.86 1.73-4.05L1.73-0.56C1.73-0.33 1.73-0.25 1.05-0.25L0.8-0.25L0.8 0C0.92 0 1.77-0.03 2.02-0.03C2.22-0.03 3.09 0 3.23 0L3.23-0.25L2.98-0.25C2.3-0.25 2.3-0.33 2.3-0.56ZM2.3-4.36"/></g><g id="hr-g4-0"><path d="M5.09-1.55C5.2-1.55 5.36-1.55 5.36-1.72C5.36-1.88 5.2-1.88 5.09-1.88L1.02-1.88C0.91-1.88 0.73-1.88 0.73-1.72C0.73-1.55 0.89-1.55 1.02-1.55ZM5.09-1.55"/></g><g id="hr-g5-0"><path d="M0.95-0.48C0.92-0.36 0.88-0.14 0.88-0.12C0.88-0.02 0.95 0.05 1.05 0.05C1.12 0.05 1.23 0.02 1.28-0.11C1.3-0.12 1.34-0.36 1.38-0.48C1.55-1.16 1.55-1.16 1.56-1.17C1.62-1.31 1.97-2 2.56-2C2.81-2 2.91-1.86 2.91-1.64C2.91-1.36 2.7-0.86 2.59-0.58C2.56-0.52 2.55-0.45 2.55-0.38C2.55-0.12 2.78 0.05 3.08 0.05C3.59 0.05 3.88-0.58 3.88-0.7C3.88-0.77 3.78-0.77 3.77-0.77C3.69-0.77 3.67-0.75 3.66-0.66C3.56-0.36 3.33-0.11 3.09-0.11C2.98-0.11 2.95-0.19 2.95-0.3C2.95-0.41 2.97-0.45 3.02-0.56C3.09-0.75 3.33-1.31 3.33-1.58C3.33-1.94 3.06-2.16 2.59-2.16C2.16-2.16 1.84-1.89 1.67-1.67C1.64-2.08 1.25-2.16 1.08-2.16C0.59-2.16 0.44-1.41 0.44-1.41C0.44-1.33 0.52-1.33 0.55-1.33C0.62-1.33 0.64-1.36 0.66-1.42C0.73-1.72 0.84-2 1.05-2C1.22-2 1.25-1.84 1.25-1.73C1.25-1.67 1.2-1.48 1.17-1.36C1.14-1.22 1.09-1.02 1.06-0.92ZM0.95-0.48"/></g><g id="hr-g6-0"><path d="M2.66-1.08L4.36-1.08C4.42-1.08 4.55-1.08 4.55-1.22C4.55-1.36 4.42-1.36 4.36-1.36L2.66-1.36L2.66-3.06C2.66-3.12 2.66-3.27 2.52-3.27C2.38-3.27 2.38-3.12 2.38-3.06L2.38-1.36L0.67-1.36C0.61-1.36 0.47-1.36 0.47-1.22C0.47-1.08 0.61-1.08 0.67-1.08L2.38-1.08L2.38 0.61C2.38 0.69 2.38 0.81 2.52 0.81C2.66 0.81 2.66 0.69 2.66 0.61ZM2.66-1.08"/></g><g id="hr-g6-1"><path d="M2.88-0.94L2.67-0.94C2.66-0.84 2.61-0.55 2.53-0.5C2.5-0.47 2.08-0.47 2.02-0.47L1.05-0.47C1.38-0.7 1.73-0.98 2.03-1.17C2.47-1.48 2.88-1.77 2.88-2.28C2.88-2.91 2.28-3.25 1.59-3.25C0.92-3.25 0.44-2.88 0.44-2.39C0.44-2.14 0.66-2.09 0.73-2.09C0.86-2.09 1.02-2.19 1.02-2.39C1.02-2.56 0.89-2.66 0.73-2.67C0.88-2.89 1.16-3.05 1.48-3.05C1.97-3.05 2.36-2.77 2.36-2.28C2.36-1.88 2.08-1.56 1.7-1.23L0.5-0.22C0.45-0.19 0.45-0.19 0.44-0.14L0.44 0L2.72 0ZM2.88-0.94"/></g><g id="hr-g6-2"><path d="M1.95-3.11C1.95-3.25 1.94-3.25 1.77-3.25C1.42-2.94 0.88-2.94 0.78-2.94L0.7-2.94L0.7-2.73L0.78-2.73C0.89-2.73 1.22-2.75 1.5-2.86L1.5-0.42C1.5-0.27 1.5-0.22 0.98-0.22L0.73-0.22L0.73 0C1-0.02 1.44-0.02 1.72-0.02C2-0.02 2.44-0.02 2.7 0L2.7-0.22L2.47-0.22C1.95-0.22 1.95-0.27 1.95-0.42ZM1.95-3.11"/></g><g id="hr-g7-0"><path d="M4.3-1.08C4.38-1.08 4.52-1.08 4.52-1.22C4.52-1.36 4.38-1.36 4.3-1.36L1-1.36C0.92-1.36 0.78-1.36 0.78-1.22C0.78-1.08 0.92-1.08 1-1.08ZM4.3-1.08"/></g></g></defs><g fill="currentColor"><use x="7.19" y="14.39" href="#hr-g0-0"/><use x="11.55" y="14.39" href="#hr-g0-0"/><use x="15.89" y="14.39" href="#hr-g0-0"/><use x="55.42" y="14.39" href="#hr-g1-0"/><use x="62.42" y="15.85" href="#hr-g2-0"/><use x="67.25" y="15.85" href="#hr-g3-0"/><use x="73.26" y="15.85" href="#hr-g3-1"/><use x="185.91" y="14.39" href="#hr-g1-0"/><use x="192.9" y="15.85" href="#hr-g2-0"/><use x="197.74" y="15.85" href="#hr-g4-0"/><use x="203.86" y="15.85" href="#hr-g3-1"/><use x="245.06" y="14.39" href="#hr-g0-0"/><use x="249.41" y="14.39" href="#hr-g0-0"/><use x="253.75" y="14.39" href="#hr-g0-0"/></g><path fill="none" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke="currentColor" d="M-110.77 0.25L-82.67 0.25" transform="matrix(0.9824, 0, 0, -0.9824, 131.8339, 12.1843)"/><path fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" d="M-2.07 2.39C-1.69 0.96-0.85 0.28 0 0C-0.85-0.28-1.69-0.96-2.07-2.39" transform="matrix(0.9824, 0, 0, -0.9824, 50.8145, 11.9396)"/><g fill="currentColor"><use x="28.35" y="7.84" href="#hr-g2-1"/><use x="32.53" y="8.82" href="#hr-g5-0"/><use x="36.84" y="8.82" href="#hr-g6-0"/><use x="41.87" y="8.82" href="#hr-g6-1"/></g><path fill="none" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke="currentColor" d="M-50.66 0.25L-22.57 0.25" transform="matrix(0.9824, 0, 0, -0.9824, 131.8339, 12.1843)"/><path fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" d="M-2.07 2.39C-1.7 0.96-0.85 0.28 0 0C-0.85-0.28-1.7-0.96-2.07-2.39" transform="matrix(0.9824, 0, 0, -0.9824, 109.8566, 11.9396)"/><g fill="currentColor"><use x="87.39" y="7.84" href="#hr-g2-1"/><use x="91.57" y="8.82" href="#hr-g5-0"/><use x="95.88" y="8.82" href="#hr-g6-0"/><use x="100.91" y="8.82" href="#hr-g6-2"/></g><path fill="none" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke="currentColor" d="M22.06 0.25L50.16 0.25" transform="matrix(0.9824, 0, 0, -0.9824, 131.8339, 12.1843)"/><path fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" d="M-2.07 2.39C-1.7 0.96-0.85 0.28 0 0C-0.85-0.28-1.7-0.96-2.07-2.39" transform="matrix(0.9824, 0, 0, -0.9824, 181.3021, 11.9396)"/><g fill="currentColor"><use x="163.01" y="8.66" href="#hr-g2-1"/><use x="167.19" y="9.64" href="#hr-g5-0"/></g><path fill="none" stroke-width="0.4" stroke-linecap="butt" stroke-linejoin="miter" stroke="currentColor" d="M82.27 0.25L110.37 0.25" transform="matrix(0.9824, 0, 0, -0.9824, 131.8339, 12.1843)"/><path fill="none" stroke-width="0.4" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor" d="M-2.07 2.39C-1.69 0.96-0.85 0.28 0 0C-0.85-0.28-1.69-0.96-2.07-2.39" transform="matrix(0.9824, 0, 0, -0.9824, 240.4529, 11.9396)"/><g fill="currentColor"><use x="217.85" y="7.84" href="#hr-g2-1"/><use x="222.03" y="8.82" href="#hr-g5-0"/><use x="226.34" y="8.82" href="#hr-g7-0"/><use x="231.64" y="8.82" href="#hr-g6-2"/></g></svg>
         <img class="hero-icon h-icon" src="assets/icon.png" width="384" height="384" alt="GabeTeX app icon" data-i18n-attr="alt:hero.iconAlt">
       </div>
-      <h1 class="wordmark h-1" id="hero-title"><span class="sr-only">GabeTeX</span><span aria-hidden="true">Gabe<span class="tex">T<span class="tex-e">E</span>X</span></span></h1>
+      <h1 class="wordmark h-1" id="hero-title" tabindex="-1"><span class="sr-only">GabeTeX</span><span aria-hidden="true">Gabe<span class="tex">T<span class="tex-e">E</span>X</span></span></h1>
       <p class="lead h-2" data-i18n="hero.lead">A native LaTeX editor for macOS, made for writing mathematics in multi-file projects.</p>
       <div class="cta h-3" id="hero-cta">
         <a class="pill pill-fill" id="download" href="https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg">
@@ -1247,14 +1252,15 @@ Scripts/build-app.sh</code></pre>
   </section>
 </div>
 
-<div id="editor-view" hidden>
-  <div id="editor-app" role="application" aria-label="LaTeX editor workspace" data-i18n-attr="aria-label:editor.workspace">
+<section id="editor-view" aria-labelledby="editor-title" hidden>
+  <h1 class="sr-only" id="editor-title" tabindex="-1" data-i18n="editor.title">Online editor</h1>
+  <div id="editor-app">
     <div class="editor-window is-split-view">
       <div class="editor-body">
         <aside class="editor-sidebar" aria-label="Project files" data-i18n-attr="aria-label:editor.projectFiles">
-          <div class="sidebar-tabs" role="tablist">
-            <button type="button" class="tab active" id="tab-files" role="tab" aria-controls="sidebar-files" aria-selected="true" data-i18n="editor.files">Files</button>
-            <button type="button" class="tab" id="tab-outline" role="tab" aria-controls="sidebar-outline" aria-selected="false" data-i18n="editor.outline">Outline</button>
+          <div class="sidebar-tabs" role="tablist" aria-label="Project panels" data-i18n-attr="aria-label:editor.sidebarTabs">
+            <button type="button" class="tab active" id="tab-files" role="tab" aria-controls="sidebar-files" aria-selected="true" tabindex="0" data-i18n="editor.files">Files</button>
+            <button type="button" class="tab" id="tab-outline" role="tab" aria-controls="sidebar-outline" aria-selected="false" tabindex="-1" data-i18n="editor.outline">Outline</button>
           </div>
           <div class="sidebar-content" id="sidebar-files" role="tabpanel" aria-labelledby="tab-files">
             <div class="file-tree">
@@ -1264,7 +1270,7 @@ Scripts/build-app.sh</code></pre>
               <p data-i18n="editor.dropTex">Drop .tex files here</p>
               <div class="file-action-buttons">
                 <button type="button" class="pill pill-ghost pill-sm" id="btn-add-file" aria-label="Create file" data-i18n="editor.addFile" data-i18n-attr="aria-label:editor.addFileAria">Create file</button>
-                <button type="button" class="pill pill-ghost pill-sm" id="btn-upload-files" data-i18n="editor.upload">Upload</button>
+                    <button type="button" class="pill pill-ghost pill-sm" id="btn-upload-files" aria-label="Upload .tex files" data-i18n="editor.upload" data-i18n-attr="aria-label:editor.uploadAria">Upload</button>
               </div>
               <input id="file-upload-input" type="file" accept=".tex,text/x-tex,text/plain" multiple hidden>
               <form class="add-file-form" id="add-file-form" hidden>
@@ -1286,15 +1292,15 @@ Scripts/build-app.sh</code></pre>
 
         <section class="editor-source-pane" aria-label="LaTeX source editor" data-i18n-attr="aria-label:editor.sourcePane">
           <div class="editor-tabs">
-            <div class="tab-list" role="tablist"></div>
+          <div class="tab-list" role="tablist" aria-label="Open files" data-i18n-attr="aria-label:editor.openFileTabs"></div>
             <div class="tab-actions">
               <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
               </button>
             </div>
           </div>
-          <div class="editor-code-wrap">
-            <div class="editor-gutter" id="editor-gutter"></div>
+          <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
+            <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
             <textarea id="editor-source" spellcheck="false" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
 \\begin{document}
 Hello, world!
@@ -1419,8 +1425,11 @@ Hello, world!
     'nav.lang': 'Idioma',
     'nav.gh': 'GabeTeX no GitHub',
     'nav.download': 'Baixar',
+    'editor.title': 'Editor online',
     'editor.workspace': 'Área de trabalho do editor LaTeX',
     'editor.projectFiles': 'Arquivos do projeto',
+    'editor.sidebarTabs': 'Painéis do projeto',
+    'editor.openFileTabs': 'Arquivos abertos',
     'editor.files': 'Arquivos',
     'editor.outline': 'Estrutura',
     'editor.addFile': 'Criar arquivo',
@@ -1432,6 +1441,7 @@ Hello, world!
     'editor.invalidFileName': 'Digite um nome de arquivo válido.',
     'editor.dropTex': 'Solte arquivos .tex aqui',
     'editor.upload': 'Upload',
+    'editor.uploadAria': 'Enviar arquivos .tex',
     'editor.uploadSuccess': '%1 arquivo(s) importado(s).',
     'editor.uploadInvalidType': 'Apenas arquivos .tex são aceitos.',
     'editor.uploadTooLarge': '%1 excede o limite de 100 KB.',
@@ -1660,8 +1670,11 @@ Hello, world!
     'js.titleEditor': 'Online editor — GabeTeX',
     'js.desc': (document.querySelector('meta[name="description"]') || {}).content || '',
     'nav.theme': 'Switch between light and dark theme',
+    'editor.title': 'Online editor',
     'editor.workspace': 'LaTeX editor workspace',
     'editor.projectFiles': 'Project files',
+    'editor.sidebarTabs': 'Project panels',
+    'editor.openFileTabs': 'Open files',
     'editor.files': 'Files',
     'editor.outline': 'Outline',
     'editor.addFile': 'Create file',
@@ -1673,6 +1686,7 @@ Hello, world!
     'editor.invalidFileName': 'Enter a valid file name.',
     'editor.dropTex': 'Drop .tex files here',
     'editor.upload': 'Upload',
+    'editor.uploadAria': 'Upload .tex files',
     'editor.uploadSuccess': '%1 file(s) imported.',
     'editor.uploadInvalidType': 'Only .tex files are supported.',
     'editor.uploadTooLarge': '%1 exceeds the 100 KB limit.',
@@ -1796,7 +1810,10 @@ Hello, world!
       syncNav(v);
       setTitle();
       if (changed && user) window.scrollTo(0, 0);
-      if (v === 'versions' && user) document.getElementById('versions-title').focus({ preventScroll: true });
+      if (changed && user) {
+        var titleId = v === 'versions' ? 'versions-title' : v === 'editor' ? 'editor-title' : 'hero-title';
+        document.getElementById(titleId).focus({ preventScroll: true });
+      }
     }
     if (v === 'versions') loadReleases(false);
     if (changed && user && document.startViewTransition && !reduced()) {

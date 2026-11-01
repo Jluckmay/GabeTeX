@@ -209,6 +209,8 @@
     tabOutline.classList.toggle('active', !showFiles);
     tabFiles.setAttribute('aria-selected', showFiles ? 'true' : 'false');
     tabOutline.setAttribute('aria-selected', showFiles ? 'false' : 'true');
+    tabFiles.tabIndex = showFiles ? 0 : -1;
+    tabOutline.tabIndex = showFiles ? -1 : 0;
     sidebarFiles.hidden = !showFiles;
     sidebarOutline.hidden = showFiles;
     sidebarFiles.classList.toggle('hidden', !showFiles);
@@ -218,30 +220,57 @@
   /* ---------- file tabs ---------- */
   function renderTabs() {
     tabList.innerHTML = '';
-    state.openFiles.forEach(function (name) {
+    state.openFiles.forEach(function (name, index) {
       var group = document.createElement('div');
       group.className = 'etab-group';
       group.setAttribute('role', 'presentation');
       var tab = document.createElement('button');
       tab.type = 'button';
       tab.className = 'etab' + (name === state.activeFile ? ' active' : '');
+      tab.id = 'editor-file-tab-' + index;
       tab.setAttribute('role', 'tab');
       tab.setAttribute('aria-selected', name === state.activeFile ? 'true' : 'false');
+      tab.setAttribute('aria-controls', 'editor-code-wrap');
+      tab.tabIndex = name === state.activeFile ? 0 : -1;
       tab.setAttribute('data-file', name);
       tab.textContent = name;
-      tab.addEventListener('click', function () { setActiveFile(name); });
+      tab.addEventListener('click', function () {
+        setActiveFile(name);
+        tabList.querySelector('[aria-selected="true"]').focus();
+      });
       var close = document.createElement('button');
       close.type = 'button';
       close.className = 'etab-close';
       close.setAttribute('aria-label', translate('editor.closeFileTab', [name]));
       close.title = translate('editor.closeFileTab', [name]);
       close.textContent = '×';
-      close.addEventListener('click', function () { closeFile(name); });
+      close.addEventListener('click', function () {
+        closeFile(name);
+        var activeTab = tabList.querySelector('[aria-selected="true"]');
+        if (activeTab) activeTab.focus();
+      });
       group.appendChild(tab);
       group.appendChild(close);
       tabList.appendChild(group);
     });
+    var activeTab = tabList.querySelector('[aria-selected="true"]');
+    if (activeTab) document.getElementById('editor-code-wrap').setAttribute('aria-labelledby', activeTab.id);
   }
+  tabList.addEventListener('keydown', function (event) {
+    if (event.target.getAttribute('role') !== 'tab') return;
+    var tabs = Array.prototype.slice.call(tabList.querySelectorAll('[role="tab"]'));
+    var index = tabs.indexOf(event.target);
+    var nextIndex = index;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = tabs.length - 1;
+    else return;
+    event.preventDefault();
+    var nextName = tabs[nextIndex].getAttribute('data-file');
+    setActiveFile(nextName);
+    tabList.querySelector('[aria-selected="true"]').focus();
+  });
   function setActiveFile(name) {
     if (!Object.prototype.hasOwnProperty.call(state.files, name)) return;
     clearTimeout(state.historyTimer);
@@ -673,6 +702,14 @@
   tabOutline.addEventListener('click', function () {
     updateOutline();
     setSidebarTab('outline');
+  });
+  tabFiles.parentNode.addEventListener('keydown', function (event) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    var nextTab = event.key === 'Home' || event.key === 'ArrowLeft' ? tabFiles : tabOutline;
+    if (event.key === 'End' || event.key === 'ArrowRight') nextTab = tabOutline;
+    nextTab.focus();
+    nextTab.click();
   });
   btnSplit.addEventListener('click', function () {
     var split = editorWindow.classList.toggle('is-split-view');
