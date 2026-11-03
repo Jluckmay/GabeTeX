@@ -29,6 +29,8 @@
 <meta name="twitter:description" content="Free and open source. Native to macOS, also for Linux and Windows. Made for writing mathematics in multi-file projects.">
 <meta name="twitter:image" content="https://gabe-rbo.github.io/GabeTeX/assets/og.png">
 <meta name="twitter:image:alt" content="The GabeTeX app icon next to the words: GabeTeX, a native LaTeX editor for macOS.">
+<link rel="preload" as="style" href="assets/editor.css">
+<link rel="stylesheet" href="assets/editor.css">
 <script>
 /* Before first paint: choose the language and the view, so nothing flashes. */
 (function () {
@@ -631,10 +633,11 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
       <img src="assets/icon-96.png" width="96" height="96" alt="">
       <span class="name"><span class="sr-only">GabeTeX</span><span aria-hidden="true">Gabe<span class="tex">T<span class="tex-e">E</span>X</span></span></span>
     </a>
-    <div class="seg seg-views" style="--n:2">
+    <div class="seg seg-views" style="--n:3">
       <span class="seg-thumb" aria-hidden="true"></span>
       <a href="#overview" data-route="overview" aria-current="page" data-i18n="nav.overview">Overview</a>
       <a href="#versions" data-route="versions" data-i18n="nav.versions">Versions</a>
+      <a href="#editor" data-route="editor" data-i18n="nav.editor">Online editor</a>
     </div>
     <div class="nav-end">
       <div class="seg seg-sm seg-lang" style="--n:2" role="group" aria-label="Language" data-i18n-attr="aria-label:nav.lang">
@@ -1144,6 +1147,7 @@ Scripts/build-app.sh</code></pre>
     'nav.lang': 'Idioma',
     'nav.gh': 'GabeTeX no GitHub',
     'nav.download': 'Baixar',
+    'nav.editor': 'Editor online',
     'hero.iconAlt': 'Ícone do app GabeTeX',
     'hero.lead': 'Um editor LaTeX nativo para macOS, feito para quem escreve matemática em projetos de vários arquivos.',
     'hero.download': 'Baixar para Mac',
@@ -1291,7 +1295,82 @@ Scripts/build-app.sh</code></pre>
     'js.copiedLive': 'Comando copiado.',
     'js.title': 'GabeTeX — editor LaTeX nativo para macOS, também para Linux e Windows',
     'js.titleVersions': 'Versões — GabeTeX',
-    'js.desc': 'O GabeTeX é um editor LaTeX livre e de código aberto, nativo do macOS 26 e também disponível para Linux e Windows, feito para quem escreve matemática em projetos de vários arquivos: compila enquanto você digita, sincroniza PDF e código palavra por palavra e instala os pacotes que faltam.'
+    'js.desc': 'O GabeTeX é um editor LaTeX livre e de código aberto, nativo do macOS 26 e também disponível para Linux e Windows, feito para quem escreve matemática em projetos de vários arquivos: compila enquanto você digita, sincroniza PDF e código palavra por palavra e instala os pacotes que faltam.',
+    'editor.title': 'Editor online',
+    'editor.workspace': 'Área de trabalho do editor LaTeX',
+    'editor.projectFiles': 'Arquivos do projeto',
+    'editor.sidebarTabs': 'Painéis do projeto',
+    'editor.openFileTabs': 'Arquivos abertos',
+    'editor.files': 'Arquivos',
+    'editor.outline': 'Estrutura',
+    'editor.addFile': 'Criar arquivo',
+    'editor.addFileAria': 'Criar arquivo',
+    'editor.newFileName': 'Nome do arquivo',
+    'editor.fileNamePlaceholder': 'capitulo.tex',
+    'editor.createFile': 'Criar',
+    'editor.cancelAddFile': 'Cancelar',
+    'editor.invalidFileName': 'Digite um nome de arquivo válido.',
+    'editor.dropTex': 'Solte arquivos .tex aqui',
+    'editor.upload': 'Upload',
+    'editor.uploadAria': 'Enviar arquivos .tex',
+    'editor.uploadSuccess': '%1 arquivo(s) importado(s).',
+    'editor.uploadInvalidType': 'Apenas arquivos .tex são aceitos.',
+    'editor.uploadTooLarge': '%1 excede o limite de 100 KB.',
+    'editor.uploadReadFailed': 'Não foi possível ler %1.',
+    'editor.uploadDuplicate': '%1 já existe.',
+    'editor.compiler': 'Compilador',
+    'editor.compilerName': 'XeLaTeX (Tectonic WASM)',
+    'editor.noOutline': 'Nenhuma estrutura disponível.',
+    'editor.sourcePane': 'Editor do código LaTeX',
+    'editor.sourceLabel': 'Código LaTeX — %1',
+    'editor.spellcheck': 'Revisar ortografia do texto',
+    'editor.spellcheckLoading': 'Carregando dicionário e verificando texto…',
+    'editor.spellcheckClean': 'Nenhum possível erro ortográfico encontrado.',
+    'editor.spellcheckIssues': '%1 palavras suspeitas em %2 ocorrência(s).',
+    'editor.spellcheckLine': 'Linha %1',
+    'editor.spellcheckReplace': 'Substituir por “%1”',
+    'editor.spellcheckIgnore': 'Ignorar neste arquivo',
+    'editor.spellcheckFailed': 'Não foi possível carregar o corretor ortográfico: %1',
+    'editor.split': 'Dividir visualização',
+    'editor.previewPane': 'Pré-visualização do PDF',
+    'editor.compiledPreview': 'Pré-visualização do PDF compilado',
+    'editor.preview': 'Pré-visualização',
+    'editor.idle': 'Inativo',
+    'editor.compile': 'Compilar',
+    'editor.viewMode': 'Modo de visualização',
+    'editor.share': 'Compartilhar',
+    'editor.history': 'Histórico',
+    'editor.undo': 'Desfazer última edição',
+    'editor.sourceCopied': 'Código copiado.',
+    'editor.shareFailed': 'Não foi possível compartilhar o código.',
+    'editor.shared': 'Código compartilhado.',
+    'editor.historyRestored': 'Edição anterior restaurada.',
+    'editor.emptyPreview': 'Compile para ver a pré-visualização',
+    'editor.zoomOut': 'Diminuir zoom',
+    'editor.zoomIn': 'Aumentar zoom',
+    'editor.downloadPdf': 'Baixar PDF',
+    'editor.compilationOutput': 'Saída da compilação',
+    'editor.status': 'Status do editor',
+    'editor.ready': 'Pronto',
+    'editor.opened': 'Arquivo aberto: %1',
+    'editor.cursor': 'Lin. %1, Col. %2',
+    'editor.mathDetected': 'Expressão matemática detectada',
+    'editor.compileDuration': 'Compilado em %1s',
+    'editor.compileTimeout': 'A compilação excedeu o limite de 3 minutos.',
+    'editor.loadingEngine': 'Carregando Tectonic WASM e pacotes…',
+    'editor.previewError': 'PDF gerado, mas a pré-visualização falhou: %1',
+    'editor.pdfPage': 'Página %1 de %2 do PDF',
+    'editor.errorsOne': '%1 erro',
+    'editor.errorsMany': '%1 erros',
+    'editor.warningsOne': '%1 aviso',
+    'editor.warningsMany': '%1 avisos',
+    'editor.closeFileTab': 'Fechar %1',
+    'editor.lastFile': 'Não é possível fechar o único arquivo.',
+    'editor.confirmDeleteFile': 'Tem certeza que deseja excluir "%1"?',
+    'editor.deleteFile': 'Excluir %1',
+    'editor.fileExists': 'Este arquivo já existe.',
+    'editor.resizeSidebar': 'Redimensionar painel de arquivos do projeto',
+    'editor.resizePreview': 'Redimensionar painéis do editor e da pré-visualização do PDF'
   };
   var EN_JS = {
     'js.latest': 'Latest',
@@ -1312,6 +1391,7 @@ Scripts/build-app.sh</code></pre>
     'hero.downloadWindows': 'Download for Windows',
     'js.title': document.title,
     'js.titleVersions': 'Versions — GabeTeX',
+    'js.titleEditor': 'Online editor — GabeTeX',
     'js.desc': (document.querySelector('meta[name="description"]') || {}).content || ''
   };
 
@@ -1353,9 +1433,18 @@ Scripts/build-app.sh</code></pre>
     if (typeof present !== 'undefined' && present) present.relang();
   }
 
-  /* ---------- views: #versions is its own view, everything else is the overview ---------- */
-  function currentView() { return location.hash === '#versions' ? 'versions' : 'overview'; }
-  function setTitle() { document.title = currentView() === 'versions' ? t('js.titleVersions') : t('js.title'); }
+  /* ---------- views: #versions is its own view, #editor is the online editor, everything else is the overview ---------- */
+  function currentView() {
+    if (location.hash === '#versions') return 'versions';
+    if (location.hash === '#editor') return 'editor';
+    return 'overview';
+  }
+  function setTitle() {
+    var v = currentView();
+    if (v === 'versions') return t('js.titleVersions');
+    if (v === 'editor') return t('js.titleEditor');
+    return t('js.title');
+  }
   function syncNav(v) {
     [].forEach.call(document.querySelectorAll('.seg-views [data-route]'), function (a, i) {
       if (a.getAttribute('data-route') === v) { a.setAttribute('aria-current', 'page'); a.parentNode.style.setProperty('--i', i); }
@@ -1369,10 +1458,12 @@ Scripts/build-app.sh</code></pre>
       root.setAttribute('data-view', v);
       document.getElementById('overview').hidden = v !== 'overview';
       document.getElementById('versions').hidden = v !== 'versions';
+      document.getElementById('editor-view').hidden = v !== 'editor';
       syncNav(v);
       setTitle();
       if (changed && user) window.scrollTo(0, 0);
       if (v === 'versions' && user) document.getElementById('versions-title').focus({ preventScroll: true });
+      if (v === 'editor' && user) document.getElementById('editor-source').focus({ preventScroll: true });
     }
     if (v === 'versions') loadReleases(false);
     if (changed && user && document.startViewTransition && !reduced()) {
@@ -1383,7 +1474,7 @@ Scripts/build-app.sh</code></pre>
     if (changed) revealNow();
   }
   document.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a[data-route="overview"]');
+    var a = e.target.closest && e.target.closest('a[data-route]');
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
     e.preventDefault();
     if (location.hash) history.pushState(null, '', location.pathname + location.search);
@@ -1755,5 +1846,140 @@ Scripts/build-app.sh</code></pre>
   if ('requestIdleCallback' in window) requestIdleCallback(loadHeroVersion, { timeout: 2500 }); else setTimeout(loadHeroVersion, 600);
 })();
 </script>
+<section id="editor-view" aria-labelledby="editor-title" hidden>
+  <h1 class="sr-only" id="editor-title" tabindex="-1" data-i18n="editor.title">Online editor</h1>
+  <div id="editor-app">
+    <div class="editor-window is-split-view">
+      <div class="editor-body">
+        <aside class="editor-sidebar" aria-label="Project files" data-i18n-attr="aria-label:editor.projectFiles">
+          <div class="sidebar-tabs" role="tablist" aria-label="Project panels" data-i18n-attr="aria-label:editor.sidebarTabs">
+            <button type="button" class="tab active" id="tab-files" role="tab" aria-controls="sidebar-files" aria-selected="true" tabindex="0" data-i18n="editor.files">Files</button>
+            <button type="button" class="tab" id="tab-outline" role="tab" aria-controls="sidebar-outline" aria-selected="false" tabindex="-1" data-i18n="editor.outline">Outline</button>
+          </div>
+          <div class="sidebar-content" id="sidebar-files" role="tabpanel" aria-labelledby="tab-files">
+            <div class="file-tree">
+              <ul id="file-list"></ul>
+            </div>
+            <div class="file-actions" id="upload-drop-zone">
+              <p data-i18n="editor.dropTex">Drop .tex files here</p>
+              <div class="file-action-buttons">
+                <button type="button" class="pill pill-ghost pill-sm" id="btn-add-file" aria-label="Create file" data-i18n="editor.addFile" data-i18n-attr="aria-label:editor.addFileAria">Create file</button>
+                    <button type="button" class="pill pill-ghost pill-sm" id="btn-upload-files" aria-label="Upload .tex files" data-i18n="editor.upload" data-i18n-attr="aria-label:editor.uploadAria">Upload</button>
+              </div>
+              <input id="file-upload-input" type="file" accept=".tex,text/x-tex,text/plain" multiple hidden>
+              <form class="add-file-form" id="add-file-form" hidden>
+                <label for="new-file-name" data-i18n="editor.newFileName">File name</label>
+                <input id="new-file-name" name="file-name" type="text" autocomplete="off" placeholder="chapter.tex" data-i18n-attr="placeholder:editor.fileNamePlaceholder" required>
+                <p class="add-file-error" id="add-file-error" role="alert" hidden></p>
+                <div class="add-file-actions">
+                  <button type="submit" class="pill pill-ghost pill-sm" data-i18n="editor.createFile">Create</button>
+                  <button type="button" class="pill pill-ghost pill-sm" id="btn-cancel-add-file" data-i18n="editor.cancelAddFile">Cancel</button>
+                </div>
+              </form>
+            </div>
+            <p class="upload-status" id="upload-status" role="status" aria-live="polite" hidden></p>
+          </div>
+          <div class="sidebar-content hidden" id="sidebar-outline" role="tabpanel" aria-labelledby="tab-outline" hidden>
+            <p class="outline-empty" data-i18n="editor.noOutline">No outline available.</p>
+          </div>
+        </aside>
+
+        <section class="editor-source-pane" aria-label="LaTeX source editor" data-i18n-attr="aria-label:editor.sourcePane">
+          <div class="editor-tabs">
+          <div class="tab-list" role="tablist" aria-label="Open files" data-i18n-attr="aria-label:editor.openFileTabs"></div>
+            <div class="tab-actions">
+              <button type="button" class="tb-btn tb-spellcheck" id="btn-spellcheck" title="Check spelling in prose" aria-label="Check spelling in prose" aria-pressed="false" data-i18n-attr="title:editor.spellcheck;aria-label:editor.spellcheck">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h7M5.5 2v1.5m-2 0 3 6m2-6-3 6M10 11.5l1.5 1.5L15 9" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
+            <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
+            <textarea id="editor-source" spellcheck="false" autocorrect="off" autocapitalize="off" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
+\\begin{document}
+Hello, world!
+\\end{document}" aria-label="LaTeX source — main.tex"></textarea>
+          </div>
+          <section class="spellcheck-panel" id="spellcheck-panel" hidden aria-label="Spelling review" data-i18n-attr="aria-label:editor.spellcheck">
+            <div class="spellcheck-head">
+              <h3 data-i18n="editor.spellcheck">Spelling review</h3>
+              <span id="spellcheck-summary" role="status" aria-live="polite"></span>
+            </div>
+            <ul id="spellcheck-results" class="spellcheck-results"></ul>
+          </section>
+          <div class="source-status" id="source-status" aria-live="polite" aria-atomic="true">Ready</div>
+        </section>
+
+        <section class="editor-preview-pane" aria-label="PDF preview" data-i18n-attr="aria-label:editor.previewPane">
+          <div class="preview-head">
+            <h3 data-i18n="editor.preview">Preview</h3>
+            <span class="preview-status" id="preview-status" role="status" aria-live="polite" data-i18n="editor.idle">Idle</span>
+            <div class="editor-toolbar">
+              <button type="button" class="tb-btn tb-compile" id="btn-compile" title="Compile" aria-label="Compile" data-i18n-attr="title:editor.compile;aria-label:editor.compile">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v13m0-13L4.5 8M8 14.5l3.5-3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="tb-btn tb-view" id="btn-view-mode" title="View mode" aria-label="View mode" aria-pressed="false" data-i18n-attr="title:editor.viewMode;aria-label:editor.viewMode">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><path d="M6 3v10M13 3v10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" class="tb-btn tb-share" id="btn-share" title="Share" aria-label="Share" data-i18n-attr="title:editor.share;aria-label:editor.share">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M16 8l-8-8M16 8l-8 8M8 16l-8-8M8 16l8-8" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" class="tb-btn tb-history" id="btn-history" title="Undo last edit" aria-label="Undo last edit" aria-keyshortcuts="Control+Z Meta+Z" disabled data-i18n-attr="title:editor.undo;aria-label:editor.undo">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="12" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 8h6M8 11l2-2 2 2" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="preview-wrap" id="preview-wrap">
+            <div id="preview-frame" class="pdf-document" style="display:none" role="region" tabindex="0" aria-label="Compiled PDF preview" data-i18n-attr="aria-label:editor.compiledPreview"></div>
+            <div class="preview-empty" id="preview-empty">
+              <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="60" height="60" x="2" y="2" fill="none" stroke="currentColor" stroke-width="1.5" rx="4"/><path d="M20 20h24v24H20z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M32 12l8 8M40 12l-8 8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+              <p data-i18n="editor.emptyPreview">Compile to see the preview</p>
+            </div>
+            <div class="preview-controls" id="preview-controls">
+              <button type="button" class="pc-btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out" data-i18n-attr="title:editor.zoomOut;aria-label:editor.zoomOut">−</button>
+              <span class="pc-zoom" id="pc-zoom">100%</span>
+              <button type="button" class="pc-btn" id="btn-zoom-in" title="Zoom in" aria-label="Zoom in" data-i18n-attr="title:editor.zoomIn;aria-label:editor.zoomIn">+</button>
+              <span class="pc-sep">|</span>
+              <span class="pc-page" id="pc-page">1 / 1</span>
+              <button type="button" class="pc-btn" id="btn-download" title="Download PDF" aria-label="Download PDF" data-i18n-attr="title:editor.downloadPdf;aria-label:editor.downloadPdf">↓</button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <section class="editor-status-strip" aria-label="Editor status" data-i18n-attr="aria-label:editor.status">
+        <div class="wrap wrap-wide foot-editor-status">
+          <div class="status-left">
+            <span class="status-item" id="status-compile">Compiled in 0s</span>
+            <span class="status-dot" aria-hidden="true"></span>
+            <button type="button" class="status-item status-errors" id="status-errors" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation errors" data-i18n-attr="aria-label:editor.viewErrors">0 errors</button>
+            <span class="status-dot" aria-hidden="true"></span>
+            <button type="button" class="status-item status-warnings" id="status-warnings" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation warnings" data-i18n-attr="aria-label:editor.viewWarnings">0 warnings</button>
+          </div>
+          <div class="status-right">
+            <span class="status-item"><span class="sr-only" data-i18n="editor.compiler">Compiler</span><span data-i18n="editor.compilerName">XeLaTeX (Tectonic WASM)</span></span>
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-item" id="status-enc">UTF-8</span>
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-item" id="status-cursor">Ln 1, Col 1</span>
+          </div>
+        </div>
+      </section>
+    </div>
+    <section class="compile-panel" id="compile-panel" hidden aria-label="Compilation output" style="margin:0 20px" data-i18n-attr="aria-label:editor.compilationOutput">
+      <div class="compile-head"><h3 data-i18n="editor.compilationOutput">Compilation output</h3></div>
+      <pre id="compile-output" role="log" tabindex="0" aria-live="polite" aria-relevant="additions"></pre>
+    </section>
+  </div>
+</div>
+</main>
+
+  </div>
+  </section>
+
+
+<script src="assets/editor.js"></script>
 </body>
 </html>
