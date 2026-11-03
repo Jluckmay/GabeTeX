@@ -1410,11 +1410,13 @@ Hello, world!
 <script>
 (function () {
   'use strict';
-  var REPO = 'Jluckmay/GabeTeX-macOS';
-  var API = 'https://api.github.com/repos/' + REPO + '/releases?per_page=30';
-  var RELEASES_URL = 'https://github.com/' + REPO + '/releases';
-  var LW_RELEASES = 'https://github.com/Jluckmay/GabeTeX-Linux-Windows/releases'; /* Linux/Windows edition (Tauri) */
-  var LATEST_DMG = RELEASES_URL + '/latest/download/GabeTeX.dmg';
+  var REPO_MAC = 'Jluckmay/GabeTeX-macOS';
+    var REPO_LW = 'Jluckmay/GabeTeX-Linux-Windows';
+    var API_MAC = 'https://api.github.com/repos/' + REPO_MAC + '/releases?per_page=30';
+    var API_LW = 'https://api.github.com/repos/' + REPO_LW + '/releases?per_page=30';
+    var RELEASES_URL = 'https://github.com/' + REPO_MAC + '/releases';
+    var LW_RELEASES = 'https://github.com/' + REPO_LW + '/releases'; /* Linux/Windows edition (Tauri) */
+    var LATEST_DMG = RELEASES_URL + '/latest/download/GabeTeX.dmg';
   var CACHE_KEY = 'gabetex.releases.v1';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
@@ -1646,7 +1648,7 @@ Hello, world!
     /* used by scripts only */
     'js.latest': 'Mais recente',
     'js.pre': 'Pré-lançamento',
-    'js.download': 'Baixar GabeTeX.dmg',
+    'js.download': 'Baixar',
     'js.view': 'Ver a versão no GitHub',
     'js.notes': 'Mostrar as notas da versão',
     'js.noNotes': 'Esta versão não tem notas.',
@@ -1668,7 +1670,7 @@ Hello, world!
   var EN_JS = {
     'js.latest': 'Latest',
     'js.pre': 'Pre-release',
-    'js.download': 'Download GabeTeX.dmg',
+    'js.download': 'Download',
     'js.view': 'View release on GitHub',
     'js.notes': 'Show release notes',
     'js.noNotes': 'This version has no release notes.',
@@ -1908,7 +1910,7 @@ Hello, world!
     dlLabel.setAttribute('data-i18n', OS_ASSET[OS][1]); dlLabel.innerHTML = t(OS_ASSET[OS][1]);
   }
 
-  /* ---------- releases: one cached request serves the hero and the Versions view ---------- */
+  /* ---------- releases: fetch from macOS and Linux/Windows repos, merge by version ---------- */
   var state = null, pending = null, heroLatest = null, lastFail = 0;
   function readCache() {
     try {
@@ -1918,64 +1920,99 @@ Hello, world!
     } catch (e) { return null; }
   }
   function writeCache(list) { try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {} }
-  function slim(r) {
-    var dmg = null;
-    (r.assets || []).forEach(function (a) { if (!dmg && a && a.name === 'GabeTeX.dmg') dmg = a; });
-    return {
-      tag: String(r.tag_name || ''), name: String(r.name || ''), pre: !!r.prerelease,
-      date: String(r.published_at || r.created_at || ''), url: String(r.html_url || ''),
-      html: typeof r.body_html === 'string' ? r.body_html : '',
-      dmg: dmg ? { url: String(dmg.browser_download_url || ''), size: +dmg.size || 0 } : null
-    };
-  }
-  /* mode 'auto' uses the cache and backs off for a minute after a failure; 'network' (Try again) always asks GitHub */
-  function fetchReleases(mode) {
-    if (mode !== 'network') {
-      var c = readCache(); if (c) return Promise.resolve(c);
-      if (Date.now() - lastFail < 60000) return Promise.reject(new Error('recent failure'));
+    function slim(r, repo) {
+      var assets = [];
+      (r.assets || []).forEach(function (a) {
+        if (a && a.browser_download_url) {
+          assets.push({
+            name: String(a.name || ''),
+            url: String(a.browser_download_url || ''),
+            size: +a.size || 0
+          });
+        }
+      });
+      return {
+        tag: String(r.tag_name || ''), name: String(r.name || ''), pre: !!r.prerelease,
+        date: String(r.published_at || r.created_at || ''), url: String(r.html_url || ''),
+        html: typeof r.body_html === 'string' ? r.body_html : '',
+        repo: repo,
+        assets: assets
+      };
     }
-    if (pending) return pending;
-    if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
-    var ctrl = window.AbortController ? new AbortController() : null;
-    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : 0;
-    pending = fetch(API, { headers: { 'Accept': 'application/vnd.github.html+json' }, signal: ctrl ? ctrl.signal : undefined })
-      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(function (data) {
-        if (!Array.isArray(data)) throw new Error('unexpected payload');
-        var list = data.filter(function (r) { return r && !r.draft; }).map(slim)
+    /* mode 'auto' uses the cache and backs off for a minute after a failure; 'network' (Try again) always asks GitHub */
+    function fetchReleases(mode) {
+      if (mode !== 'network') {
+        var c = readCache(); if (c) return Promise.resolve(c);
+        if (Date.now() - lastFail < 60000) return Promise.reject(new Error('recent failure'));
+      }
+      if (pending) return pending;
+      if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
+      pending = Promise.all([
+        fetch(API_MAC, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+          .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); }),
+        fetch(API_LW, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+          .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      ])
+      .then(function (results) {
+        var macList = results[0], lwList = results[1];
+        if (!Array.isArray(macList) || !Array.isArray(lwList)) throw new Error('unexpected payload');
+        var all = macList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'mac'); })
+          .concat(lwList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'lw'); }));
+        var merged = {};
+        all.forEach(function (r) {
+          var key = bare(r.tag);
+          if (!key) return;
+          if (!merged[key]) {
+            merged[key] = r;
+          } else {
+            var existing = merged[key];
+            if (Date.parse(r.date || 0) > Date.parse(existing.date || 0)) {
+              existing.date = r.date;
+            }
+            existing.assets = existing.assets.concat(r.assets);
+            if (!existing.html && r.html) existing.html = r.html;
+            if (!existing.name && r.name) existing.name = r.name;
+            if (!existing.url && r.url) existing.url = r.url;
+            existing.pre = existing.pre || r.pre;
+          }
+        });
+        var list = Object.values(merged)
           .sort(function (a, b) { return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0); });
         writeCache(list);
         return list;
       });
-    pending.then(function () { clearTimeout(timer); pending = null; }, function () { clearTimeout(timer); pending = null; lastFail = Date.now(); });
-    return pending;
-  }
-  function latestOf(list) { for (var i = 0; i < list.length; i++) if (!list[i].pre) return list[i]; return null; }
-  function bare(tag) { return String(tag || '').trim().replace(/^v(?=\d)/i, ''); }
-  function fmtSize(bytes) {
-    if (!bytes) return '';
-    return new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(bytes / 1e6) + ' MB';
-  }
-  function fmtDate(iso) {
-    var d = new Date(iso);
-    if (isNaN(d)) return '';
-    try { return new Intl.DateTimeFormat(locale(), { year: 'numeric', month: 'long', day: 'numeric' }).format(d); }
-    catch (e) { return d.toISOString().slice(0, 10); }
-  }
-  function renderSize() {
-    var s = document.getElementById('size');
-    if (!OS_ASSET[OS] && heroLatest && heroLatest.dmg && heroLatest.dmg.size) { s.textContent = fmtSize(heroLatest.dmg.size); s.hidden = false; }
-    else s.hidden = true;
-  }
-  function loadHeroVersion() {
-    fetchReleases('auto').then(function (list) {
-      var l = latestOf(list);
-      if (!l || !/^\d/.test(bare(l.tag))) return;
-      heroLatest = l;
-      document.getElementById('ver').textContent = 'v' + bare(l.tag);
-      renderSize();
-    }).catch(function () { /* keep the built-in version label */ });
-  }
+      pending.then(function () { pending = null; }, function () { pending = null; lastFail = Date.now(); });
+      return pending;
+    }
+    function latestOf(list) { for (var i = 0; i < list.length; i++) if (!list[i].pre) return list[i]; return null; }
+    function bare(tag) { return String(tag || '').trim().replace(/^v(?=\d)/i, ''); }
+    function fmtSize(bytes) {
+      if (!bytes) return '';
+      return new Intl.NumberFormat(locale(), { maximumFractionDigits: 1 }).format(bytes / 1e6) + ' MB';
+    }
+    function fmtDate(iso) {
+      var d = new Date(iso);
+      if (isNaN(d)) return '';
+      try { return new Intl.DateTimeFormat(locale(), { year: 'numeric', month: 'long', day: 'numeric' }).format(d); }
+      catch (e) { return d.toISOString().slice(0, 10); }
+    }
+    function renderSize() {
+      var s = document.getElementById('size');
+      if (!OS_ASSET[OS] && heroLatest) {
+        var a = heroLatest.assets && heroLatest.assets[0];
+        if (a && a.size) { s.textContent = fmtSize(a.size); s.hidden = false; }
+        else s.hidden = true;
+      } else s.hidden = true;
+    }
+    function loadHeroVersion() {
+      fetchReleases('auto').then(function (list) {
+        var l = latestOf(list);
+        if (!l || !/^\d/.test(bare(l.tag))) return;
+        heroLatest = l;
+        document.getElementById('ver').textContent = 'v' + bare(l.tag);
+        renderSize();
+      }).catch(function () { /* keep the built-in version label */ });
+    }
 
   /* release notes: GitHub sends sanitized HTML; keep an allowlist anyway */
   var KEEP = /^(A|B|BLOCKQUOTE|BR|CODE|DEL|DETAILS|EM|H1|H2|H3|H4|HR|I|IMG|KBD|LI|OL|P|PRE|S|STRONG|SUB|SUMMARY|SUP|TABLE|TBODY|TD|TH|THEAD|TR|UL)$/;
@@ -2031,7 +2068,7 @@ Hello, world!
       return;
     }
     if (!state.list.length) {
-      box.innerHTML = '<div class="v-state"><p>' + esc(t('js.empty')) + '</p><div class="row"><a href="https://github.com/' + REPO + '">' + esc(t('js.repo')) + '</a></div></div>';
+      box.innerHTML = '<div class="v-state"><p>' + esc(t('js.empty')) + '</p><div class="row"><a href="https://github.com/' + REPO_MAC + '">' + esc(t('js.repo')) + '</a></div></div>';
       return;
     }
     var latest = latestOf(state.list);
@@ -2048,8 +2085,10 @@ Hello, world!
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
       var acts = '<div class="entry-actions">' +
-        (r.dmg && r.dmg.url ? '<a class="pill ' + (isLatest ? 'pill-fill' : 'pill-ghost') + ' pill-sm" href="' + esc(safeUrl(r.dmg.url, LATEST_DMG)) + '">' + I_DL +
-          '<span>' + esc(t('js.download')) + (r.dmg.size ? ' <span class="num">(' + esc(fmtSize(r.dmg.size)) + ')</span>' : '') + '</span></a>' : '') +
+        r.assets.map(function (a) {
+          return '<a class="pill ' + (isLatest ? 'pill-fill' : 'pill-ghost') + ' pill-sm" href="' + esc(safeUrl(a.url, LATEST_DMG)) + '">' + I_DL +
+            '<span>' + esc(t('js.download')) + ' ' + esc(a.name) + (a.size ? ' <span class="num">(' + esc(fmtSize(a.size)) + ')</span>' : '') + '</span></a>';
+        }).join('') +
         '<a class="link" href="' + esc(safeUrl(r.url, RELEASES_URL)) + '">' + esc(t('js.view')) + '</a></div>';
       return '<li class="entry' + (isLatest ? ' is-latest' : '') + (animate && !reduced() && i < 6 ? ' enter' : '') + '" style="--stagger:' + Math.min(i, 5) + '">' +
         '<span class="dot" aria-hidden="true"></span>' + head + (meta.length ? '<p class="entry-meta">' + meta.join('') + '</p>' : '') + notes + acts + '</li>';
