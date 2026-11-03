@@ -252,26 +252,32 @@
       tab.setAttribute('aria-controls', 'editor-code-wrap');
       tab.tabIndex = name === state.activeFile ? 0 : -1;
       tab.setAttribute('data-file', name);
-      tab.textContent = name;
-      tab.addEventListener('click', function () {
-        setActiveFile(name);
-        tabList.querySelector('[aria-selected="true"]').focus();
+        var fileIcon = document.createElement('span');
+        fileIcon.className = 'etab-file-icon';
+        fileIcon.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-6l-2-2z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = name;
+        tab.appendChild(fileIcon);
+        tab.appendChild(nameSpan);
+        tab.addEventListener('click', function () {
+          setActiveFile(name);
+          tabList.querySelector('[aria-selected="true"]').focus();
+        });
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'etab-close';
+        close.setAttribute('aria-label', translate('editor.closeFileTab', [name]));
+        close.title = translate('editor.closeFileTab', [name]);
+        close.textContent = '×';
+        close.addEventListener('click', function () {
+          closeFile(name);
+          var activeTab = tabList.querySelector('[aria-selected="true"]');
+          if (activeTab) activeTab.focus();
+        });
+        group.appendChild(tab);
+        group.appendChild(close);
+        tabList.appendChild(group);
       });
-      var close = document.createElement('button');
-      close.type = 'button';
-      close.className = 'etab-close';
-      close.setAttribute('aria-label', translate('editor.closeFileTab', [name]));
-      close.title = translate('editor.closeFileTab', [name]);
-      close.textContent = '×';
-      close.addEventListener('click', function () {
-        closeFile(name);
-        var activeTab = tabList.querySelector('[aria-selected="true"]');
-        if (activeTab) activeTab.focus();
-      });
-      group.appendChild(tab);
-      group.appendChild(close);
-      tabList.appendChild(group);
-    });
     var activeTab = tabList.querySelector('[aria-selected="true"]');
     if (activeTab) document.getElementById('editor-code-wrap').setAttribute('aria-labelledby', activeTab.id);
   }
@@ -363,24 +369,28 @@
     Object.keys(state.files).forEach(function (name) {
       var li = document.createElement('li');
       li.className = 'ft-item ft-file' + (name === state.activeFile ? ' active' : '');
-      var open = document.createElement('button');
-      open.type = 'button';
-      open.className = 'ft-open';
-      open.setAttribute('aria-current', name === state.activeFile ? 'page' : 'false');
-      open.textContent = name;
-      open.addEventListener('click', function () { setActiveFile(name); });
-      var remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'ft-delete';
-      remove.setAttribute('aria-label', translate('editor.deleteFile', [name]));
-      remove.title = translate('editor.deleteFile', [name]);
-      remove.textContent = '×';
-      remove.addEventListener('click', function () { deleteFile(name); });
-      li.appendChild(open);
-      li.appendChild(remove);
-      fileList.appendChild(li);
-    });
-  }
+        var star = document.createElement('span');
+        star.className = 'ft-star';
+        star.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3.5l-1.5 4.5-4.5.5-1.5-4.5L2 8l4.5 1.5L8 16l1.5-4.5L14 8z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        var open = document.createElement('button');
+        open.type = 'button';
+        open.className = 'ft-open';
+        open.setAttribute('aria-current', name === state.activeFile ? 'page' : 'false');
+        open.textContent = name;
+        open.addEventListener('click', function () { setActiveFile(name); });
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'ft-delete';
+        remove.setAttribute('aria-label', translate('editor.deleteFile', [name]));
+        remove.title = translate('editor.deleteFile', [name]);
+        remove.textContent = '×';
+        remove.addEventListener('click', function () { deleteFile(name); });
+        li.appendChild(star);
+        li.appendChild(open);
+        li.appendChild(remove);
+        fileList.appendChild(li);
+      });
+    }
 
   btnAddFile.addEventListener('click', function () {
     addFileForm.hidden = false;
