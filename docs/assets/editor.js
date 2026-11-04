@@ -115,7 +115,7 @@
     uploadMessages: [],
     previewStatusKey: 'editor.idle',
     previewStatusArgs: [],
-    spellcheckEnabled: false,
+    spellcheckEnabled: true,
     autoCompile: false,
     presentationSlide: 1,
     spellcheckIgnored: Object.create(null)
