@@ -7,15 +7,20 @@ async function loadChecker(language) {
   if (checkers[language]) return checkers[language];
   var packageName = language === 'pt' ? 'dictionary-pt@4.0.0' : 'dictionary-en@4.0.0';
   var dictionaryUrl = dictionaryRoot + packageName + '/index.';
-  var promise = Promise.all([
-    import('https://cdn.jsdelivr.net/npm/typo-js@1.4.0/+esm'),
-    fetch(dictionaryUrl + 'aff').then(function (response) {
-      if (!response.ok) throw new Error('Dictionary download failed (HTTP ' + response.status + ').');
-      return response.text();
-    }),
-    fetch(dictionaryUrl + 'dic').then(function (response) {
-      if (!response.ok) throw new Error('Dictionary download failed (HTTP ' + response.status + ').');
-      return response.text();
+  var promise = Promise.race([
+    Promise.all([
+      import('https://cdn.jsdelivr.net/npm/typo-js@1.4.0/+esm'),
+      fetch(dictionaryUrl + 'aff').then(function (response) {
+        if (!response.ok) throw new Error('Dictionary download failed (HTTP ' + response.status + ').');
+        return response.text();
+      }),
+      fetch(dictionaryUrl + 'dic').then(function (response) {
+        if (!response.ok) throw new Error('Dictionary download failed (HTTP ' + response.status + ').');
+        return response.text();
+      })
+    ]),
+    new Promise(function (_, reject) {
+      setTimeout(function () { reject(new Error('Dictionary load timeout.')); }, 15000);
     })
   ]).then(function (resources) {
     var Typo = resources[0].default;
