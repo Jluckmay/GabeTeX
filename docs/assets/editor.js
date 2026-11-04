@@ -36,13 +36,9 @@
   var btnShare = document.getElementById('btn-share');
   var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
-  var btnEditorPlay = document.getElementById('btn-editor-play');
-  var btnEditorStop = document.getElementById('btn-editor-stop');
-  var btnEditorPresent = document.getElementById('btn-editor-present');
-  var btnEditorTheme = document.getElementById('btn-editor-theme');
-  var btnEditorShare = document.getElementById('btn-editor-share');
-  var btnEditorLightning = document.getElementById('btn-editor-lightning');
-  var btnEditorPdf = document.getElementById('btn-editor-pdf');
+  var btnToolbarDownload = document.getElementById('btn-toolbar-download');
+  var btnAutoCompile = document.getElementById('btn-autocompile');
+  var btnToolbarPresent = document.getElementById('btn-toolbar-present');
   var fileList = document.getElementById('file-list');
   var tabList = document.querySelector('.tab-list');
   var tabFiles = document.getElementById('tab-files');
@@ -122,6 +118,7 @@
     previewStatusKey: 'editor.idle',
     previewStatusArgs: [],
     spellcheckEnabled: false,
+    autoCompile: false,
     spellcheckIgnored: Object.create(null)
   };
   var compileWorker = null;
@@ -1282,62 +1279,20 @@
     applyPreviewZoom();
   });
 
-  /* ---------- header buttons ---------- */
-  btnEditorPlay.addEventListener('click', function () {
-    compile().catch(function (err) {
-      console.error('Compile failed:', err);
-    });
-  });
-  btnEditorStop.addEventListener('click', function () {
-    if (compileWorker) compileWorker.terminate();
-    compileWorker = null;
-    state.compiling = false;
-    updateCompileButton();
-    setPreviewStatus('editor.compileFailed');
-    appendOutput(translate('editor.compileErrorDetail', ['Interrompido pelo usuário.']), 'err');
-  });
-  btnEditorPresent.addEventListener('click', function () {
-    var pressed = btnEditorPresent.getAttribute('aria-pressed') === 'true';
-    btnEditorPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-    // Present mode toggle - handled by CSS/view mode
-  });
-  btnEditorTheme.addEventListener('click', function () {
-    var html = document.documentElement;
-    var isDark = html.classList.contains('dark');
-    if (isDark) {
-      html.classList.remove('dark');
-      html.classList.add('light');
-    } else {
-      html.classList.remove('light');
-      html.classList.add('dark');
-    }
-    // Update button state
-    var pressed = btnEditorTheme.getAttribute('aria-pressed') === 'true';
-    btnEditorTheme.setAttribute('aria-pressed', pressed ? 'false' : 'true');
-  });
-  btnEditorShare.addEventListener('click', function () {
-    btnShare.click();
-  });
-  btnEditorLightning.addEventListener('click', function () {
-    // Quick actions - open command palette or similar
-    console.log('Quick actions clicked');
-  });
-  btnEditorPdf.addEventListener('click', function () {
+  /* ---------- preview toolbar buttons ---------- */
+  btnToolbarDownload.addEventListener('click', function () {
     btnDownload.click();
   });
-
-  /* ---------- window controls ---------- */
-  var btnEditorMinimize = document.getElementById('btn-editor-minimize');
-  var btnEditorMaximize = document.getElementById('btn-editor-maximize');
-  var btnEditorClose = document.getElementById('btn-editor-close');
-  if (btnEditorMinimize) btnEditorMinimize.addEventListener('click', function () {
-    // Minimize - not applicable in web, but placeholder
+  btnAutoCompile.addEventListener('click', function () {
+    state.autoCompile = !state.autoCompile;
+    btnAutoCompile.setAttribute('aria-pressed', state.autoCompile ? 'true' : 'false');
+    btnAutoCompile.classList.toggle('tb-active', state.autoCompile);
   });
-  if (btnEditorMaximize) btnEditorMaximize.addEventListener('click', function () {
-    // Maximize - not applicable in web, but placeholder
-  });
-  if (btnEditorClose) btnEditorClose.addEventListener('click', function () {
-    // Close - not applicable in web, but placeholder
+  btnToolbarPresent.addEventListener('click', function () {
+    var pressed = btnToolbarPresent.getAttribute('aria-pressed') === 'true';
+    btnToolbarPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
+    btnToolbarPresent.classList.toggle('tb-active', !pressed);
+    // Presentation mode toggle - handled by CSS/view mode
   });
 
   /* ---------- init ---------- */

@@ -1257,47 +1257,6 @@ Scripts/build-app.sh</code></pre>
   <h1 class="sr-only" id="editor-title" tabindex="-1" data-i18n="editor.title">Online editor</h1>
   <div id="editor-app">
     <div class="editor-window is-split-view">
-        <header class="editor-header">
-          <div class="editor-header-left">
-            <button type="button" class="editor-btn editor-btn-play" id="btn-editor-play" title="Compile" aria-label="Compile">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v13m0-13L4.5 8M8 14.5l3.5-3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="editor-btn editor-btn-stop" id="btn-editor-stop" title="Stop" aria-label="Stop">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><rect width="6" height="6" x="5" y="5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <div class="editor-dropdown">
-              <button type="button" class="editor-btn editor-btn-present" id="btn-editor-present" title="Present" aria-label="Present mode">
-                Apresentar <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 16l8-8-8-8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-            <h1 class="editor-doc-title" id="editor-doc-title" data-i18n="editor.docTitle">main.tex</h1>
-          </div>
-          <div class="editor-header-right">
-            <button type="button" class="editor-btn editor-btn-theme" id="btn-editor-theme" title="Theme" aria-label="Toggle theme">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M4.93 4.93l1.41 1.41M11.66 11.66l1.41 1.41M1.41 11.66l1.41-1.41M11.66 4.93l1.41-1.41" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="editor-btn editor-btn-share" id="btn-editor-share" title="Share" aria-label="Share">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M16 8l-8-8M16 8l-8 8M8 16l-8-8M8 16l8-8" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round"/></svg>
-            </button>
-            <button type="button" class="editor-btn editor-btn-lightning" id="btn-editor-lightning" title="Quick actions" aria-label="Quick actions">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 2L3 14h9l-1 8-8-8h9l-1 8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="editor-btn editor-btn-pdf" id="btn-editor-pdf" title="Download PDF" aria-label="Download PDF">
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75v9m0 0L4.5 7.25M8 10.75l3.5-3.5M2.75 14.25h10.5" class="ico" stroke="currentColor" stroke-width="1.75"/></svg>
-            </button>
-            <div class="editor-window-controls">
-              <button type="button" class="editor-btn editor-btn-window" id="btn-editor-minimize" aria-label="Minimize">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8H3M8 8H13M8 8V3M8 8V13" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button type="button" class="editor-btn editor-btn-window" id="btn-editor-maximize" aria-label="Maximize">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v10h10V3H3zM3 3l9 9M12 3l-9 9" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button type="button" class="editor-btn editor-btn-window editor-btn-close" id="btn-editor-close" aria-label="Close">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 6l4 4M6 10l4-4" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-          </div>
-        </header>
         <div class="editor-body">
         <aside class="editor-sidebar" aria-label="Project files" data-i18n-attr="aria-label:editor.projectFiles">
           <div class="sidebar-tabs" role="tablist" aria-label="Project panels" data-i18n-attr="aria-label:editor.sidebarTabs">
@@ -1372,11 +1331,17 @@ Hello, world!
               <button type="button" class="tb-btn tb-view" id="btn-view-mode" title="View mode" aria-label="View mode" aria-pressed="false" data-i18n-attr="title:editor.viewMode;aria-label:editor.viewMode">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><path d="M6 3v10M13 3v10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
               </button>
-              <button type="button" class="tb-btn tb-share" id="btn-share" title="Share" aria-label="Share" data-i18n-attr="title:editor.share;aria-label:editor.share">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M16 8l-8-8M16 8l-8 8M8 16l-8-8M8 16l8-8" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round"/></svg>
+              <button type="button" class="tb-btn tb-download" id="btn-toolbar-download" title="Download PDF" aria-label="Download PDF">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75v9m0 0L4.5 7.25M8 10.75l3.5-3.5M2.75 14.25h10.5" class="ico" stroke="currentColor" stroke-width="1.75"/></svg>
               </button>
               <button type="button" class="tb-btn tb-history" id="btn-history" title="Undo last edit" aria-label="Undo last edit" aria-keyshortcuts="Control+Z Meta+Z" disabled data-i18n-attr="title:editor.undo;aria-label:editor.undo">
                 <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="12" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 8h6M8 11l2-2 2 2" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="tb-btn tb-autocompile" id="btn-autocompile" title="Auto-compile" aria-label="Auto-compile" aria-pressed="false">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M16 8l-8-8M16 8l-8 8M8 16l-8-8M8 16l8-8" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" class="tb-btn tb-present" id="btn-toolbar-present" title="Presentation mode" aria-label="Presentation mode" aria-pressed="false">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v13m0-13L4.5 8M8 14.5l3.5-3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
           </div>
