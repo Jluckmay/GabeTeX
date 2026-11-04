@@ -2083,6 +2083,32 @@ Hello, world!
     })(box);
     return box.innerHTML;
   }
+  /* filter release notes to show only the section matching the page language */
+  function filterNotesByLanguage(html, lang) {
+    var targetLang = lang === 'pt' ? 'Português' : 'English';
+    var otherLang = lang === 'pt' ? 'English' : 'Português';
+    var doc = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html');
+    var box = doc.body.firstChild;
+    var keep = true;
+    var parts = [];
+    [].slice.call(box.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)) {
+        var text = node.textContent.trim();
+        if (text === targetLang) {
+          keep = true;
+          parts.push(node.outerHTML);
+        } else if (text === otherLang) {
+          keep = false;
+        } else if (keep) {
+          parts.push(node.outerHTML);
+        }
+      } else if (keep) {
+        parts.push(node.outerHTML);
+      }
+    });
+    return parts.join('');
+  }
+
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function safeUrl(u, fallback) { return /^https:\/\/(github\.com|objects\.githubusercontent\.com|release-assets\.githubusercontent\.com)\//.test(u) ? u : fallback; }
   var I_DL = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75v9m0 0L4.5 7.25M8 10.75l3.5-3.5M2.75 14.25h10.5" class="ico" stroke-width="1.75"/></svg>';
@@ -2122,7 +2148,7 @@ Hello, world!
       var plainName = r.name.replace(/^GabeTeX\s*/i, '').replace(/^v(?=\d)/i, '');
       if (r.name && plainName !== ver && r.name !== r.tag) meta.push('<span>' + esc(r.name) + '</span>');
       if (r.date) meta.push('<span><time datetime="' + esc(r.date) + '">' + esc(fmtDate(r.date)) + '</time></span>');
-      var notesHtml = r.html ? clean(r.html) : '<p>' + esc(t('js.noNotes')) + '</p>';
+      var notesHtml = r.html ? filterNotesByLanguage(clean(r.html), lang) : '<p>' + esc(t('js.noNotes')) + '</p>';
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
       var acts = '<div class="entry-actions">' +
