@@ -2002,15 +2002,17 @@ Hello, world!
       }
       if (pending) return pending;
       if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
-      pending = Promise.all([
-        fetch(API_MAC, { headers: { 'Accept': 'application/vnd.github.html+json' } })
-          .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); }),
-        fetch(API_LW, { headers: { 'Accept': 'application/vnd.github.html+json' } })
-          .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      ])
+      var macPromise = fetch(API_MAC, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+        .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .catch(function () { return []; });
+      var lwPromise = fetch(API_LW, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+        .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .catch(function () { return []; });
+      pending = Promise.all([macPromise, lwPromise])
       .then(function (results) {
         var macList = results[0], lwList = results[1];
-        if (!Array.isArray(macList) || !Array.isArray(lwList)) throw new Error('unexpected payload');
+        if (!Array.isArray(macList)) macList = [];
+        if (!Array.isArray(lwList)) lwList = [];
         var all = macList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'mac'); })
           .concat(lwList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'lw'); }));
         var merged = {};
@@ -2036,7 +2038,7 @@ Hello, world!
         writeCache(list);
         return list;
       });
-      pending.then(function () { pending = null; }, function () { pending = null; lastFail = Date.now(); });
+      pending.then(function (list) { pending = null; if (!list || !list.length) lastFail = Date.now(); }, function () { pending = null; lastFail = Date.now(); });
       return pending;
     }
     function latestOf(list) { for (var i = 0; i < list.length; i++) if (!list[i].pre) return list[i]; return null; }
@@ -2152,10 +2154,10 @@ Hello, world!
   function loadReleases(force) {
     if (!force && state && state.status !== 'error') return;
     var cached = force ? null : readCache();
-    if (cached) { state = { status: 'ok', list: cached }; renderReleases(true); return; }
+    if (cached) { state = { status: cached.length ? 'ok' : 'error', list: cached }; renderReleases(true); return; }
     state = { status: 'loading', list: [] };
     renderReleases(false);
-    fetchReleases(force ? 'network' : 'auto').then(function (list) { state = { status: 'ok', list: list }; renderReleases(true); },
+    fetchReleases(force ? 'network' : 'auto').then(function (list) { state = { status: list && list.length ? 'ok' : 'error', list: list || [] }; renderReleases(true); },
                              function () { state = { status: 'error', list: [] }; renderReleases(false); });
   }
 
