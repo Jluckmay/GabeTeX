@@ -316,6 +316,75 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 .editor-window.presentation-mode .editor-sidebar,
 .editor-window.presentation-mode .editor-source-pane { display: none; }
 .editor-window.presentation-mode .editor-preview-pane { width: 100%; flex: 1; }
+.editor-window.presentation-mode .preview-head,
+.editor-window.presentation-mode .preview-controls,
+.editor-window.presentation-mode .editor-status-strip { display: none; }
+.editor-window.presentation-mode .editor-body { overflow: hidden; }
+.editor-window.presentation-mode .preview-wrap { overflow: hidden; }
+.editor-window.presentation-mode #preview-frame {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.editor-window.presentation-mode .pdf-page {
+  margin: 0 !important;
+  box-shadow: none !important;
+  max-width: 95vw;
+  max-height: 90vh;
+}
+
+/* Slide presentation overlay */
+.slide-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px;
+  pointer-events: none;
+  z-index: 10;
+}
+.slide-overlay .slide-nav,
+.slide-overlay .slide-exit {
+  pointer-events: auto;
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.5);
+  background: rgba(0,0,0,.4);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.slide-overlay .slide-nav:hover,
+.slide-overlay .slide-exit:hover {
+  background: rgba(0,0,0,.6);
+  border-color: rgba(255,255,255,.8);
+}
+.slide-overlay .slide-prev { left: 24px; top: 50%; transform: translateY(-50%); }
+.slide-overlay .slide-next { right: 24px; top: 50%; transform: translateY(-50%); }
+.slide-overlay .slide-exit { top: 24px; right: 24px; font-size: 18px; }
+.slide-overlay .slide-counter {
+  pointer-events: auto;
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.4);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.5);
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(4px);
+}
 #editor-app.preview-focus .editor-sidebar,
 #editor-app.preview-focus .editor-source-pane { display: none; }
 #editor-app.preview-focus .editor-preview-pane { display: flex; width: auto; flex: 1; min-width: 0; }

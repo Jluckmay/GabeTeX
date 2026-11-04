@@ -117,6 +117,7 @@
     previewStatusArgs: [],
     spellcheckEnabled: false,
     autoCompile: false,
+    presentationSlide: 1,
     spellcheckIgnored: Object.create(null)
   };
   var compileWorker = null;
@@ -1069,6 +1070,7 @@
     }
     applyPreviewZoom();
     previewFrame.style.display = 'block';
+    updateSlideView();
     return currentPage;
   }
 
@@ -1277,7 +1279,75 @@
     btnToolbarPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
     btnToolbarPresent.classList.toggle('tb-active', !pressed);
     editorWindow.classList.toggle('presentation-mode', !pressed);
+    if (!pressed) {
+      // Enter presentation mode
+      state.presentationSlide = 1;
+      updateSlideView();
+      setupSlideKeyboard();
+    } else {
+      // Exit presentation mode
+      teardownSlideKeyboard();
+    }
   });
+
+  /* ---------- slide presentation ---------- */
+  var slideOverlay = document.getElementById('slide-overlay');
+  var slideCounter = document.getElementById('slide-counter');
+  var slidePrev = document.getElementById('slide-prev');
+  var slideNext = document.getElementById('slide-next');
+  var slideExit = document.getElementById('slide-exit');
+
+  function updateSlideView() {
+    var pages = previewFrame.querySelectorAll('.pdf-page');
+    pages.forEach(function (page, i) {
+      var pageNum = i + 1;
+      if (pageNum === state.presentationSlide) {
+        page.style.display = 'block';
+      } else {
+        page.style.display = 'none';
+      }
+    });
+    slideCounter.textContent = state.presentationSlide + ' / ' + pages.length;
+  }
+
+  function goToSlide(n) {
+    var pages = previewFrame.querySelectorAll('.pdf-page');
+    if (n < 1) n = 1;
+    if (n > pages.length) n = pages.length;
+    state.presentationSlide = n;
+    updateSlideView();
+  }
+
+  slidePrev.addEventListener('click', function () { goToSlide(state.presentationSlide - 1); });
+  slideNext.addEventListener('click', function () { goToSlide(state.presentationSlide + 1); });
+  slideExit.addEventListener('click', function () {
+    btnToolbarPresent.setAttribute('aria-pressed', 'false');
+    btnToolbarPresent.classList.remove('tb-active');
+    editorWindow.classList.remove('presentation-mode');
+    teardownSlideKeyboard();
+  });
+
+  function setupSlideKeyboard() {
+    document.addEventListener('keydown', slideKeydown);
+  }
+  function teardownSlideKeyboard() {
+    document.removeEventListener('keydown', slideKeydown);
+  }
+  function slideKeydown(event) {
+    if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') {
+      event.preventDefault();
+      goToSlide(state.presentationSlide + 1);
+    } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+      event.preventDefault();
+      goToSlide(state.presentationSlide - 1);
+    } else if (event.key === 'Escape' || event.key === 'q' || event.key === 'Q') {
+      event.preventDefault();
+      btnToolbarPresent.setAttribute('aria-pressed', 'false');
+      btnToolbarPresent.classList.remove('tb-active');
+      editorWindow.classList.remove('presentation-mode');
+      teardownSlideKeyboard();
+    }
+  }
 
   /* ---------- init ---------- */
   renderTabs();
