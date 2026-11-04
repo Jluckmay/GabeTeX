@@ -1458,6 +1458,10 @@ Hello, world!
     var RELEASES_URL = 'https://github.com/' + REPO_MAC + '/releases';
     var LW_RELEASES = 'https://github.com/' + REPO_LW + '/releases'; /* Linux/Windows edition (Tauri) */
     var LATEST_DMG = RELEASES_URL + '/latest/download/GabeTeX.dmg';
+    var LATEST_APP_IMAGE = LW_RELEASES + '/latest/download/GabeTeX-linux-x86_64.AppImage';
+    var LATEST_DEB = LW_RELEASES + '/latest/download/GabeTeX-linux-amd64.deb';
+    var LATEST_EXE = LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe';
+    var LATEST_MSI = LW_RELEASES + '/latest/download/GabeTeX-windows-x64.msi';
   var CACHE_KEY = 'gabetex.releases.v1';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
@@ -1705,6 +1709,9 @@ Hello, world!
     'js.retry': 'Tentar de novo',
     'js.seeAll': 'Ver todas as versões no GitHub',
     'js.latestDl': 'Baixar a versão mais recente',
+    'js.latestDlMac': 'Baixar para macOS',
+    'js.latestDlLinux': 'Baixar para Linux',
+    'js.latestDlWin': 'Baixar para Windows',
     'js.empty': 'Ainda não há versões publicadas.',
     'js.repo': 'Ver o repositório no GitHub',
     'js.copiedLive': 'Comando copiado.',
@@ -1727,6 +1734,9 @@ Hello, world!
     'js.retry': 'Try again',
     'js.seeAll': 'See all releases on GitHub',
     'js.latestDl': 'Download the latest version',
+    'js.latestDlMac': 'Download for macOS',
+    'js.latestDlLinux': 'Download for Linux',
+    'js.latestDlWin': 'Download for Windows',
     'js.empty': 'No releases yet.',
     'js.repo': 'View the repository on GitHub',
     'js.copiedLive': 'Command copied.',
@@ -2119,7 +2129,9 @@ Hello, world!
     if (state.status === 'error') {
       box.innerHTML = '<div class="v-state"><p>' + esc(t('js.error')) + '</p><div class="row">' +
         '<button type="button" class="pill pill-ghost" data-retry>' + esc(t('js.retry')) + '</button>' +
-        '<a class="pill pill-fill" href="' + LATEST_DMG + '">' + I_DL + '<span>' + esc(t('js.latestDl')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + LATEST_DMG + '">' + I_DL + '<span>' + esc(t('js.latestDlMac')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + LATEST_APP_IMAGE + '">' + I_DL + '<span>' + esc(t('js.latestDlLinux')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + LATEST_EXE + '">' + I_DL + '<span>' + esc(t('js.latestDlWin')) + '</span></a>' +
         '<a href="' + RELEASES_URL + '">' + esc(t('js.seeAll')) + '</a></div></div>';
       box.querySelector('[data-retry]').addEventListener('click', function () { loadReleases(true); });
       return;
