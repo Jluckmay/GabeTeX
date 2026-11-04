@@ -2094,10 +2094,10 @@ Hello, world!
     [].slice.call(box.childNodes).forEach(function (node) {
       if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)) {
         var text = node.textContent.trim();
-        if (text === targetLang) {
+        if (text.toLowerCase() === targetLang.toLowerCase() || text.indexOf(targetLang) === 0) {
           keep = true;
           parts.push(node.outerHTML);
-        } else if (text === otherLang) {
+        } else if (text.toLowerCase() === otherLang.toLowerCase() || text.indexOf(otherLang) === 0) {
           keep = false;
         } else if (keep) {
           parts.push(node.outerHTML);
@@ -2148,7 +2148,7 @@ Hello, world!
       var plainName = r.name.replace(/^GabeTeX\s*/i, '').replace(/^v(?=\d)/i, '');
       if (r.name && plainName !== ver && r.name !== r.tag) meta.push('<span>' + esc(r.name) + '</span>');
       if (r.date) meta.push('<span><time datetime="' + esc(r.date) + '">' + esc(fmtDate(r.date)) + '</time></span>');
-      var notesHtml = r.html ? filterNotesByLanguage(clean(r.html), lang) : '<p>' + esc(t('js.noNotes')) + '</p>';
+      var notesHtml = r.html ? clean(filterNotesByLanguage(r.html, lang)) : '<p>' + esc(t('js.noNotes')) + '</p>';
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
       var acts = '<div class="entry-actions">' +
