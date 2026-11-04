@@ -1241,6 +1241,7 @@ Scripts/build-app.sh</code></pre>
       <h1 id="versions-title" tabindex="-1" data-i18n="v.title">Versions</h1>
       <div class="vh-sub">
         <p data-i18n="v.lead">Every GabeTeX release, newest first. Updated automatically from GitHub.</p>
+        <p class="v-current" data-i18n="v.current">Current version: <span id="current-version">—</span></p>
         <a href="https://github.com/Jluckmay/GabeTeX-macOS/releases" data-i18n="v.all">All releases on GitHub</a>
       </div>
     </header>
@@ -1689,6 +1690,7 @@ Hello, world!
     'v.title': 'Versões',
     'v.lead': 'Todas as versões do GabeTeX, da mais recente para a mais antiga. Atualizado automaticamente a partir do GitHub.',
     'v.all': 'Todas as versões no GitHub',
+    'v.current': 'Versão atual: <span id="current-version">—</span>',
     'foot.by': 'por Gabriel Ribeiro',
     'foot.label': 'Rodapé',
     'foot.releases': 'Versões',
@@ -1745,6 +1747,10 @@ Hello, world!
     'js.title': document.title,
     'js.titleVersions': 'Versions — GabeTeX',
     'js.titleEditor': 'Online editor — GabeTeX',
+    'v.title': 'Versions',
+    'v.lead': 'Every GabeTeX release, newest first. Updated automatically from GitHub.',
+    'v.all': 'All releases on GitHub',
+    'v.current': 'Current version: <span id="current-version">—</span>',
     'js.desc': (document.querySelector('meta[name="description"]') || {}).content || '',
     'nav.theme': 'Switch between light and dark theme',
     'editor.title': 'Online editor',
@@ -2141,6 +2147,8 @@ Hello, world!
       return;
     }
     var latest = latestOf(state.list);
+    var cur = document.getElementById('current-version');
+    if (cur && latest) cur.textContent = 'v' + bare(latest.tag);
     box.innerHTML = '<ol class="timeline">' + state.list.map(function (r, i) {
       var isLatest = r === latest, ver = bare(r.tag) || r.name;
       var head = '<div class="entry-head"><h2>' + esc(ver) + '</h2>' +
