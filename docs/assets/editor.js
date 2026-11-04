@@ -544,6 +544,14 @@
     scheduleSpellcheck();
     clearTimeout(source._mathTimer);
     source._mathTimer = setTimeout(updateMathPreview, 300);
+    if (state.autoCompile) {
+      clearTimeout(source._autoCompileTimer);
+      source._autoCompileTimer = setTimeout(function () {
+        compile().catch(function (err) {
+          console.error('Auto-compile failed:', err);
+        });
+      }, 1000);
+    }
   });
   source.addEventListener('keyup', updateCursor);
   source.addEventListener('click', updateCursor);
