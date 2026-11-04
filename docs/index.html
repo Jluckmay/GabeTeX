@@ -2096,7 +2096,6 @@ Hello, world!
         var text = node.textContent.trim();
         if (text.toLowerCase() === targetLang.toLowerCase() || text.indexOf(targetLang) === 0) {
           started = true;
-          parts.push(node.outerHTML);
         } else if (text.toLowerCase() === otherLang.toLowerCase() || text.indexOf(otherLang) === 0) {
           started = false;
         } else if (started) {
