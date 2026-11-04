@@ -1069,6 +1069,17 @@
     var start = Date.now();
     var pdfGenerated = false;
 
+    var source = state.files[state.activeFile] || '';
+    if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
+      appendOutput(translate('editor.beamerNotSupported'), 'err');
+      setPreviewStatus('editor.compileError');
+      state.errors = 1;
+      state.warnings = 0;
+      updateErrorStatus();
+      updateWarningStatus();
+      return;
+    }
+
     state.compiling = true;
     updateCompileButton();
     setPreviewStatus('editor.compiling');
