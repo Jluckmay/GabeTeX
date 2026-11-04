@@ -1278,15 +1278,18 @@
     var pressed = btnToolbarPresent.getAttribute('aria-pressed') === 'true';
     btnToolbarPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
     btnToolbarPresent.classList.toggle('tb-active', !pressed);
-    editorWindow.classList.toggle('presentation-mode', !pressed);
     if (!pressed) {
       // Enter presentation mode
       state.presentationSlide = 1;
+      editorWindow.classList.add('presentation-mode');
       updateSlideView();
       setupSlideKeyboard();
+      requestFullscreen(editorWindow);
     } else {
       // Exit presentation mode
+      editorWindow.classList.remove('presentation-mode');
       teardownSlideKeyboard();
+      exitFullscreen();
     }
   });
 
@@ -1325,6 +1328,7 @@
     btnToolbarPresent.classList.remove('tb-active');
     editorWindow.classList.remove('presentation-mode');
     teardownSlideKeyboard();
+    exitFullscreen();
   });
 
   function setupSlideKeyboard() {
@@ -1346,8 +1350,40 @@
       btnToolbarPresent.classList.remove('tb-active');
       editorWindow.classList.remove('presentation-mode');
       teardownSlideKeyboard();
+      exitFullscreen();
     }
   }
+
+  function requestFullscreen(el) {
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  }
+  function exitFullscreen() {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    else if (document.msExitFullscreen) document.msExitFullscreen();
+  }
+
+  /* Handle fullscreen change from browser controls (F11, ESC, etc.) */
+  document.addEventListener('fullscreenchange', function () {
+    var isFull = !!document.fullscreenElement;
+    if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
+      btnToolbarPresent.setAttribute('aria-pressed', 'false');
+      btnToolbarPresent.classList.remove('tb-active');
+      editorWindow.classList.remove('presentation-mode');
+      teardownSlideKeyboard();
+    }
+  });
+  document.addEventListener('webkitfullscreenchange', function () {
+    var isFull = !!document.webkitFullscreenElement;
+    if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
+      btnToolbarPresent.setAttribute('aria-pressed', 'false');
+      btnToolbarPresent.classList.remove('tb-active');
+      editorWindow.classList.remove('presentation-mode');
+      teardownSlideKeyboard();
+    }
+  });
 
   /* ---------- init ---------- */
   renderTabs();
