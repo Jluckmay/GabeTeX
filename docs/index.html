@@ -1295,13 +1295,10 @@ Scripts/build-app.sh</code></pre>
           <div class="editor-tabs">
           <div class="tab-list" role="tablist" aria-label="Open files" data-i18n-attr="aria-label:editor.openFileTabs"></div>
             <div class="tab-actions">
-              <button type="button" class="tb-btn tb-spellcheck" id="btn-spellcheck" title="Check spelling in prose" aria-label="Check spelling in prose" aria-pressed="false" data-i18n-attr="title:editor.spellcheck;aria-label:editor.spellcheck">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h7M5.5 2v1.5m-2 0 3 6m2-6-3 6M10 11.5l1.5 1.5L15 9" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
-                <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
-              </button>
-            </div>
+                          <button type="button" class="tb-btn tb-spellcheck" id="btn-spellcheck" title="Check spelling in prose" aria-label="Check spelling in prose" aria-pressed="false" data-i18n-attr="title:editor.spellcheck;aria-label:editor.spellcheck">
+                            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h7M5.5 2v1.5m-2 0 3 6m2-6-3 6M10 11.5l1.5 1.5L15 9" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          </button>
+                        </div>
           </div>
           <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
             <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
@@ -1334,11 +1331,14 @@ Hello, world!
                           <button type="button" class="tb-btn tb-present" id="btn-toolbar-present" title="Presentation mode" aria-label="Presentation mode" aria-pressed="false">
                             <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M8 5l3 3-3 3" class="ico" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
                           </button>
+                          <button type="button" class="tb-btn tb-history" id="btn-history" title="Undo last edit" aria-label="Undo last edit" aria-keyshortcuts="Control+Z Meta+Z" disabled data-i18n-attr="title:editor.undo;aria-label:editor.undo">
+                            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="12" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 8h6M8 11l2-2 2 2" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          </button>
                           <button type="button" class="tb-btn tb-download" id="btn-toolbar-download" title="Download PDF" aria-label="Download PDF">
                             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75v9m0 0L4.5 7.25M8 10.75l3.5-3.5M2.75 14.25h10.5" class="ico" stroke="currentColor" stroke-width="1.75"/></svg>
                           </button>
-                          <button type="button" class="tb-btn tb-history" id="btn-history" title="Undo last edit" aria-label="Undo last edit" aria-keyshortcuts="Control+Z Meta+Z" disabled data-i18n-attr="title:editor.undo;aria-label:editor.undo">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="12" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 8h6M8 11l2-2 2 2" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                          <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
+                            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
                           </button>
                         </div>
           </div>
