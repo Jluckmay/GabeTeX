@@ -36,6 +36,13 @@
   var btnShare = document.getElementById('btn-share');
   var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
+  var btnEditorPlay = document.getElementById('btn-editor-play');
+  var btnEditorStop = document.getElementById('btn-editor-stop');
+  var btnEditorPresent = document.getElementById('btn-editor-present');
+  var btnEditorTheme = document.getElementById('btn-editor-theme');
+  var btnEditorShare = document.getElementById('btn-editor-share');
+  var btnEditorLightning = document.getElementById('btn-editor-lightning');
+  var btnEditorPdf = document.getElementById('btn-editor-pdf');
   var fileList = document.getElementById('file-list');
   var tabList = document.querySelector('.tab-list');
   var tabFiles = document.getElementById('tab-files');
@@ -1269,6 +1276,56 @@
   btnZoomOut.addEventListener('click', function () {
     state.zoom = Math.max(state.zoom - 0.25, 0.5);
     applyPreviewZoom();
+  });
+
+  /* ---------- header buttons ---------- */
+  btnEditorPlay.addEventListener('click', compile);
+  btnEditorStop.addEventListener('click', function () {
+    if (compileWorker) compileWorker.terminate();
+    compileWorker = null;
+    state.compiling = false;
+    updateCompileButton();
+    setPreviewStatus('editor.compileFailed');
+    appendOutput(translate('editor.compileErrorDetail', ['Interrompido pelo usuário.']), 'err');
+  });
+  btnEditorPresent.addEventListener('click', function () {
+    btnEditorPresent.setAttribute('aria-pressed', 'true');
+    // Present mode toggle - handled by CSS/view mode
+  });
+  btnEditorTheme.addEventListener('click', function () {
+    var html = document.documentElement;
+    var isDark = html.classList.contains('dark');
+    if (isDark) {
+      html.classList.remove('dark');
+      html.classList.add('light');
+    } else {
+      html.classList.remove('light');
+      html.classList.add('dark');
+    }
+  });
+  btnEditorShare.addEventListener('click', function () {
+    btnShare.click();
+  });
+  btnEditorLightning.addEventListener('click', function () {
+    // Quick actions - open command palette or similar
+    console.log('Quick actions clicked');
+  });
+  btnEditorPdf.addEventListener('click', function () {
+    btnDownload.click();
+  });
+
+  /* ---------- window controls ---------- */
+  var btnEditorMinimize = document.getElementById('btn-editor-minimize');
+  var btnEditorMaximize = document.getElementById('btn-editor-maximize');
+  var btnEditorClose = document.getElementById('btn-editor-close');
+  if (btnEditorMinimize) btnEditorMinimize.addEventListener('click', function () {
+    // Minimize - not applicable in web, but placeholder
+  });
+  if (btnEditorMaximize) btnEditorMaximize.addEventListener('click', function () {
+    // Maximize - not applicable in web, but placeholder
+  });
+  if (btnEditorClose) btnEditorClose.addEventListener('click', function () {
+    // Close - not applicable in web, but placeholder
   });
 
   /* ---------- init ---------- */
