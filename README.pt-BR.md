@@ -21,6 +21,8 @@
 
 <p align="center">
   <a href="https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg"><img alt="Baixar o GabeTeX para Mac" src="https://img.shields.io/badge/Baixar%20para%20Mac-GabeTeX.dmg-0A84FF?style=for-the-badge&logo=apple&logoColor=white"></a>
+  <a href="https://github.com/Jluckmay/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64-setup.exe"><img alt="Baixar o GabeTeX para Windows" src="https://img.shields.io/badge/Baixar%20para%20Windows-.exe-0078D4?style=for-the-badge&logo=windows&logoColor=white"></a>
+  <a href="https://github.com/Jluckmay/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-x86_64.AppImage"><img alt="Baixar o GabeTeX para Linux" src="https://img.shields.io/badge/Baixar%20para%20Linux-.AppImage-E95420?style=for-the-badge&logo=linux&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -45,7 +47,7 @@
 | Plataforma | Situação | Tecnologia | Repositório | Download |
 |---|---|---|---|---|
 | **macOS** | Disponível | Swift, SwiftUI e AppKit (macOS 26+, Apple Silicon) | [GabeTeX-macOS](https://github.com/Jluckmay/GabeTeX-macOS) | [Versões](https://github.com/Jluckmay/GabeTeX-macOS/releases) · [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg) |
-| **Linux e Windows** | Em desenvolvimento (interface implementada, testada no Linux; Windows só compilado no CI) | Tauri 2 (Rust + TypeScript), um único código-fonte | [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) | Ainda sem versão. Previstos: AppImage, `.deb`, `.exe`, `.msi` |
+| **Linux e Windows** | Disponível | Tauri 2 (Rust + TypeScript), um único código-fonte | [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) | [Versões](https://github.com/Jluckmay/GabeTeX-Linux-Windows/releases) · `.AppImage`, `.deb`, `.exe`, `.msi` |
 
 ## Por que o GabeTeX
 
