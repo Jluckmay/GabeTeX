@@ -59,7 +59,7 @@
     return value;
   }
   function updateOutline() {
-    var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph)\*?\s*\{([^}]*)\}/g;
+      var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}/g;
     var matches = [];
     var match;
     while ((match = expression.exec(source.value))) {
