@@ -33,7 +33,6 @@
   var spellcheckSummary = document.getElementById('spellcheck-summary');
   var spellcheckResults = document.getElementById('spellcheck-results');
   var btnViewMode = document.getElementById('btn-view-mode');
-  var btnShare = document.getElementById('btn-share');
   var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
@@ -1169,35 +1168,6 @@
   btnViewMode.addEventListener('click', function () {
     var focused = editorApp.classList.toggle('preview-focus');
     btnViewMode.setAttribute('aria-pressed', focused ? 'true' : 'false');
-  });
-  btnShare.addEventListener('click', function () {
-    var shareData = { title: 'GabeTeX', text: source.value };
-    if (navigator.share) {
-      navigator.share(shareData).then(function () {
-        setSourceStatus('editor.shared');
-      }).catch(function (error) {
-        if (error.name !== 'AbortError') setSourceStatus('editor.shareFailed');
-      });
-      return;
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(source.value).then(function () {
-        setSourceStatus('editor.sourceCopied');
-      }).catch(function () {
-        setSourceStatus('editor.shareFailed');
-      });
-      return;
-    }
-    var temporary = document.createElement('textarea');
-    temporary.value = source.value;
-    temporary.setAttribute('readonly', '');
-    temporary.style.position = 'fixed';
-    temporary.style.opacity = '0';
-    document.body.appendChild(temporary);
-    temporary.select();
-    var copied = document.execCommand('copy');
-    document.body.removeChild(temporary);
-    setSourceStatus(copied ? 'editor.sourceCopied' : 'editor.shareFailed');
   });
   source.addEventListener('keydown', function (event) {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
