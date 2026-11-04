@@ -32,7 +32,6 @@
   var spellcheckPanel = document.getElementById('spellcheck-panel');
   var spellcheckSummary = document.getElementById('spellcheck-summary');
   var spellcheckResults = document.getElementById('spellcheck-results');
-  var btnViewMode = document.getElementById('btn-view-mode');
   var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
@@ -1164,10 +1163,6 @@
   btnSplit.addEventListener('click', function () {
     var split = editorWindow.classList.toggle('is-split-view');
     btnSplit.setAttribute('aria-pressed', split ? 'true' : 'false');
-  });
-  btnViewMode.addEventListener('click', function () {
-    var focused = editorApp.classList.toggle('preview-focus');
-    btnViewMode.setAttribute('aria-pressed', focused ? 'true' : 'false');
   });
   source.addEventListener('keydown', function (event) {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
