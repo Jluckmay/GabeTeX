@@ -669,22 +669,5 @@ html.js:not([data-view="editor"]) .editor-status-strip { display: none; }
   .editor-sidebar { height: min(25vh, 180px); }
 }
 
-/* ===== versions meta ===== */
-.v-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--ink-2);
-}
-.v-meta .v-current {
-  white-space: nowrap;
-}
-.v-meta a {
-  color: var(--accent);
-  white-space: nowrap;
-}
-
 /* ===== forced colors ===== */
 @media (forced-colors: active) { .pill { border: 1px solid ButtonText; } }
