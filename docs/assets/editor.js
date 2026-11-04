@@ -1144,7 +1144,11 @@
     }
   }
 
-  btnCompile.addEventListener('click', compile);
+  btnCompile.addEventListener('click', function () {
+    compile().catch(function (err) {
+      console.error('Compile failed:', err);
+    });
+  });
   statusErrors.addEventListener('click', showCompileOutput);
   statusWarnings.addEventListener('click', showCompileOutput);
   btnHistory.addEventListener('click', undoEdit);
@@ -1279,7 +1283,11 @@
   });
 
   /* ---------- header buttons ---------- */
-  btnEditorPlay.addEventListener('click', compile);
+  btnEditorPlay.addEventListener('click', function () {
+    compile().catch(function (err) {
+      console.error('Compile failed:', err);
+    });
+  });
   btnEditorStop.addEventListener('click', function () {
     if (compileWorker) compileWorker.terminate();
     compileWorker = null;
@@ -1289,7 +1297,8 @@
     appendOutput(translate('editor.compileErrorDetail', ['Interrompido pelo usuário.']), 'err');
   });
   btnEditorPresent.addEventListener('click', function () {
-    btnEditorPresent.setAttribute('aria-pressed', 'true');
+    var pressed = btnEditorPresent.getAttribute('aria-pressed') === 'true';
+    btnEditorPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
     // Present mode toggle - handled by CSS/view mode
   });
   btnEditorTheme.addEventListener('click', function () {
@@ -1302,6 +1311,9 @@
       html.classList.remove('light');
       html.classList.add('dark');
     }
+    // Update button state
+    var pressed = btnEditorTheme.getAttribute('aria-pressed') === 'true';
+    btnEditorTheme.setAttribute('aria-pressed', pressed ? 'false' : 'true');
   });
   btnEditorShare.addEventListener('click', function () {
     btnShare.click();
