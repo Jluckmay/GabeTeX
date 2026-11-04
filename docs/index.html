@@ -571,7 +571,7 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 /* ===== versions ===== */
 .vh { padding: clamp(48px, 6vw, 88px) 0 0; }
 .vh h1 { margin: 0; font: 600 var(--t-title)/1.1 var(--font-display); letter-spacing: -.008em; }
-.vh-sub { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; margin-top: 10px; color: var(--ink-2); }
+.vh-sub { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; color: var(--ink-2); }
 .timeline { position: relative; margin: 48px 0 0; padding: 0 0 8px; list-style: none; }
 .timeline::before { content: ""; position: absolute; left: 5px; top: 10px; bottom: 0; width: 1px; background: var(--hairline-strong); }
 .entry { position: relative; padding-left: 40px; }
@@ -1241,10 +1241,8 @@ Scripts/build-app.sh</code></pre>
       <h1 id="versions-title" tabindex="-1" data-i18n="v.title">Versions</h1>
       <div class="vh-sub">
         <p data-i18n="v.lead">Every GabeTeX release, newest first. Updated automatically from GitHub.</p>
-        <div class="v-meta">
-          <span class="v-current" data-i18n="v.current">Current version: <span id="current-version">—</span></span>
-          <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases" data-i18n="v.all">All releases on GitHub</a>
-        </div>
+        <p class="v-current" data-i18n="v.current">Current version: <span id="current-version">—</span></p>
+        <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases" data-i18n="v.all">All releases on GitHub</a>
       </div>
     </header>
     <div id="releases" aria-live="polite">
