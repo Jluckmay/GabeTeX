@@ -59,11 +59,21 @@
     return value;
   }
   function updateOutline() {
-      var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}/g;
+      var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}|\begin\{frame\}\s*\{([^}]*)\}/g;
     var matches = [];
     var match;
     while ((match = expression.exec(source.value))) {
-      matches.push({ title: match[2].trim(), position: match.index });
+      var title, position;
+      if (match[1]) {
+        title = match[2].trim();
+        position = match.index;
+      } else if (match[3]) {
+        title = match[3].trim();
+        position = match.index;
+      } else {
+        continue;
+      }
+      matches.push({ title: title, position: position });
     }
     sidebarOutline.innerHTML = '';
     if (!matches.length) {
