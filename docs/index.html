@@ -1425,7 +1425,7 @@ Hello, world!
     var LATEST_DEB = LW_RELEASES + '/latest/download/GabeTeX-linux-amd64.deb';
     var LATEST_EXE = LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe';
     var LATEST_MSI = LW_RELEASES + '/latest/download/GabeTeX-windows-x64.msi';
-  var CACHE_KEY = 'gabetex.releases.v1';
+  var CACHE_KEY = 'gabetex.releases.v2';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
   var mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
@@ -2089,20 +2089,20 @@ Hello, world!
     var otherLang = lang === 'pt' ? 'English' : 'Português';
     var doc = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html');
     var box = doc.body.firstChild;
-    var keep = true;
+    var started = lang === 'en';
     var parts = [];
     [].slice.call(box.childNodes).forEach(function (node) {
       if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)) {
         var text = node.textContent.trim();
         if (text.toLowerCase() === targetLang.toLowerCase() || text.indexOf(targetLang) === 0) {
-          keep = true;
+          started = true;
           parts.push(node.outerHTML);
         } else if (text.toLowerCase() === otherLang.toLowerCase() || text.indexOf(otherLang) === 0) {
-          keep = false;
-        } else if (keep) {
+          started = false;
+        } else if (started) {
           parts.push(node.outerHTML);
         }
-      } else if (keep) {
+      } else if (started) {
         parts.push(node.outerHTML);
       }
     });
