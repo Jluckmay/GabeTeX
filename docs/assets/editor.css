@@ -304,6 +304,8 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 @media (hover: hover) and (pointer: fine) {
   .tb-compile:hover { background: var(--accent-tint); }
 }
+.tb-autocompile.tb-active { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.tb-present.tb-active { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
 /* ===== editor body ===== */
 .editor-body {
@@ -311,6 +313,9 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 }
 .editor-window:not(.is-split-view) .editor-preview-pane { display: none; }
 .editor-window.is-split-view .editor-preview-pane { display: flex; }
+.editor-window.presentation-mode .editor-sidebar,
+.editor-window.presentation-mode .editor-source-pane { display: none; }
+.editor-window.presentation-mode .editor-preview-pane { width: 100%; flex: 1; }
 #editor-app.preview-focus .editor-sidebar,
 #editor-app.preview-focus .editor-source-pane { display: none; }
 #editor-app.preview-focus .editor-preview-pane { display: flex; width: auto; flex: 1; min-width: 0; }
