@@ -1276,7 +1276,7 @@
     var pressed = btnToolbarPresent.getAttribute('aria-pressed') === 'true';
     btnToolbarPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
     btnToolbarPresent.classList.toggle('tb-active', !pressed);
-    editorApp.classList.toggle('presentation-mode', !pressed);
+    editorWindow.classList.toggle('presentation-mode', !pressed);
   });
 
   /* ---------- init ---------- */
