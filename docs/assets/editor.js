@@ -171,11 +171,14 @@
     statusWarnings.textContent = translate(key, [state.warnings]);
   }
   function showCompileOutput() {
-    compilePanel.hidden = false;
-    statusErrors.setAttribute('aria-expanded', 'true');
-    statusWarnings.setAttribute('aria-expanded', 'true');
-    compilePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    compileOutput.focus({ preventScroll: true });
+    var isHidden = compilePanel.hidden;
+    compilePanel.hidden = !isHidden;
+    statusErrors.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    statusWarnings.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    if (isHidden) {
+      compilePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      compileOutput.focus({ preventScroll: true });
+    }
   }
   function updateCompileButton() {
     var label = translate(state.compiling ? 'editor.compiling' : 'editor.compile');
@@ -1203,6 +1206,46 @@
   btnSplit.addEventListener('click', function () {
     var split = editorWindow.classList.toggle('is-split-view');
     btnSplit.setAttribute('aria-pressed', split ? 'true' : 'false');
+  });
+
+  /* ---------- draggable dividers ---------- */
+  var dividerSidebar = document.getElementById('divider-sidebar');
+  var dividerPreview = document.getElementById('divider-preview');
+
+  function startDrag(divider, onMove, onEnd) {
+    divider.addEventListener('mousedown', function (event) {
+      event.preventDefault();
+      var startX = event.clientX;
+      var startSidebar = parseInt(getComputedStyle(editorSidebar).width, 10);
+      var startPreview = parseInt(getComputedStyle(editorPreviewPane).width, 10);
+
+      function onMouseMove(moveEvent) {
+        var dx = moveEvent.clientX - startX;
+        onMove(dx, startSidebar, startPreview);
+      }
+
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        if (onEnd) onEnd();
+      }
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+  }
+
+  var editorSidebar = document.querySelector('.editor-sidebar');
+  var editorPreviewPane = document.querySelector('.editor-preview-pane');
+
+  startDrag(dividerSidebar, function (dx, startSidebar) {
+    var newWidth = Math.max(120, Math.min(400, startSidebar + dx));
+    document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
+  });
+
+  startDrag(dividerPreview, function (dx, startPreview) {
+    var newWidth = Math.max(200, Math.min(600, startPreview - dx));
+    document.documentElement.style.setProperty('--preview-width', newWidth + 'px');
   });
   source.addEventListener('keydown', function (event) {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {

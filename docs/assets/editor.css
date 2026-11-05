@@ -419,7 +419,7 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 /* --- sidebar --- */
 .editor-sidebar {
   display: flex; flex-direction: column;
-  width: 240px; flex: none;
+  width: var(--sidebar-width, 240px); flex: none;
   border-right: 1px solid var(--hairline);
   background: var(--raised);
   overflow: hidden;
@@ -623,7 +623,7 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 
 /* --- preview pane --- */
 .editor-preview-pane {
-  width: 420px; flex: none;
+  width: var(--preview-width, 420px); flex: none;
   display: flex; flex-direction: column;
   border-left: 1px solid var(--hairline);
   background: var(--raised);
@@ -668,6 +668,33 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
   padding: 8px 16px; border-top: 1px solid var(--hairline);
   background: var(--alt); flex: none;
   font-size: 12px; color: var(--ink-2);
+}
+
+/* --- draggable dividers --- */
+.divider {
+  width: 8px; flex: none;
+  cursor: col-resize;
+  background: var(--hairline);
+  position: relative;
+  z-index: 5;
+  user-select: none;
+}
+.divider:hover {
+  background: var(--accent);
+}
+.divider:active {
+  background: var(--accent-hover);
+}
+.divider::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--ink-3);
+  transform: translateX(-50%);
+}
+.divider:hover::before {
+  background: var(--ink);
 }
 .pc-btn {
   width: 26px; height: 26px; border-radius: var(--r-sm); border: 0;
