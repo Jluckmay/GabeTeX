@@ -129,7 +129,7 @@
     previewStatusKey: 'editor.idle',
     previewStatusArgs: [],
     spellcheckEnabled: true,
-    autoCompile: false,
+    autoCompile: true,
     presentationSlide: 1,
     spellcheckIgnored: Object.create(null)
   };
@@ -1327,6 +1327,10 @@
     btnAutoCompile.setAttribute('aria-pressed', state.autoCompile ? 'true' : 'false');
     btnAutoCompile.classList.toggle('tb-active', state.autoCompile);
   });
+
+  /* Initialize auto-compile button state */
+  btnAutoCompile.setAttribute('aria-pressed', state.autoCompile ? 'true' : 'false');
+  btnAutoCompile.classList.toggle('tb-active', state.autoCompile);
   btnToolbarPresent.addEventListener('click', function () {
     var pressed = btnToolbarPresent.getAttribute('aria-pressed') === 'true';
     btnToolbarPresent.setAttribute('aria-pressed', pressed ? 'false' : 'true');
