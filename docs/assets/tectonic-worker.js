@@ -196,6 +196,8 @@ function readOutput(name) {
 
 function prepareMathSource(files, mainFile) {
   var source = files[mainFile];
+  // Beamer has its own font system; do not inject fontspec.
+  if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) return source;
   var projectSource = Object.keys(files).map(function (name) { return files[name]; }).join('\n');
   if (!/\$|\\\(|\\\[|\\begin\s*\{(?:equation|align(?:at)?|flalign|gather|multline|displaymath|math|eqnarray)\*?\}/.test(projectSource)) return source;
   if (/\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{[^}]*\bunicode-math\b/.test(projectSource)) return source;
