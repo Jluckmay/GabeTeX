@@ -198,6 +198,14 @@ function prepareMathSource(files, mainFile) {
   var source = files[mainFile];
   // Beamer has its own font system; do not inject fontspec.
   if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) return source;
+  // Tectonic WASM bundle lacks size11.clo and size12.clo; fall back to 10pt
+  source = source.replace(/\\documentclass\s*\[([^\]]*)\]\s*\{([^}]+)\}/g, function(match, options, cls) {
+    var newOptions = options.replace(/\b(11|12)pt\b/g, '10pt');
+    if (newOptions !== options) {
+      return '\\documentclass[' + newOptions + ']{' + cls + '}';
+    }
+    return match;
+  });
   var projectSource = Object.keys(files).map(function (name) { return files[name]; }).join('\n');
   if (!/\$|\\\(|\\\[|\\begin\s*\{(?:equation|align(?:at)?|flalign|gather|multline|displaymath|math|eqnarray)\*?\}/.test(projectSource)) return source;
   if (/\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{[^}]*\bunicode-math\b/.test(projectSource)) return source;
