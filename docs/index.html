@@ -52,6 +52,22 @@
   d.setAttribute('data-view', location.hash === '#versions' ? 'versions' : 'overview');
 })();
 </script>
+<script>
+/* Theme preference before first paint */
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  var saved = null;
+  try { saved = localStorage.getItem('gabetex.theme'); } catch (e) {}
+  var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) {
+    root.classList.add('dark');
+    if (toggle) toggle.setAttribute('aria-pressed', 'true');
+  } else if (saved === 'light') {
+    root.classList.add('light');
+  }
+})();
+</script>
 <style>
 /* ===== tokens ===== */
 :root {
@@ -132,6 +148,68 @@
     --accent-text: #2997ff;
   }
 }
+
+/* ===== manual theme classes (theme toggle) ===== */
+html.dark {
+  --canvas: #000000;
+  --alt: #161617;
+  --raised: #1c1c1e;
+  --tile: #1d1d1f;
+  --tile-raised: #000000;
+  --ink: #f5f5f7;
+  --ink-2: #a1a1a6;
+  --ink-3: rgba(245, 245, 247, .36);
+  --accent: #2997ff;
+  --btn-fill: #0071e3;
+  --accent-hover: #0066cc;
+  --focus: #2997ff;
+  --accent-tint: rgba(41, 151, 255, .16);
+  --hairline: rgba(255, 255, 255, .12);
+  --hairline-strong: rgba(255, 255, 255, .2);
+  --fill: rgba(120, 120, 128, .24);
+  --glass-bg: rgba(22, 22, 23, .72);
+  --glass-rim: rgba(255, 255, 255, .1);
+  --seg-thumb: #636366;
+  --warn: #ff9f0a;
+  --diagram: rgba(245, 245, 247, .2);
+  --seg-ink: #a1a1a6;
+  --accent-text: #2997ff;
+  color-scheme: dark;
+}
+html.light {
+  --canvas: #ffffff;
+  --alt: #f5f5f7;
+  --raised: #fbfbfd;
+  --tile: #272729;
+  --tile-raised: #1d1d1f;
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --ink-3: rgba(29, 29, 31, .38);
+  --accent: #0066cc;
+  --btn-fill: #0066cc;
+  --accent-hover: #005bb5;
+  --focus: #0071e3;
+  --accent-tint: rgba(0, 102, 204, .1);
+  --hairline: rgba(0, 0, 0, .08);
+  --hairline-strong: rgba(0, 0, 0, .14);
+  --fill: rgba(120, 120, 128, .12);
+  --glass-bg: rgba(255, 255, 255, .72);
+  --glass-rim: rgba(255, 255, 255, .65);
+  --seg-thumb: #ffffff;
+  --warn: #bf4800;
+  --diagram: rgba(29, 29, 31, .2);
+  --seg-ink: #636366;
+  --accent-text: #0058b0;
+  color-scheme: light;
+}
+
+/* ===== theme toggle button ===== */
+.theme-toggle { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-pill); color: var(--ink); background: transparent; border: 0; cursor: pointer; }
+.theme-toggle svg { width: 18px; height: 18px; }
+@media (hover: hover) and (pointer: fine) { .theme-toggle:hover { background: var(--fill); } }
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle[aria-pressed="true"] .icon-sun { display: initial; }
+.theme-toggle[aria-pressed="true"] .icon-moon { display: none; }
 
 /* ===== base ===== */
 *, *::before, *::after { box-sizing: border-box; }
@@ -640,6 +718,15 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
       <a href="#editor" data-route="editor" data-i18n="nav.editor">Online editor</a>
     </div>
     <div class="nav-end">
+      <button type="button" class="gh theme-toggle" id="theme-toggle" aria-label="Switch between light and dark theme" aria-pressed="false" data-i18n-attr="aria-label:nav.theme">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path class="icon-moon ico" d="M13.2 10.5A5.7 5.7 0 0 1 5.5 2.8 5.7 5.7 0 1 0 13.2 10.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <g class="icon-sun ico" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="8" cy="8" r="3" fill="none"/>
+            <path d="M8 1.5v1.25M8 13.25v1.25M1.5 8h1.25m10.5 0h1.25M3.4 3.4l.9.9m7.4 7.4.9.9m0-9.2-.9.9m-7.4 7.4-.9.9"/>
+          </g>
+        </svg>
+      </button>
       <div class="seg seg-sm seg-lang" style="--n:2" role="group" aria-label="Language" data-i18n-attr="aria-label:nav.lang">
         <span class="seg-thumb" aria-hidden="true"></span>
         <button type="button" data-setlang="en" lang="en" aria-pressed="true" aria-label="English">EN</button>
@@ -1087,9 +1174,15 @@ Scripts/build-app.sh</code></pre>
       <h1 id="versions-title" tabindex="-1" data-i18n="v.title">Versions</h1>
       <div class="vh-sub">
         <p data-i18n="v.lead">Every GabeTeX release, newest first. Updated automatically from GitHub.</p>
-        <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases" data-i18n="v.all">All releases on GitHub</a>
-      </div>
-    </header>
+            <p class="v-current" data-i18n="v.current">Current version: <span id="current-version">—</span></p>
+            <div class="seg seg-sm seg-notes-lang" style="--n:2" role="group" aria-label="Release notes language" data-i18n-attr="aria-label:nav.notesLang">
+              <span class="seg-thumb" aria-hidden="true"></span>
+              <button type="button" data-setnoteslang="en" lang="en" aria-pressed="true" aria-label="English">EN</button>
+              <button type="button" data-setnoteslang="pt" lang="pt-BR" aria-pressed="false" aria-label="Português (Brasil)">PT</button>
+            </div>
+            <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases" data-i18n="v.all">All releases on GitHub</a>
+          </div>
+        </header>
     <div id="releases" aria-live="polite">
       <noscript>
         <div class="v-state"><p>The version list needs JavaScript. <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases">See all releases on GitHub</a>, or <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg">download the latest version</a>.</p></div>
@@ -1127,12 +1220,18 @@ Scripts/build-app.sh</code></pre>
 <script>
 (function () {
   'use strict';
-  var REPO = 'gabe-rbo/GabeTeX-macOS';
-  var API = 'https://api.github.com/repos/' + REPO + '/releases?per_page=30';
-  var RELEASES_URL = 'https://github.com/' + REPO + '/releases';
-  var LW_RELEASES = 'https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases'; /* Linux/Windows edition (Tauri) */
+  var REPO_MAC = 'gabe-rbo/GabeTeX-macOS';
+  var REPO_LW = 'gabe-rbo/GabeTeX-Linux-Windows';
+  var API_MAC = 'https://api.github.com/repos/' + REPO_MAC + '/releases?per_page=30';
+  var API_LW = 'https://api.github.com/repos/' + REPO_LW + '/releases?per_page=30';
+  var RELEASES_URL = 'https://github.com/' + REPO_MAC + '/releases';
+  var LW_RELEASES = 'https://github.com/' + REPO_LW + '/releases'; /* Linux/Windows edition (Tauri) */
   var LATEST_DMG = RELEASES_URL + '/latest/download/GabeTeX.dmg';
-  var CACHE_KEY = 'gabetex.releases.v1';
+  var LATEST_APP_IMAGE = LW_RELEASES + '/latest/download/GabeTeX-linux-x86_64.AppImage';
+  var LATEST_DEB = LW_RELEASES + '/latest/download/GabeTeX-linux-amd64.deb';
+  var LATEST_EXE = LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe';
+  var LATEST_MSI = LW_RELEASES + '/latest/download/GabeTeX-windows-x64.msi';
+  var CACHE_KEY = 'gabetex.releases.v2';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
   var mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
@@ -1145,6 +1244,8 @@ Scripts/build-app.sh</code></pre>
     'nav.overview': 'Visão geral',
     'nav.versions': 'Versões',
     'nav.lang': 'Idioma',
+    'nav.theme': 'Alternar entre temas claro e escuro',
+    'nav.notesLang': 'Idioma das notas de versão',
     'nav.gh': 'GabeTeX no GitHub',
     'nav.download': 'Baixar',
     'nav.editor': 'Editor online',
@@ -1270,6 +1371,7 @@ Scripts/build-app.sh</code></pre>
     'v.title': 'Versões',
     'v.lead': 'Todas as versões do GabeTeX, da mais recente para a mais antiga. Atualizado automaticamente a partir do GitHub.',
     'v.all': 'Todas as versões no GitHub',
+    'v.current': 'Versão atual: <span id="current-version">—</span>',
     'foot.by': 'por Gabriel Ribeiro',
     'foot.label': 'Rodapé',
     'foot.releases': 'Versões',
@@ -1290,7 +1392,10 @@ Scripts/build-app.sh</code></pre>
     'js.retry': 'Tentar de novo',
     'js.seeAll': 'Ver todas as versões no GitHub',
     'js.latestDl': 'Baixar a versão mais recente',
-    'js.empty': 'Ainda não há versões publicadas.',
+        'js.latestDlMac': 'Baixar para macOS',
+        'js.latestDlLinux': 'Baixar para Linux',
+        'js.latestDlWin': 'Baixar para Windows',
+        'js.empty': 'Ainda não há versões publicadas.',
     'js.repo': 'Ver o repositório no GitHub',
     'js.copiedLive': 'Comando copiado.',
     'js.title': 'GabeTeX — editor LaTeX nativo para macOS, também para Linux e Windows',
@@ -1384,6 +1489,9 @@ Scripts/build-app.sh</code></pre>
     'js.retry': 'Try again',
     'js.seeAll': 'See all releases on GitHub',
     'js.latestDl': 'Download the latest version',
+    'js.latestDlMac': 'Download for macOS',
+    'js.latestDlLinux': 'Download for Linux',
+    'js.latestDlWin': 'Download for Windows',
     'js.empty': 'No releases yet.',
     'js.repo': 'View the repository on GitHub',
     'js.copiedLive': 'Command copied.',
@@ -1396,6 +1504,7 @@ Scripts/build-app.sh</code></pre>
   };
 
   var lang = root.getAttribute('data-lang') === 'pt' ? 'pt' : 'en';
+  var notesLang = lang;
   var EN = {};
   var i18nEls = [].slice.call(document.querySelectorAll('[data-i18n]'));
   var attrEls = [].slice.call(document.querySelectorAll('[data-i18n-attr]'));
@@ -1486,6 +1595,17 @@ Scripts/build-app.sh</code></pre>
   [].forEach.call(document.querySelectorAll('[data-setlang]'), function (b) {
     b.addEventListener('click', function () { applyLang(b.getAttribute('data-setlang'), true); });
   });
+  [].forEach.call(document.querySelectorAll('[data-setnoteslang]'), function (b) {
+    b.addEventListener('click', function () {
+      notesLang = b.getAttribute('data-setnoteslang') === 'pt' ? 'pt' : 'en';
+      [].forEach.call(document.querySelectorAll('[data-setnoteslang]'), function (bb, i) {
+        var on = bb.getAttribute('data-setnoteslang') === notesLang;
+        bb.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (on) bb.parentNode.style.setProperty('--i', i);
+      });
+      if (state) renderReleases(false);
+    });
+  });
 
   /* ---------- nav hairline + late Download pill ---------- */
   var nav = document.querySelector('.nav'), navDl = document.querySelector('.nav-dl');
@@ -1539,38 +1659,72 @@ Scripts/build-app.sh</code></pre>
     } catch (e) { return null; }
   }
   function writeCache(list) { try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {} }
-  function slim(r) {
-    var dmg = null;
-    (r.assets || []).forEach(function (a) { if (!dmg && a && a.name === 'GabeTeX.dmg') dmg = a; });
-    return {
-      tag: String(r.tag_name || ''), name: String(r.name || ''), pre: !!r.prerelease,
-      date: String(r.published_at || r.created_at || ''), url: String(r.html_url || ''),
-      html: typeof r.body_html === 'string' ? r.body_html : '',
-      dmg: dmg ? { url: String(dmg.browser_download_url || ''), size: +dmg.size || 0 } : null
-    };
-  }
-  /* mode 'auto' uses the cache and backs off for a minute after a failure; 'network' (Try again) always asks GitHub */
-  function fetchReleases(mode) {
-    if (mode !== 'network') {
-      var c = readCache(); if (c) return Promise.resolve(c);
-      if (Date.now() - lastFail < 60000) return Promise.reject(new Error('recent failure'));
+  function slim(r, repo) {
+      var assets = [];
+      (r.assets || []).forEach(function (a) {
+        if (a && a.browser_download_url) {
+          assets.push({
+            name: String(a.name || ''),
+            url: String(a.browser_download_url || ''),
+            size: +a.size || 0
+          });
+        }
+      });
+      return {
+        tag: String(r.tag_name || ''), name: String(r.name || ''), pre: !!r.prerelease,
+        date: String(r.published_at || r.created_at || ''), url: String(r.html_url || ''),
+        html: typeof r.body_html === 'string' ? r.body_html : '',
+        repo: repo,
+        assets: assets
+      };
     }
-    if (pending) return pending;
-    if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
-    var ctrl = window.AbortController ? new AbortController() : null;
-    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : 0;
-    pending = fetch(API, { headers: { 'Accept': 'application/vnd.github.html+json' }, signal: ctrl ? ctrl.signal : undefined })
-      .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-      .then(function (data) {
-        if (!Array.isArray(data)) throw new Error('unexpected payload');
-        var list = data.filter(function (r) { return r && !r.draft; }).map(slim)
+    /* mode 'auto' uses the cache and backs off for a minute after a failure; 'network' (Try again) always asks GitHub */
+    function fetchReleases(mode) {
+      if (mode !== 'network') {
+        var c = readCache(); if (c) return Promise.resolve(c);
+        if (Date.now() - lastFail < 60000) return Promise.reject(new Error('recent failure'));
+      }
+      if (pending) return pending;
+      if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
+      var macPromise = fetch(API_MAC, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+        .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .catch(function () { return []; });
+      var lwPromise = fetch(API_LW, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+        .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+        .catch(function () { return []; });
+      pending = Promise.all([macPromise, lwPromise])
+      .then(function (results) {
+        var macList = results[0], lwList = results[1];
+        if (!Array.isArray(macList)) macList = [];
+        if (!Array.isArray(lwList)) lwList = [];
+        var all = macList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'mac'); })
+          .concat(lwList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'lw'); }));
+        var merged = {};
+        all.forEach(function (r) {
+          var key = bare(r.tag);
+          if (!key) return;
+          if (!merged[key]) {
+            merged[key] = r;
+          } else {
+            var existing = merged[key];
+            if (Date.parse(r.date || 0) > Date.parse(existing.date || 0)) {
+              existing.date = r.date;
+            }
+            existing.assets = existing.assets.concat(r.assets);
+            if (!existing.html && r.html) existing.html = r.html;
+            if (!existing.name && r.name) existing.name = r.name;
+            if (!existing.url && r.url) existing.url = r.url;
+            existing.pre = existing.pre || r.pre;
+          }
+        });
+        var list = Object.values(merged)
           .sort(function (a, b) { return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0); });
         writeCache(list);
         return list;
       });
-    pending.then(function () { clearTimeout(timer); pending = null; }, function () { clearTimeout(timer); pending = null; lastFail = Date.now(); });
-    return pending;
-  }
+      pending.then(function (list) { pending = null; if (!list || !list.length) lastFail = Date.now(); }, function () { pending = null; lastFail = Date.now(); });
+      return pending;
+    }
   function latestOf(list) { for (var i = 0; i < list.length; i++) if (!list[i].pre) return list[i]; return null; }
   function bare(tag) { return String(tag || '').trim().replace(/^v(?=\d)/i, ''); }
   function fmtSize(bytes) {
@@ -1630,6 +1784,30 @@ Scripts/build-app.sh</code></pre>
     })(box);
     return box.innerHTML;
   }
+  /* filter release notes to show only the section matching the notes language */
+  function filterNotesByLanguage(html, lang) {
+    var targetLang = lang === 'pt' ? 'Português' : 'English';
+    var otherLang = lang === 'pt' ? 'English' : 'Português';
+    var doc = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html');
+    var box = doc.body.firstChild;
+    var started = lang === 'en';
+    var parts = [];
+    [].slice.call(box.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)) {
+        var text = node.textContent.trim();
+        if (text.toLowerCase() === targetLang.toLowerCase() || text.indexOf(targetLang) === 0) {
+          started = true;
+        } else if (text.toLowerCase() === otherLang.toLowerCase() || text.indexOf(otherLang) === 0) {
+          started = false;
+        } else if (started) {
+          parts.push(node.outerHTML);
+        }
+      } else if (started) {
+        parts.push(node.outerHTML);
+      }
+    });
+    return parts.join('');
+  }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function safeUrl(u, fallback) { return /^https:\/\/(github\.com|objects\.githubusercontent\.com|release-assets\.githubusercontent\.com)\//.test(u) ? u : fallback; }
   var I_DL = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75v9m0 0L4.5 7.25M8 10.75l3.5-3.5M2.75 14.25h10.5" class="ico" stroke-width="1.75"/></svg>';
@@ -1646,16 +1824,20 @@ Scripts/build-app.sh</code></pre>
     if (state.status === 'error') {
       box.innerHTML = '<div class="v-state"><p>' + esc(t('js.error')) + '</p><div class="row">' +
         '<button type="button" class="pill pill-ghost" data-retry>' + esc(t('js.retry')) + '</button>' +
-        '<a class="pill pill-fill" href="' + LATEST_DMG + '">' + I_DL + '<span>' + esc(t('js.latestDl')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + LATEST_DMG + '">' + I_DL + '<span>' + esc(t('js.latestDlMac')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + LATEST_APP_IMAGE + '">' + I_DL + '<span>' + esc(t('js.latestDlLinux')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + LATEST_EXE + '">' + I_DL + '<span>' + esc(t('js.latestDlWin')) + '</span></a>' +
         '<a href="' + RELEASES_URL + '">' + esc(t('js.seeAll')) + '</a></div></div>';
       box.querySelector('[data-retry]').addEventListener('click', function () { loadReleases(true); });
       return;
     }
     if (!state.list.length) {
-      box.innerHTML = '<div class="v-state"><p>' + esc(t('js.empty')) + '</p><div class="row"><a href="https://github.com/' + REPO + '">' + esc(t('js.repo')) + '</a></div></div>';
+      box.innerHTML = '<div class="v-state"><p>' + esc(t('js.empty')) + '</p><div class="row"><a href="https://github.com/' + REPO_MAC + '">' + esc(t('js.repo')) + '</a></div></div>';
       return;
     }
     var latest = latestOf(state.list);
+    var cur = document.getElementById('current-version');
+    if (cur && latest) cur.textContent = 'v' + bare(latest.tag);
     box.innerHTML = '<ol class="timeline">' + state.list.map(function (r, i) {
       var isLatest = r === latest, ver = bare(r.tag) || r.name;
       var head = '<div class="entry-head"><h2>' + esc(ver) + '</h2>' +
@@ -1665,12 +1847,14 @@ Scripts/build-app.sh</code></pre>
       var plainName = r.name.replace(/^GabeTeX\s*/i, '').replace(/^v(?=\d)/i, '');
       if (r.name && plainName !== ver && r.name !== r.tag) meta.push('<span>' + esc(r.name) + '</span>');
       if (r.date) meta.push('<span><time datetime="' + esc(r.date) + '">' + esc(fmtDate(r.date)) + '</time></span>');
-      var notesHtml = r.html ? clean(r.html) : '<p>' + esc(t('js.noNotes')) + '</p>';
+      var notesHtml = r.html ? clean(filterNotesByLanguage(r.html, notesLang)) : '<p>' + esc(t('js.noNotes')) + '</p>';
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
       var acts = '<div class="entry-actions">' +
-        (r.dmg && r.dmg.url ? '<a class="pill ' + (isLatest ? 'pill-fill' : 'pill-ghost') + ' pill-sm" href="' + esc(safeUrl(r.dmg.url, LATEST_DMG)) + '">' + I_DL +
-          '<span>' + esc(t('js.download')) + (r.dmg.size ? ' <span class="num">(' + esc(fmtSize(r.dmg.size)) + ')</span>' : '') + '</span></a>' : '') +
+        r.assets.map(function (a) {
+          return '<a class="pill ' + (isLatest ? 'pill-fill' : 'pill-ghost') + ' pill-sm" href="' + esc(safeUrl(a.url, LATEST_DMG)) + '">' + I_DL +
+            '<span>' + esc(t('js.download')) + ' ' + esc(a.name) + (a.size ? ' <span class="num">(' + esc(fmtSize(a.size)) + ')</span>' : '') + '</span></a>';
+        }).join('') +
         '<a class="link" href="' + esc(safeUrl(r.url, RELEASES_URL)) + '">' + esc(t('js.view')) + '</a></div>';
       return '<li class="entry' + (isLatest ? ' is-latest' : '') + (animate && !reduced() && i < 6 ? ' enter' : '') + '" style="--stagger:' + Math.min(i, 5) + '">' +
         '<span class="dot" aria-hidden="true"></span>' + head + (meta.length ? '<p class="entry-meta">' + meta.join('') + '</p>' : '') + notes + acts + '</li>';
@@ -1839,8 +2023,33 @@ Scripts/build-app.sh</code></pre>
     };
   })();
 
-  /* ---------- go ---------- */
-  applyLang(lang, false);
+    /* ---------- theme toggle ---------- */
+    (function () {
+      var toggle = document.getElementById('theme-toggle');
+      var root = document.documentElement;
+      var saved = null;
+      try { saved = localStorage.getItem('gabetex.theme'); } catch (e) {}
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        root.classList.add('dark');
+        toggle.setAttribute('aria-pressed', 'true');
+      }
+      toggle.addEventListener('click', function () {
+        var isDark = !root.classList.contains('dark');
+        root.classList.toggle('dark', isDark);
+        root.classList.toggle('light', !isDark);
+        toggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        try { localStorage.setItem('gabetex.theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      });
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+        if (!localStorage.getItem('gabetex.theme')) {
+          if (e.matches) { root.classList.add('dark'); toggle.setAttribute('aria-pressed', 'true'); }
+          else { root.classList.remove('dark'); toggle.setAttribute('aria-pressed', 'false'); }
+        }
+      });
+    })();
+
+    /* ---------- go ---------- */
+    applyLang(lang, false);
   applyView(false);
   revealNow();
   if ('requestIdleCallback' in window) requestIdleCallback(loadHeroVersion, { timeout: 2500 }); else setTimeout(loadHeroVersion, 600);

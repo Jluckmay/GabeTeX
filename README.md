@@ -17,6 +17,8 @@
 
 <p align="center">
   <a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg"><img alt="Download GabeTeX for Mac" src="https://img.shields.io/badge/Download%20for%20Mac-GabeTeX.dmg-0A84FF?style=for-the-badge&logo=apple&logoColor=white"></a>
+  <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases"><img alt="Download GabeTeX for Linux" src="https://img.shields.io/badge/Download%20for%20Linux-.AppImage/.deb-0A84FF?style=for-the-badge&logo=linux&logoColor=white"></a>
+  <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases"><img alt="Download GabeTeX for Windows" src="https://img.shields.io/badge/Download%20for%20Windows-.exe/.msi-0A84FF?style=for-the-badge&logo=windows&logoColor=white"></a>
 </p>
 
 <p align="center">
