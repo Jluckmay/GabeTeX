@@ -106,6 +106,23 @@
     sidebarOutline.appendChild(list);
   }
 
+  /* ---------- beamer detection ---------- */
+  function isBeamerSource(sourceText) {
+    return /\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(sourceText);
+  }
+
+  function updatePresentationButtonVisibility() {
+    var beamer = isBeamerSource(source.value);
+    btnToolbarPresent.hidden = !beamer;
+    if (!beamer && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
+      btnToolbarPresent.setAttribute('aria-pressed', 'false');
+      btnToolbarPresent.classList.remove('tb-active');
+      editorWindow.classList.remove('presentation-mode');
+      teardownSlideKeyboard();
+      exitFullscreen();
+    }
+  }
+
   /* ---------- state ---------- */
   var state = {
     files: { 'main.tex': '\\documentclass{article}\n\\begin{document}\nHello, world!\n\\end{document}\n' },
@@ -325,6 +342,7 @@
     state.activeFile = name;
     state.initialized = true;
     source.value = state.files[name];
+    updatePresentationButtonVisibility();
     if (!state.history[name]) state.history[name] = [source.value];
     if (typeof state.historyIndex[name] !== 'number') state.historyIndex[name] = state.history[name].length - 1;
     source.setAttribute('aria-label', translate('editor.sourceLabel', [name]));
@@ -558,6 +576,7 @@
     updateCursor();
     scheduleHistorySnapshot();
     updateOutline();
+    updatePresentationButtonVisibility();
     scheduleSpellcheck();
     clearTimeout(source._mathTimer);
     source._mathTimer = setTimeout(updateMathPreview, 300);
