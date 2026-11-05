@@ -1093,6 +1093,15 @@
     var pdfGenerated = false;
 
     var source = state.files[state.activeFile] || '';
+    if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
+      appendOutput(translate('editor.beamerNotSupported'), 'err');
+      setPreviewStatus('editor.compileError');
+      state.errors = 1;
+      state.warnings = 0;
+      updateErrorStatus();
+      updateWarningStatus();
+      return;
+    }
 
     state.compiling = true;
     updateCompileButton();
@@ -1146,7 +1155,11 @@
       if (error.log) appendOutput(error.log, 'warn');
       var firstError = error.log ? error.log.match(/^!.*$/m) : null;
       if (firstError) appendOutput(firstError[0], 'err');
-      else appendOutput(translate('editor.compileErrorDetail', [error.message]), 'err');
+      else if (error.log) {
+        // No LaTeX ! error line: show the tail of the log (e.g. engine panic message)
+        var lines = error.log.split('\n').filter(function (l) { return l.trim(); });
+        appendOutput(lines.slice(-4).join('\n'), 'err');
+      } else appendOutput(translate('editor.compileErrorDetail', [error.message]), 'err');
       previewEmpty.hidden = pdfGenerated;
       previewControls.hidden = !pdfGenerated;
       if (pdfGenerated) {
