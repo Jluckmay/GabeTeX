@@ -59,7 +59,7 @@
     return value;
   }
   function updateOutline() {
-      var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}|\begin\{frame\}\s*\{([^}]*)\}/g;
+    var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}|\\begin\s*\{frame\}\s*\{([^}]*)\}|\\begin\s*\{frame\}/g;
     var matches = [];
     var match;
     while ((match = expression.exec(source.value))) {
@@ -69,6 +69,9 @@
         position = match.index;
       } else if (match[3]) {
         title = match[3].trim();
+        position = match.index;
+      } else if (/^\\begin\s*\{frame\}/.test(match[0])) {
+        title = 'Frame';
         position = match.index;
       } else {
         continue;
@@ -1090,15 +1093,6 @@
     var pdfGenerated = false;
 
     var source = state.files[state.activeFile] || '';
-    if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
-      appendOutput(translate('editor.beamerNotSupported'), 'err');
-      setPreviewStatus('editor.compileError');
-      state.errors = 1;
-      state.warnings = 0;
-      updateErrorStatus();
-      updateWarningStatus();
-      return;
-    }
 
     state.compiling = true;
     updateCompileButton();
@@ -1150,7 +1144,9 @@
       updateCompileStatus();
     } catch (error) {
       if (error.log) appendOutput(error.log, 'warn');
-      appendOutput(translate('editor.compileErrorDetail', [error.message]), 'err');
+      var firstError = error.log ? error.log.match(/^!.*$/m) : null;
+      if (firstError) appendOutput(firstError[0], 'err');
+      else appendOutput(translate('editor.compileErrorDetail', [error.message]), 'err');
       previewEmpty.hidden = pdfGenerated;
       previewControls.hidden = !pdfGenerated;
       if (pdfGenerated) {

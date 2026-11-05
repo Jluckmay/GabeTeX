@@ -226,17 +226,27 @@ function compileDocument(message) {
   source = prepareMathSource(files, message.mainFile);
   var inputBytes = textEncoder.encode(source);
   var inputPointer = allocate(inputBytes);
+  var engineFailure = null;
   try {
     wasmExports.tectonic_set_input(inputPointer, inputBytes.length);
     wasmExports.tectonic_compile();
+  } catch (error) {
+    engineFailure = error;
   } finally {
     wasmExports.free(inputPointer);
   }
+  var texLog = textDecoder.decode(readOutput('texput.log'));
+  if (engineFailure) {
+    var failure = new Error(engineFailure && engineFailure.message ? engineFailure.message : String(engineFailure));
+    failure.log = texLog || outputLog;
+    throw failure;
+  }
   var pdf = readOutput('texput.pdf');
   if (pdf.length < 5 || textDecoder.decode(pdf.subarray(0, 5)) !== '%PDF-') {
-    throw new Error('Tectonic did not produce a valid PDF.');
+    var invalid = new Error('Tectonic did not produce a valid PDF.');
+    invalid.log = texLog || outputLog;
+    throw invalid;
   }
-  var texLog = textDecoder.decode(readOutput('texput.log'));
   var compileLog = texLog || outputLog;
   return {
     pdf: pdf.buffer,
