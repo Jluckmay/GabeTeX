@@ -277,7 +277,7 @@ self.addEventListener('message', async function (event) {
       type: 'error',
       id: message.id,
       message: error && error.message ? error.message : String(error),
-      log: outputLog
+      log: error.log || outputLog
     });
   }
 });
