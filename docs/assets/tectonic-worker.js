@@ -175,6 +175,68 @@ async function addTarFilesFromResponse(response) {
   addTarFiles(new Uint8Array(archive));
 }
 
+/* ---------- beamer support ---------- */
+
+var BEAMER_GITHUB_ROOT = 'https://raw.githubusercontent.com/josephwright/beamer/master/base/';
+var BEAMER_GITHUB_FILES = [
+  'beamer.cls',
+  'beamerbaseauxtemplates.sty',
+  'beamerbaseboxes.sty',
+  'beamerbasecolor.sty',
+  'beamerbasecompatibility.sty',
+  'beamerbasedecode.sty',
+  'beamerbasefont.sty',
+  'beamerbaseframe.sty',
+  'beamerbaseframecomponents.sty',
+  'beamerbaseframesize.sty',
+  'beamerbaselocalstructure.sty',
+  'beamerbasemisc.sty',
+  'beamerbasemodes.sty',
+  'beamerbasenavigation.sty',
+  'beamerbasenotes.sty',
+  'beamerbaseoptions.sty',
+  'beamerbaseoverlay.sty',
+  'beamerbasearticle.sty',
+  'beamerbasesection.sty',
+  'beamerbasetemplates.sty',
+  'beamerbasethemes.sty',
+  'beamerbasetheorems.sty',
+  'beamerbasetitle.sty',
+  'beamerbasetoc.sty',
+  'beamerbasetranslator.sty',
+  'beamerbasetwoscreens.sty',
+  'beamerbaseverbatim.sty'
+];
+var XXCOLOR_URL = 'https://raw.githubusercontent.com/pgf-tikz/pgf/master/tex/latex/pgf/utilities/xxcolor.sty';
+
+async function fetchBeamerFiles() {
+  for (var i = 0; i < BEAMER_GITHUB_FILES.length; i++) {
+    var name = BEAMER_GITHUB_FILES[i];
+    try {
+      var response = await fetchResource(BEAMER_GITHUB_ROOT + name);
+      var bytes = await response.arrayBuffer();
+      addFile(name, new Uint8Array(bytes));
+    } catch (error) {
+      // Non-fatal: some files may not exist
+    }
+  }
+  try {
+    var response = await fetchResource(XXCOLOR_URL);
+    var bytes = await response.arrayBuffer();
+    addFile('xxcolor.sty', new Uint8Array(bytes));
+  } catch (error) {
+    // Non-fatal
+  }
+  // Tectonic WASM bundle lacks size11.clo/size12.clo; beamer defaults to 11pt.
+  // Provide stubs that fall back to size10.clo.
+  addFile('size11.clo', new TextEncoder().encode('\\input{size10.clo}'));
+  addFile('size12.clo', new TextEncoder().encode('\\input{size10.clo}'));
+}
+
+function sourceUsesBeamer(sourceText) {
+  return /\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(sourceText);
+}
+
 function readOutput(name) {
   var nameBytes = textEncoder.encode(name);
   var namePointer = allocate(nameBytes);
@@ -225,7 +287,7 @@ function prepareMathSource(files, mainFile) {
   return source.slice(0, classEnd) + fontSetup + source.slice(classEnd);
 }
 
-function compileDocument(message) {
+async function compileDocument(message) {
   outputLog = '';
   var files = message.files || {};
   Object.keys(files).forEach(function (name) {
@@ -233,6 +295,7 @@ function compileDocument(message) {
   });
   var source = files[message.mainFile];
   if (typeof source !== 'string') throw new Error('The active TeX source file is missing.');
+  if (sourceUsesBeamer(source)) await fetchBeamerFiles();
   source = prepareMathSource(files, message.mainFile);
   var inputBytes = textEncoder.encode(source);
   var inputPointer = allocate(inputBytes);
@@ -271,7 +334,7 @@ self.addEventListener('message', async function (event) {
   if (!message || message.type !== 'compile') return;
   try {
     await initialize();
-    var result = compileDocument(message);
+    var result = await compileDocument(message);
     self.postMessage({
       type: 'result',
       id: message.id,
