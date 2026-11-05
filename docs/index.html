@@ -1443,6 +1443,10 @@ Hello, world!
     var DOWNLOAD_EXE = RELEASES_URL + '/latest/download/GabeTeX-windows-x64-setup.exe';
     var DOWNLOAD_MSI = RELEASES_URL + '/latest/download/GabeTeX-windows-x64.msi';
     var DOWNLOAD_MAC_UP = UP_MAC_RELEASES + '/latest/download/GabeTeX.dmg';
+    var DOWNLOAD_LINUX_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-linux-x86_64.AppImage';
+    var DOWNLOAD_DEB_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-linux-amd64.deb';
+    var DOWNLOAD_EXE_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe';
+    var DOWNLOAD_MSI_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-windows-x64.msi';
   var CACHE_KEY = 'gabetex.releases.v2';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
@@ -1952,9 +1956,17 @@ Hello, world!
     return 'mac';
   })();
   var OS_ASSET = {
-    linux: [LW_RELEASES + '/latest/download/GabeTeX-linux-x86_64.AppImage', 'hero.downloadLinux'],
-    windows: [LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe', 'hero.downloadWindows']
+    linux: [DOWNLOAD_LINUX, 'hero.downloadLinux'],
+    windows: [DOWNLOAD_EXE, 'hero.downloadWindows']
   };
+  function applyDownloadLinks() {
+    if (!OS_ASSET[OS]) return;
+    OS_ASSET.linux[0] = DOWNLOAD_LINUX;
+    OS_ASSET.windows[0] = DOWNLOAD_EXE;
+    dl.href = OS_ASSET[OS][0]; navDl.href = OS_ASSET[OS][0];
+    var dlLabel = dl.querySelector('.def[data-i18n]');
+    dlLabel.setAttribute('data-i18n', OS_ASSET[OS][1]); dlLabel.innerHTML = t(OS_ASSET[OS][1]);
+  }
   if (OS_ASSET[OS]) {
     root.setAttribute('data-os', OS);
     dl.href = OS_ASSET[OS][0]; navDl.href = OS_ASSET[OS][0];
@@ -1964,14 +1976,31 @@ Hello, world!
 
   /* ---------- releases: fetch from macOS and Linux/Windows repos, merge by version ---------- */
   var state = null, pending = null, heroLatest = null, lastFail = 0;
+  var currentDownloadSrc = 'primary';
+  function usePrimaryDownloads() {
+    currentDownloadSrc = 'primary';
+    DOWNLOAD_MAC = RELEASES_URL + '/latest/download/GabeTeX.dmg';
+    DOWNLOAD_LINUX = RELEASES_URL + '/latest/download/GabeTeX-linux-x86_64.AppImage';
+    DOWNLOAD_DEB = RELEASES_URL + '/latest/download/GabeTeX-linux-amd64.deb';
+    DOWNLOAD_EXE = RELEASES_URL + '/latest/download/GabeTeX-windows-x64-setup.exe';
+    DOWNLOAD_MSI = RELEASES_URL + '/latest/download/GabeTeX-windows-x64.msi';
+  }
+  function useUpstreamDownloads() {
+    currentDownloadSrc = 'fallback';
+    DOWNLOAD_MAC = DOWNLOAD_MAC_UP;
+    DOWNLOAD_LINUX = DOWNLOAD_LINUX_UP;
+    DOWNLOAD_DEB = DOWNLOAD_DEB_UP;
+    DOWNLOAD_EXE = DOWNLOAD_EXE_UP;
+    DOWNLOAD_MSI = DOWNLOAD_MSI_UP;
+  }
   function readCache() {
     try {
       var c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
       if (!c || !Array.isArray(c.list) || Date.now() - c.t > CACHE_MS) return null;
-      return c.list;
+      return { list: c.list, src: c.src || 'primary' };
     } catch (e) { return null; }
   }
-  function writeCache(list) { try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), list: list })); } catch (e) {} }
+  function writeCache(list, src) { try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), list: list, src: src || 'primary' })); } catch (e) {} }
     function slim(r, repo) {
       var assets = [];
       (r.assets || []).forEach(function (a) {
@@ -1994,50 +2023,68 @@ Hello, world!
     /* mode 'auto' uses the cache and backs off for a minute after a failure; 'network' (Try again) always asks GitHub */
     function fetchReleases(mode) {
       if (mode !== 'network') {
-        var c = readCache(); if (c) return Promise.resolve(c);
-        if (Date.now() - lastFail < 60000) return Promise.reject(new Error('recent failure'));
-      }
-      if (pending) return pending;
-      if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
-      var macPromise = fetch(API_MAC, { headers: { 'Accept': 'application/vnd.github.html+json' } })
-        .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-        .catch(function () { return []; });
-      var lwPromise = fetch(API_LW, { headers: { 'Accept': 'application/vnd.github.html+json' } })
-        .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
-        .catch(function () { return []; });
-      pending = Promise.all([macPromise, lwPromise])
-      .then(function (results) {
-        var macList = results[0], lwList = results[1];
-        if (!Array.isArray(macList)) macList = [];
-        if (!Array.isArray(lwList)) lwList = [];
-        var all = macList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'mac'); })
-          .concat(lwList.filter(function (r) { return r && !r.draft; }).map(function (r) { return slim(r, 'lw'); }));
-        var merged = {};
-        all.forEach(function (r) {
-          var key = bare(r.tag);
-          if (!key) return;
-          if (!merged[key]) {
-            merged[key] = r;
-          } else {
-            var existing = merged[key];
-            if (Date.parse(r.date || 0) > Date.parse(existing.date || 0)) {
-              existing.date = r.date;
+            var c = readCache(); if (c) {
+              if (c.src === 'fallback') useUpstreamDownloads(); else usePrimaryDownloads();
+              applyDownloadLinks();
+              return Promise.resolve(c.list);
             }
-            existing.assets = existing.assets.concat(r.assets);
-            if (!existing.html && r.html) existing.html = r.html;
-            if (!existing.name && r.name) existing.name = r.name;
-            if (!existing.url && r.url) existing.url = r.url;
-            existing.pre = existing.pre || r.pre;
+            if (Date.now() - lastFail < 60000) return Promise.reject(new Error('recent failure'));
           }
-        });
-        var list = Object.values(merged)
-          .sort(function (a, b) { return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0); });
-        writeCache(list);
-        return list;
-      });
-      pending.then(function (list) { pending = null; if (!list || !list.length) lastFail = Date.now(); }, function () { pending = null; lastFail = Date.now(); });
-      return pending;
-    }
+          if (pending) return pending;
+          if (!window.fetch) return Promise.reject(new Error('fetch unavailable'));
+          function getJson(url) {
+            return fetch(url, { headers: { 'Accept': 'application/vnd.github.html+json' } })
+              .then(function (res) { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+              .catch(function () { return null; });
+          }
+          function published(list) {
+            if (!Array.isArray(list)) return [];
+            return list.filter(function (r) { return r && !r.draft; });
+          }
+          /* Primary: releases published in this fork (Jluckmay/GabeTeX).
+             Upstream repos are used only as fallback when the primary cannot be
+             accessed or has no published releases. */
+          pending = getJson(API_MAC).then(function (primary) {
+            var pub = published(primary);
+            if (!pub.length) throw new Error('no releases');
+            usePrimaryDownloads();
+            applyDownloadLinks();
+            return pub.map(function (r) { return slim(r, 'mac'); });
+          }).catch(function () {
+            return Promise.all([getJson(API_UP_MAC), getJson(API_LW)]).then(function (results) {
+              var upMac = published(results[0]), lw = published(results[1]);
+              useUpstreamDownloads();
+              applyDownloadLinks();
+              var all = upMac.map(function (r) { return slim(r, 'mac'); })
+                .concat(lw.map(function (r) { return slim(r, 'lw'); }));
+              var merged = {};
+              all.forEach(function (r) {
+                var key = bare(r.tag);
+                if (!key) return;
+                if (!merged[key]) {
+                  merged[key] = r;
+                } else {
+                  var existing = merged[key];
+                  if (Date.parse(r.date || 0) > Date.parse(existing.date || 0)) {
+                    existing.date = r.date;
+                  }
+                  existing.assets = existing.assets.concat(r.assets);
+                  if (!existing.html && r.html) existing.html = r.html;
+                  if (!existing.name && r.name) existing.name = r.name;
+                  if (!existing.url && r.url) existing.url = r.url;
+                  existing.pre = existing.pre || r.pre;
+                }
+              });
+              return Object.values(merged)
+                .sort(function (a, b) { return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0); });
+            });
+          });
+          pending.then(function (list) {
+            pending = null; writeCache(list, currentDownloadSrc);
+            if (!list || !list.length) lastFail = Date.now();
+          }, function () { pending = null; lastFail = Date.now(); });
+          return pending;
+        }
     function latestOf(list) { for (var i = 0; i < list.length; i++) if (!list[i].pre) return list[i]; return null; }
     function bare(tag) { return String(tag || '').trim().replace(/^v(?=\d)/i, ''); }
     function fmtSize(bytes) {
@@ -2141,9 +2188,9 @@ Hello, world!
     if (state.status === 'error') {
       box.innerHTML = '<div class="v-state"><p>' + esc(t('js.error')) + '</p><div class="row">' +
         '<button type="button" class="pill pill-ghost" data-retry>' + esc(t('js.retry')) + '</button>' +
-        '<a class="pill pill-fill" href="' + LATEST_DMG + '">' + I_DL + '<span>' + esc(t('js.latestDlMac')) + '</span></a>' +
-        '<a class="pill pill-fill" href="' + LATEST_APP_IMAGE + '">' + I_DL + '<span>' + esc(t('js.latestDlLinux')) + '</span></a>' +
-        '<a class="pill pill-fill" href="' + LATEST_EXE + '">' + I_DL + '<span>' + esc(t('js.latestDlWin')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + DOWNLOAD_MAC + '">' + I_DL + '<span>' + esc(t('js.latestDlMac')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + DOWNLOAD_LINUX + '">' + I_DL + '<span>' + esc(t('js.latestDlLinux')) + '</span></a>' +
+        '<a class="pill pill-fill" href="' + DOWNLOAD_EXE + '">' + I_DL + '<span>' + esc(t('js.latestDlWin')) + '</span></a>' +
         '<a href="' + RELEASES_URL + '">' + esc(t('js.seeAll')) + '</a></div></div>';
       box.querySelector('[data-retry]').addEventListener('click', function () { loadReleases(true); });
       return;
@@ -2169,7 +2216,7 @@ Hello, world!
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
       var acts = '<div class="entry-actions">' +
         r.assets.map(function (a) {
-          return '<a class="pill ' + (isLatest ? 'pill-fill' : 'pill-ghost') + ' pill-sm" href="' + esc(safeUrl(a.url, LATEST_DMG)) + '">' + I_DL +
+          return '<a class="pill ' + (isLatest ? 'pill-fill' : 'pill-ghost') + ' pill-sm" href="' + esc(safeUrl(a.url, DOWNLOAD_MAC)) + '">' + I_DL +
             '<span>' + esc(t('js.download')) + ' ' + esc(a.name) + (a.size ? ' <span class="num">(' + esc(fmtSize(a.size)) + ')</span>' : '') + '</span></a>';
         }).join('') +
         '<a class="link" href="' + esc(safeUrl(r.url, RELEASES_URL)) + '">' + esc(t('js.view')) + '</a></div>';
@@ -2180,12 +2227,17 @@ Hello, world!
   function loadReleases(force) {
     if (!force && state && state.status !== 'error') return;
     var cached = force ? null : readCache();
-    if (cached) { state = { status: cached.length ? 'ok' : 'error', list: cached }; renderReleases(true); return; }
-    state = { status: 'loading', list: [] };
-    renderReleases(false);
-    fetchReleases(force ? 'network' : 'auto').then(function (list) { state = { status: list && list.length ? 'ok' : 'error', list: list || [] }; renderReleases(true); },
-                             function () { state = { status: 'error', list: [] }; renderReleases(false); });
-  }
+      if (cached) {
+        if (cached.src === 'fallback') useUpstreamDownloads(); else usePrimaryDownloads();
+        applyDownloadLinks();
+        state = { status: cached.list.length ? 'ok' : 'error', list: cached.list };
+        renderReleases(true); return;
+      }
+      state = { status: 'loading', list: [] };
+      renderReleases(false);
+      fetchReleases(force ? 'network' : 'auto').then(function (list) { state = { status: list && list.length ? 'ok' : 'error', list: list || [] }; renderReleases(true); },
+                               function () { state = { status: 'error', list: [] }; renderReleases(false); });
+    }
 
   /* ---------- copy buttons ---------- */
   var live = document.getElementById('live');
