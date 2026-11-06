@@ -584,6 +584,7 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 .pill-pre { display: inline-flex; padding: 4px 10px; border-radius: var(--r-pill); background: var(--alt); color: var(--warn); font: 600 12px/1.2 var(--font-sans); letter-spacing: -.01em; box-shadow: inset 0 0 0 1px var(--hairline); }
 .entry-meta { margin-top: 6px; color: var(--ink-2); font-size: 14px; font-variant-numeric: tabular-nums; }
 .entry-meta span + span::before { content: "·"; margin: 0 .45em; }
+.entry-source { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
 .entry-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-top: 18px; }
 .entry-actions a.link { font-size: 15px; }
 .notes { max-width: var(--max-text); margin-top: 18px; color: var(--ink); overflow-wrap: anywhere; }
@@ -1700,7 +1701,10 @@ Hello, world!
     'js.latestDlWin': 'Baixar para Windows',
     'js.empty': 'Ainda não há versões publicadas.',
     'js.repo': 'Ver o repositório no GitHub',
-    'js.copiedLive': 'Comando copiado.',
+        'js.source': 'Fonte',
+        'js.fork': 'Fork (Jluckmay/GabeTeX)',
+        'js.upstream': 'Upstream (gabe-rbo)',
+        'js.copiedLive': 'Comando copiado.',
     'js.title': 'GabeTeX — editor LaTeX multiplataform, também para Linux e Windows',
     'js.titleVersions': 'Versões — GabeTeX',
     'js.titleEditor': 'Editor online — GabeTeX',
@@ -1725,7 +1729,10 @@ Hello, world!
     'js.latestDlWin': 'Download for Windows',
     'js.empty': 'No releases yet.',
     'js.repo': 'View the repository on GitHub',
-    'js.copiedLive': 'Command copied.',
+        'js.source': 'Source',
+        'js.fork': 'Fork (Jluckmay/GabeTeX)',
+        'js.upstream': 'Upstream (gabe-rbo)',
+        'js.copiedLive': 'Command copied.',
     'hero.downloadLinux': 'Download for Linux',
     'hero.downloadWindows': 'Download for Windows',
     'js.title': document.title,
@@ -2223,6 +2230,9 @@ Hello, world!
       var plainName = r.name.replace(/^GabeTeX\s*/i, '').replace(/^v(?=\d)/i, '');
       if (r.name && plainName !== ver && r.name !== r.tag) meta.push('<span>' + esc(r.name) + '</span>');
       if (r.date) meta.push('<span><time datetime="' + esc(r.date) + '">' + esc(fmtDate(r.date)) + '</time></span>');
+      /* repository badge */
+      var srcLabel = r.repo === 'mac' ? t('js.fork') : t('js.upstream');
+      meta.push('<span class="entry-source">' + esc(t('js.source')) + ': ' + esc(srcLabel) + '</span>');
       var notesHtml = r.html ? clean(filterNotesByLanguage(r.html, lang)) : '<p>' + esc(t('js.noNotes')) + '</p>';
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
