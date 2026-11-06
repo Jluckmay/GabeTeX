@@ -163,6 +163,24 @@ function addTarFiles(bytes) {
     var contentStart = offset + 512;
     if ((type === 48 || type === 0) && name && name !== 'latex.fmt' && size >= 0 && contentStart + size <= bytes.length) {
       addFile(name, bytes.subarray(contentStart, contentStart + size));
+      // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
+      if (name.toLowerCase().endsWith('.tfm')) {
+        var lower = name.toLowerCase();
+        var family = lower.startsWith('ms') ? 'amsfonts' : 'cm';
+        var base = 'fonts/tfm/public/' + family + '/' + name;
+        var tfmPaths = [
+          name,
+          base,
+          'fonts/tfm/' + family + '/' + name,
+          'tfm/' + family + '/' + name,
+          'fonts/tfm/' + name,
+          'texmf-dist/' + base,
+          'texmf/fonts/tfm/' + family + '/' + name
+        ];
+        tfmPaths.forEach(function (path) {
+          if (path !== name) addFile(path, bytes.subarray(contentStart, contentStart + size));
+        });
+      }
       entries++;
     }
     offset = contentStart + Math.ceil(size / 512) * 512;
@@ -207,31 +225,56 @@ var BEAMER_GITHUB_FILES = [
   'beamerbasetwoscreens.sty',
   'beamerbaseverbatim.sty'
 ];
-var XXCOLOR_URL = 'https://raw.githubusercontent.com/pgf-tikz/pgf/master/tex/latex/pgf/utilities/xxcolor.sty';
+  // Beamer default themes (loaded by beamer.cls via \usetheme{default})
+  var BEAMER_DEFAULT_THEME_FILES = [
+    'themes/outer/beamerouterthemedefault.sty',
+    'themes/inner/beamerinnerthemedefault.sty',
+    'themes/color/beamercolorthemedefault.sty',
+    'themes/font/beamerfontthemedefault.sty',
+    'themes/font/beamerfontthemeserif.sty'
+  ];
+  // Beamer Madrid theme files (loads whale+orchid color, rounded inner, infolines outer)
+  var BEAMER_MADRID_THEME_FILES = [
+    'themes/theme/beamerthemeMadrid.sty',
+    'themes/color/beamercolorthemewhale.sty',
+    'themes/color/beamercolorthemeorchid.sty',
+    'themes/inner/beamerinnerthemerounded.sty',
+    'themes/outer/beamerouterthemeinfolines.sty'
+  ];
+  var XXCOLOR_URL = 'https://raw.githubusercontent.com/pgf-tikz/pgf/master/tex/latex/pgf/utilities/xxcolor.sty';
 
-async function fetchBeamerFiles() {
-  for (var i = 0; i < BEAMER_GITHUB_FILES.length; i++) {
-    var name = BEAMER_GITHUB_FILES[i];
-    try {
-      var response = await fetchResource(BEAMER_GITHUB_ROOT + name);
-      var bytes = await response.arrayBuffer();
-      addFile(name, new Uint8Array(bytes));
-    } catch (error) {
-      // Non-fatal: some files may not exist
+  async function fetchBeamerFiles() {
+    var allFiles = BEAMER_GITHUB_FILES
+      .concat(BEAMER_DEFAULT_THEME_FILES)
+      .concat(BEAMER_MADRID_THEME_FILES);
+    for (var i = 0; i < allFiles.length; i++) {
+      var name = allFiles[i];
+      try {
+        var response = await fetchResource(BEAMER_GITHUB_ROOT + name);
+        var bytes = await response.arrayBuffer();
+        // Add file at root level (for simple lookups)
+        addFile(name, new Uint8Array(bytes));
+        // Also add with TDS path for kpathsea
+        addFile('tex/latex/beamer/' + name, new Uint8Array(bytes));
+      } catch (error) {
+        // Non-fatal: some files may not exist
+      }
     }
+    try {
+      var response = await fetchResource(XXCOLOR_URL);
+      var bytes = await response.arrayBuffer();
+      addFile('xxcolor.sty', new Uint8Array(bytes));
+      addFile('tex/latex/beamer/xxcolor.sty', new Uint8Array(bytes));
+    } catch (error) {
+      // Non-fatal
+    }
+    // Tectonic WASM bundle lacks size11.clo/size12.clo; beamer defaults to 11pt.
+    // Provide stubs that fall back to size10.clo.
+    addFile('size11.clo', new TextEncoder().encode('\\input{size10.clo}'));
+    addFile('size12.clo', new TextEncoder().encode('\\input{size10.clo}'));
+    addFile('tex/latex/beamer/size11.clo', new TextEncoder().encode('\\input{size10.clo}'));
+    addFile('tex/latex/beamer/size12.clo', new TextEncoder().encode('\\input{size10.clo}'));
   }
-  try {
-    var response = await fetchResource(XXCOLOR_URL);
-    var bytes = await response.arrayBuffer();
-    addFile('xxcolor.sty', new Uint8Array(bytes));
-  } catch (error) {
-    // Non-fatal
-  }
-  // Tectonic WASM bundle lacks size11.clo/size12.clo; beamer defaults to 11pt.
-  // Provide stubs that fall back to size10.clo.
-  addFile('size11.clo', new TextEncoder().encode('\\input{size10.clo}'));
-  addFile('size12.clo', new TextEncoder().encode('\\input{size10.clo}'));
-}
 
 function sourceUsesBeamer(sourceText) {
   return /\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(sourceText);
@@ -256,10 +299,49 @@ function readOutput(name) {
   }
 }
 
+function stripBeamerPackages(source) {
+  // Beamer has its own font system; packages that require TFM font
+  // metrics missing from the Tectonic WASM bundle are stripped to avoid
+  // cascading font errors that break environments like column/alertblock.
+  return source
+    .replace(/\\usepackage\s*\{lmodern\}/g, '')
+    .replace(/\\usepackage\s*\{amsmath,?\s*amssymb?\}/g, '')
+    .replace(/\\usepackage\s*\{amssymb,?\s*amsmath?\}/g, '')
+    .replace(/\\usepackage\s*\{amsmath\}/g, '')
+    .replace(/\\usepackage\s*\{amssymb\}/g, '')
+    .replace(/\\usepackage\s*\{fontenc\}/g, '');
+}
+
+function stripMathPackages(source) {
+  // Packages that require TFM font metrics missing from the Tectonic WASM
+  // bundle are stripped to avoid cascading font errors. unicode-math with
+  // OTF fonts (available in the bundle) provides math support instead.
+  return source
+    .replace(/\\usepackage\s*\{amsmath,?\s*amssymb?\}/g, '')
+    .replace(/\\usepackage\s*\{amssymb,?\s*amsmath?\}/g, '')
+    .replace(/\\usepackage\s*\{amsmath\}/g, '')
+    .replace(/\\usepackage\s*\{amssymb\}/g, '');
+}
+
 function prepareMathSource(files, mainFile) {
   var source = files[mainFile];
   // Beamer has its own font system; do not inject fontspec.
-  if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) return source;
+  // Strip packages that need TFM font metrics missing from the WASM bundle.
+  if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
+    source = stripBeamerPackages(source);
+    // Add fontspec/unicode-math with OTF fonts available in the bundle
+    // to replace TFM-based Computer Modern fonts that kpathsea cannot locate.
+    var fontSetup = '\n\\usepackage{fontspec}\n\\setmainfont{lmroman10-regular.otf}\n\\usepackage{unicode-math}\n\\setmathfont{latinmodern-math.otf}\n';
+    // Insert after \documentclass line
+    var documentClass = /\\documentclass(?:\s*\[[^\]]*\])?\s*\{[^}]+\}/.exec(source);
+    if (documentClass) {
+      var classEnd = documentClass.index + documentClass[0].length;
+      source = source.slice(0, classEnd) + fontSetup + source.slice(classEnd);
+    }
+    return source;
+  }
+  // Strip amsmath/amssymb for all documents; unicode-math provides math support
+  source = stripMathPackages(source);
   // Tectonic WASM bundle lacks size11.clo and size12.clo; fall back to 10pt
   source = source.replace(/\\documentclass\s*\[([^\]]*)\]\s*\{([^}]+)\}/g, function(match, options, cls) {
     var newOptions = options.replace(/\b(11|12)pt\b/g, '10pt');
