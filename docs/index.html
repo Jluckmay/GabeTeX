@@ -1297,29 +1297,19 @@ Scripts/build-app.sh</code></pre>
           <div class="editor-tabs">
           <div class="tab-list" role="tablist" aria-label="Open files" data-i18n-attr="aria-label:editor.openFileTabs"></div>
             <div class="tab-actions">
-                          <button type="button" class="tb-btn tb-spellcheck" id="btn-spellcheck" title="Check spelling in prose" aria-label="Check spelling in prose" aria-pressed="true" data-i18n-attr="title:editor.spellcheck;aria-label:editor.spellcheck">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h7M5.5 2v1.5m-2 0 3 6m2-6-3 6M10 11.5l1.5 1.5L15 9" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </button>
-                          <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
+                                                    <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
                             <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
                           </button>
                         </div>
           </div>
           <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
             <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
-            <textarea id="editor-source" spellcheck="false" autocorrect="off" autocapitalize="off" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
+            <textarea id="editor-source" spellcheck="true" autocorrect="off" autocapitalize="off" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
 \\begin{document}
 Hello, world!
 \\end{document}" aria-label="LaTeX source — main.tex"></textarea>
           </div>
-          <section class="spellcheck-panel" id="spellcheck-panel" hidden aria-label="Spelling review" data-i18n-attr="aria-label:editor.spellcheck">
-            <div class="spellcheck-head">
-              <h3 data-i18n="editor.spellcheck">Spelling review</h3>
-              <span id="spellcheck-summary" role="status" aria-live="polite"></span>
-            </div>
-            <ul id="spellcheck-results" class="spellcheck-results"></ul>
-          </section>
-          <div class="source-status" id="source-status" aria-live="polite" aria-atomic="true">Ready</div>
+                    <div class="source-status" id="source-status" aria-live="polite" aria-atomic="true">Ready</div>
         </section>
         <div class="divider" id="divider-preview" role="separator" aria-orientation="vertical" aria-label="Resize preview"></div>
 
@@ -1497,14 +1487,6 @@ Hello, world!
     'editor.noOutline': 'Nenhuma estrutura disponível.',
     'editor.sourcePane': 'Editor do código LaTeX',
     'editor.sourceLabel': 'Código LaTeX — %1',
-    'editor.spellcheck': 'Revisar ortografia do texto',
-    'editor.spellcheckLoading': 'Carregando dicionário e verificando texto…',
-    'editor.spellcheckClean': 'Nenhum possível erro ortográfico encontrado.',
-    'editor.spellcheckIssues': '%1 palavras suspeitas em %2 ocorrência(s).',
-    'editor.spellcheckLine': 'Linha %1',
-    'editor.spellcheckReplace': 'Substituir por “%1”',
-    'editor.spellcheckIgnore': 'Ignorar neste arquivo',
-    'editor.spellcheckFailed': 'Não foi possível carregar o corretor ortográfico: %1',
     'editor.split': 'Dividir visualização',
     'editor.previewPane': 'Pré-visualização do PDF',
     'editor.compiledPreview': 'Pré-visualização do PDF compilado',
@@ -1776,14 +1758,6 @@ Hello, world!
     'editor.noOutline': 'No outline available.',
     'editor.sourcePane': 'LaTeX source editor',
     'editor.sourceLabel': 'LaTeX source — %1',
-    'editor.spellcheck': 'Check prose spelling',
-    'editor.spellcheckLoading': 'Loading dictionary and checking prose…',
-    'editor.spellcheckClean': 'No possible spelling mistakes found.',
-    'editor.spellcheckIssues': '%1 possible misspellings in %2 occurrence(s).',
-    'editor.spellcheckLine': 'Line %1',
-    'editor.spellcheckReplace': 'Replace with “%1”',
-    'editor.spellcheckIgnore': 'Ignore in this file',
-    'editor.spellcheckFailed': 'Could not load the spell checker: %1',
     'editor.split': 'Split view',
     'editor.previewPane': 'PDF preview',
     'editor.compiledPreview': 'Compiled PDF preview',

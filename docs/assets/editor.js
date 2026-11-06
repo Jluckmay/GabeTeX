@@ -28,10 +28,6 @@
   var uploadStatus = document.getElementById('upload-status');
   var btnHistory = document.getElementById('btn-history');
   var btnSplit = document.getElementById('btn-split');
-  var btnSpellcheck = document.getElementById('btn-spellcheck');
-  var spellcheckPanel = document.getElementById('spellcheck-panel');
-  var spellcheckSummary = document.getElementById('spellcheck-summary');
-  var spellcheckResults = document.getElementById('spellcheck-results');
   var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
@@ -145,17 +141,12 @@
     uploadMessages: [],
     previewStatusKey: 'editor.idle',
     previewStatusArgs: [],
-    spellcheckEnabled: true,
     autoCompile: true,
     presentationSlide: 1,
-    spellcheckIgnored: Object.create(null)
   };
   var compileWorker = null;
   var compileRequestId = 0;
   var pdfJsPromise = null;
-  var spellWorker = null;
-  var spellcheckRequestId = 0;
-  var spellcheckTimer = null;
 
   function setSourceStatus(key, values) {
     state.sourceStatusKey = key;
@@ -223,7 +214,6 @@
   }
   document.addEventListener('gabetex:languagechange', updateTranslatedUI);
   document.addEventListener('gabetex:languagechange', function () {
-    if (state.spellcheckEnabled) scheduleSpellcheck();
   });
 
   function commitHistorySnapshot() {
@@ -254,7 +244,6 @@
     updateOutline();
     updateCursor();
     updateMathPreview();
-    scheduleSpellcheck();
     setSourceStatus('editor.historyRestored');
     updateHistoryButton();
   }
@@ -352,7 +341,6 @@
     setSourceStatus('editor.opened', [name]);
     updateCursor();
     updateHistoryButton();
-    scheduleSpellcheck();
   }
   function closeFile(name) {
     var index = state.openFiles.indexOf(name);
@@ -577,7 +565,6 @@
     scheduleHistorySnapshot();
     updateOutline();
     updatePresentationButtonVisibility();
-    scheduleSpellcheck();
     clearTimeout(source._mathTimer);
     source._mathTimer = setTimeout(updateMathPreview, 300);
     if (state.autoCompile) {
@@ -680,288 +667,11 @@
     return text.length;
   }
 
-  function extractTexWords(text) {
-    var words = [];
-    var segmentStart = 0;
-    var index = 0;
 
-    function flush(end) {
-      var segment = text.slice(segmentStart, end);
-      var expression = /[A-Za-zÀ-ÖØ-öø-ÿ]+(?:['’][A-Za-zÀ-ÖØ-öø-ÿ]+)*/g;
-      var match;
-      while ((match = expression.exec(segment))) {
-        words.push({
-          word: match[0],
-          start: segmentStart + match.index,
-          end: segmentStart + match.index + match[0].length
-        });
-      }
-    }
 
-    while (index < text.length) {
-      if (text[index] === '%') {
-        flush(index);
-        var newline = text.indexOf('\n', index);
-        index = newline === -1 ? text.length : newline + 1;
-        segmentStart = index;
-        continue;
-      }
 
-      if (text[index] === '$') {
-        flush(index);
-        var mathDelimiter = text[index + 1] === '$' ? '$$' : '$';
-        index = skipMathDelimiter(text, index, mathDelimiter);
-        segmentStart = index;
-        continue;
-      }
 
-      if (text[index] !== '\\') {
-        index++;
-        continue;
-      }
 
-      flush(index);
-      var commandStart = index;
-      index++;
-      var commandMatch = /^[A-Za-z@]+/.exec(text.slice(index));
-      var command = commandMatch ? commandMatch[0] : text[index] || '';
-      index += command.length;
-      if (text[index] === '*' && /^(verb|lstinline|mintinline|newcommand|renewcommand|providecommand|newenvironment|renewenvironment)$/.test(command)) {
-        index++;
-      }
-
-      if (command === '(' || command === '[') {
-        index = skipMathDelimiter(text, commandStart, '\\' + command);
-        segmentStart = index;
-        continue;
-      }
-      if (command === 'verb' || command === 'lstinline' || command === 'mintinline') {
-        index = skipTexOptions(text, index);
-        if (command === 'mintinline') {
-          var languageGroup = readTexGroup(text, index);
-          if (languageGroup) index = languageGroup.end;
-        }
-        var verbatimDelimiter = text[index];
-        if (verbatimDelimiter) {
-          var verbatimEnd = text.indexOf(verbatimDelimiter, index + 1);
-          index = verbatimEnd === -1 ? text.length : verbatimEnd + 1;
-        }
-        segmentStart = index;
-        continue;
-      }
-
-      if (command === 'begin' || command === 'end') {
-        index = skipTexWhitespace(text, index);
-        var environmentGroup = readTexGroup(text, index);
-        if (environmentGroup) {
-          index = environmentGroup.end;
-          var environment = environmentGroup.value.trim();
-          var baseEnvironment = environment.replace(/\*$/, '');
-          if (command === 'begin' && (mathEnvironments[baseEnvironment] || literalEnvironments[environment])) {
-            var escapedEnvironment = environment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            var closingEnvironment = new RegExp('\\\\end\\s*\\{\\s*' + escapedEnvironment + '\\s*\\}');
-            var closingMatch = closingEnvironment.exec(text.slice(index));
-            index = closingMatch
-              ? index + closingMatch.index + closingMatch[0].length
-              : text.length;
-          }
-        }
-        segmentStart = index;
-        continue;
-      }
-
-      if (command === 'href') {
-        index = skipTexOptions(text, index);
-        var urlGroup = readTexGroup(text, index);
-        if (urlGroup) index = urlGroup.end;
-        segmentStart = index;
-        continue;
-      }
-      if (command === 'foreignlanguage') {
-        index = skipTexOptions(text, index);
-        var languageArgument = readTexGroup(text, index);
-        if (languageArgument) index = languageArgument.end;
-        segmentStart = index;
-        continue;
-      }
-      if (command === 'newcommand' || command === 'renewcommand' || command === 'providecommand') {
-        index = skipTexOptions(text, index);
-        index = skipTexGroup(text, index, '{', '}');
-        index = skipTexOptions(text, index);
-        index = skipTexGroup(text, index, '{', '}');
-        segmentStart = index;
-        continue;
-      }
-      if (command === 'newenvironment' || command === 'renewenvironment') {
-        index = skipTexOptions(text, index);
-        index = skipTexGroup(text, index, '{', '}');
-        index = skipTexOptions(text, index);
-        index = skipTexGroup(text, index, '{', '}');
-        index = skipTexGroup(text, index, '{', '}');
-        segmentStart = index;
-        continue;
-      }
-
-      if (skippedTexCommands[command]) {
-        index = skipTexOptions(text, index);
-        for (var argument = 0; argument < skippedTexCommands[command]; argument++) {
-          index = skipTexWhitespace(text, index);
-          index = skipTexGroup(text, index, '{', '}');
-        }
-        segmentStart = index;
-        continue;
-      }
-
-      segmentStart = index;
-    }
-
-    flush(text.length);
-    return words;
-  }
-
-  function renderSpellcheckResults(issues, occurrences, language, fileName) {
-    spellcheckResults.replaceChildren();
-    spellcheckPanel.hidden = false;
-    if (!issues.length) {
-      spellcheckSummary.textContent = translate('editor.spellcheckClean');
-      return;
-    }
-
-    spellcheckSummary.textContent = translate('editor.spellcheckIssues', [issues.length, occurrences]);
-    issues.forEach(function (issue) {
-      var item = document.createElement('li');
-      item.className = 'spellcheck-item';
-      var word = document.createElement('span');
-      word.className = 'spellcheck-word';
-      word.textContent = issue.word;
-      item.appendChild(word);
-
-      issue.positions.forEach(function (position) {
-        var location = document.createElement('button');
-        location.type = 'button';
-        location.className = 'spellcheck-location';
-        location.textContent = translate('editor.spellcheckLine', [position.line]);
-        location.addEventListener('click', function () {
-          if (source.value.slice(position.start, position.end) !== issue.word) {
-            scheduleSpellcheck();
-            return;
-          }
-          source.focus();
-          source.setSelectionRange(position.start, position.end);
-          var lineHeight = parseFloat(window.getComputedStyle(source).lineHeight) || 20;
-          source.scrollTop = Math.max(0, (position.line - 1) * lineHeight);
-          updateCursor();
-        });
-        item.appendChild(location);
-      });
-
-      issue.suggestions.forEach(function (suggestion) {
-        var replace = document.createElement('button');
-        replace.type = 'button';
-        replace.className = 'spellcheck-suggestion';
-        replace.textContent = translate('editor.spellcheckReplace', [suggestion]);
-        replace.addEventListener('click', function () {
-          var position = issue.positions[0];
-          if (source.value.slice(position.start, position.end) !== issue.word) {
-            scheduleSpellcheck();
-            return;
-          }
-          source.value = source.value.slice(0, position.start) + suggestion + source.value.slice(position.end);
-          source.setSelectionRange(position.start + suggestion.length, position.start + suggestion.length);
-          source.dispatchEvent(new Event('input', { bubbles: true }));
-          source.focus();
-        });
-        item.appendChild(replace);
-      });
-
-      var ignore = document.createElement('button');
-      ignore.type = 'button';
-      ignore.className = 'spellcheck-ignore';
-      ignore.textContent = translate('editor.spellcheckIgnore');
-      ignore.addEventListener('click', function () {
-        var ignoredKey = language + '|' + fileName;
-        var ignored = state.spellcheckIgnored[ignoredKey] || (state.spellcheckIgnored[ignoredKey] = Object.create(null));
-        ignored[issue.word.toLocaleLowerCase(language === 'pt' ? 'pt-BR' : 'en-US')] = true;
-        scheduleSpellcheck();
-      });
-      item.appendChild(ignore);
-      spellcheckResults.appendChild(item);
-    });
-  }
-
-  function getSpellWorker() {
-    if (spellWorker) return spellWorker;
-    spellWorker = new Worker(new URL('spellcheck-worker.js', editorScriptUrl));
-    spellWorker.addEventListener('message', function (event) {
-      var message = event.data;
-      if (!message || message.id !== spellcheckRequestId || !state.spellcheckEnabled) return;
-      if (message.type === 'error') {
-        spellcheckSummary.textContent = translate('editor.spellcheckFailed', [message.message]);
-      } else if (message.type === 'result') {
-        if (message.fileName !== state.activeFile ||
-            message.language !== (document.documentElement.lang.indexOf('pt') === 0 ? 'pt' : 'en')) return;
-        var occurrences = message.occurrences;
-        renderSpellcheckResults(message.issues, occurrences, message.language, message.fileName);
-      }
-    });
-    spellWorker.addEventListener('error', function (event) {
-      spellcheckSummary.textContent = translate('editor.spellcheckFailed', [event.message || 'Worker failed.']);
-      spellWorker.terminate();
-      spellWorker = null;
-    });
-    return spellWorker;
-  }
-
-  function runSpellcheck() {
-    if (!state.spellcheckEnabled) return;
-    var requestId = ++spellcheckRequestId;
-    var language = document.documentElement.lang.indexOf('pt') === 0 ? 'pt' : 'en';
-    var fileName = state.activeFile;
-    var sourceText = source.value;
-    spellcheckPanel.hidden = false;
-    spellcheckResults.replaceChildren();
-    spellcheckSummary.textContent = translate('editor.spellcheckLoading');
-
-    var tokens = [];
-    var line = 1;
-    var nextLineBreak = sourceText.indexOf('\n');
-    extractTexWords(sourceText).forEach(function (token) {
-      while (nextLineBreak !== -1 && token.start > nextLineBreak) {
-        line++;
-        nextLineBreak = sourceText.indexOf('\n', nextLineBreak + 1);
-      }
-      tokens.push({ word: token.word, start: token.start, end: token.end, line: line });
-    });
-    var ignored = state.spellcheckIgnored[language + '|' + fileName] || Object.create(null);
-    try {
-      getSpellWorker().postMessage({
-        type: 'check',
-        id: requestId,
-        language: language,
-        fileName: fileName,
-        words: tokens,
-        ignoredWords: Object.keys(ignored)
-      });
-    } catch (error) {
-      spellcheckSummary.textContent = translate('editor.spellcheckFailed', [error.message]);
-    }
-  }
-
-  function scheduleSpellcheck() {
-    clearTimeout(spellcheckTimer);
-    if (state.spellcheckEnabled) {
-      spellcheckRequestId++;
-      spellcheckTimer = setTimeout(runSpellcheck, 350);
-    }
-  }
-
-  btnSpellcheck.addEventListener('click', function () {
-    state.spellcheckEnabled = !state.spellcheckEnabled;
-    btnSpellcheck.setAttribute('aria-pressed', state.spellcheckEnabled ? 'true' : 'false');
-    spellcheckPanel.hidden = !state.spellcheckEnabled;
-    if (state.spellcheckEnabled) runSpellcheck();
-    else spellcheckRequestId++;
-  });
 
   /* ---------- compile ---------- */
   function appendOutput(text, cls) {
