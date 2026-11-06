@@ -2041,44 +2041,35 @@ Hello, world!
             if (!Array.isArray(list)) return [];
             return list.filter(function (r) { return r && !r.draft; });
           }
-          /* Primary: releases published in this fork (Jluckmay/GabeTeX).
-             Upstream repos are used only as fallback when the primary cannot be
-             accessed or has no published releases. */
-          pending = getJson(API_MAC).then(function (primary) {
-            var pub = published(primary);
-            if (!pub.length) throw new Error('no releases');
-            usePrimaryDownloads();
-            applyDownloadLinks();
-            return pub.map(function (r) { return slim(r, 'mac'); });
-          }).catch(function () {
-            return Promise.all([getJson(API_UP_MAC), getJson(API_LW)]).then(function (results) {
-              var upMac = published(results[0]), lw = published(results[1]);
-              useUpstreamDownloads();
-              applyDownloadLinks();
-              var all = upMac.map(function (r) { return slim(r, 'mac'); })
-                .concat(lw.map(function (r) { return slim(r, 'lw'); }));
-              var merged = {};
-              all.forEach(function (r) {
-                var key = bare(r.tag);
-                if (!key) return;
-                if (!merged[key]) {
-                  merged[key] = r;
-                } else {
-                  var existing = merged[key];
-                  if (Date.parse(r.date || 0) > Date.parse(existing.date || 0)) {
-                    existing.date = r.date;
-                  }
-                  existing.assets = existing.assets.concat(r.assets);
-                  if (!existing.html && r.html) existing.html = r.html;
-                  if (!existing.name && r.name) existing.name = r.name;
-                  if (!existing.url && r.url) existing.url = r.url;
-                  existing.pre = existing.pre || r.pre;
-                }
-              });
-              return Object.values(merged)
-                .sort(function (a, b) { return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0); });
-            });
-          });
+          /* Fetch releases from all three repos and display them all in the timeline,
+                       sorted by date (newest first). The fork (Jluckmay/GabeTeX) is the primary
+                       source for download links; upstream repos are always included. */
+                    pending = Promise.all([getJson(API_MAC), getJson(API_UP_MAC), getJson(API_LW)])
+                    .then(function (results) {
+                      var primary = published(results[0]);
+                      var upMac = published(results[1]);
+                      var lw = published(results[2]);
+
+                      /* Decide download-link source: prefer the fork when it has releases,
+                         otherwise fall back to upstream repos. */
+                      if (primary.length) {
+                        usePrimaryDownloads();
+                      } else {
+                        useUpstreamDownloads();
+                      }
+                      applyDownloadLinks();
+
+                      /* Combine all releases WITHOUT merging by version tag.
+                         Each release from each repo appears separately in the timeline,
+                         sorted by publication date (newest first). */
+                      var all = primary.map(function (r) { return slim(r, 'mac'); })
+                        .concat(upMac.map(function (r) { return slim(r, 'mac-up'); }))
+                        .concat(lw.map(function (r) { return slim(r, 'lw-up'); }));
+
+                      return all.sort(function (a, b) {
+                        return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0);
+                      });
+                    });
           pending.then(function (list) {
             pending = null; writeCache(list, currentDownloadSrc);
             if (!list || !list.length) lastFail = Date.now();
