@@ -1701,7 +1701,6 @@ Hello, world!
     'js.latestDlWin': 'Baixar para Windows',
     'js.empty': 'Ainda não há versões publicadas.',
     'js.repo': 'Ver o repositório no GitHub',
-        'js.source': 'Fonte',
         'js.fork': 'Fork (Jluckmay/GabeTeX)',
         'js.upstream': 'Upstream (gabe-rbo)',
         'js.copiedLive': 'Comando copiado.',
@@ -1729,7 +1728,6 @@ Hello, world!
     'js.latestDlWin': 'Download for Windows',
     'js.empty': 'No releases yet.',
     'js.repo': 'View the repository on GitHub',
-        'js.source': 'Source',
         'js.fork': 'Fork (Jluckmay/GabeTeX)',
         'js.upstream': 'Upstream (gabe-rbo)',
         'js.copiedLive': 'Command copied.',
@@ -2232,7 +2230,7 @@ Hello, world!
       if (r.date) meta.push('<span><time datetime="' + esc(r.date) + '">' + esc(fmtDate(r.date)) + '</time></span>');
       /* repository badge */
       var srcLabel = r.repo === 'mac' ? t('js.fork') : t('js.upstream');
-      meta.push('<span class="entry-source">' + esc(t('js.source')) + ': ' + esc(srcLabel) + '</span>');
+      meta.push('<span class="entry-source">' + esc(srcLabel) + '</span>');
       var notesHtml = r.html ? clean(filterNotesByLanguage(r.html, lang)) : '<p>' + esc(t('js.noNotes')) + '</p>';
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
