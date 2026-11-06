@@ -27,12 +27,8 @@
   var uploadDropZone = document.getElementById('upload-drop-zone');
   var uploadStatus = document.getElementById('upload-status');
   var btnHistory = document.getElementById('btn-history');
-  var btnSplit = document.getElementById('btn-split');
-  var btnSpellcheck = document.getElementById('btn-spellcheck');
-  var spellcheckPanel = document.getElementById('spellcheck-panel');
-  var spellcheckSummary = document.getElementById('spellcheck-summary');
-  var spellcheckResults = document.getElementById('spellcheck-results');
-  var btnZoomIn = document.getElementById('btn-zoom-in');
+    var btnSplit = document.getElementById('btn-split');
+    var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
   var btnAutoCompile = document.getElementById('btn-autocompile');
