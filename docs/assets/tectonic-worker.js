@@ -139,7 +139,48 @@ async function initialize() {
     throw new Error('The downloaded Tectonic WebAssembly engine has an invalid version.');
   }
   await addTarFilesFromResponse(responses[1]);
-  wasmExports.tectonic_create_format();
+  // Ensure latex.ltx is available for INITEX format creation. The Tectonic
+  // WASM bundle may not include it at a path kpathsea can find. Fetch it
+  // from TeX Live if missing from the bundle.
+  var latexLtxUrls = [
+    'https://cdn.jsdelivr.net/gh/TeX-Live/texlive@master/texmf-dist/tex/latex/base/latex.ltx',
+    'https://raw.githubusercontent.com/TeX-Live/texlive/master/texmf-dist/tex/latex/base/latex.ltx'
+  ];
+  var latexLtxLoaded = false;
+  for (var u = 0; u < latexLtxUrls.length && !latexLtxLoaded; u++) {
+    try {
+      var latexLtxResponse = await fetchResource(latexLtxUrls[u]);
+      var latexLtxBytes = await latexLtxResponse.arrayBuffer();
+      addFile('latex.ltx', new Uint8Array(latexLtxBytes));
+      addFile('tex/latex/base/latex.ltx', new Uint8Array(latexLtxBytes));
+      addFile('tex/latex/latex.ltx', new Uint8Array(latexLtxBytes));
+      latexLtxLoaded = true;
+      self.postMessage({ type: 'progress', key: 'editor.latexLtxLoaded' });
+    } catch (error) {
+      // Try next URL
+    }
+  }
+  if (!latexLtxLoaded) {
+    self.postMessage({ type: 'progress', key: 'editor.latexLtxFailed' });
+  }
+  // Create the XeLaTeX format with retry; INITEX may fail transiently if
+  // latex.ltx is not yet visible in the virtual file system.
+  var formatCreated = false;
+  var lastFormatError = null;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      wasmExports.tectonic_create_format();
+      formatCreated = true;
+      break;
+    } catch (error) {
+      lastFormatError = error;
+      // Small delay before retrying
+      await new Promise(function (resolve) { setTimeout(resolve, 500); });
+    }
+  }
+  if (!formatCreated) {
+    throw lastFormatError || new Error('Tectonic could not create its format.');
+  }
   var format = readOutput('xelatex.fmt');
   if (!format.length) {
     throw new Error('Tectonic could not prepare its XeLaTeX format.');
@@ -163,6 +204,27 @@ function addTarFiles(bytes) {
     var contentStart = offset + 512;
     if ((type === 48 || type === 0) && name && name !== 'latex.fmt' && size >= 0 && contentStart + size <= bytes.length) {
       addFile(name, bytes.subarray(contentStart, contentStart + size));
+      // Re-add latex.ltx under multiple TDS paths so INITEX can locate it
+      // when creating the XeLaTeX format.
+      if (name.toLowerCase() === 'latex.ltx' || name.toLowerCase().endsWith('/latex.ltx')) {
+        var latexLtxPaths = [
+          name,
+          'tex/latex/base/latex.ltx',
+          'tex/latex/latex.ltx',
+          'latex.ltx',
+          'texmf-dist/tex/latex/base/latex.ltx',
+          'texmf-dist/tex/latex/latex.ltx',
+          'texmf/tex/latex/base/latex.ltx',
+          'texmf/tex/latex/latex.ltx',
+          'share/texmf/tex/latex/base/latex.ltx',
+          'share/texmf/tex/latex/latex.ltx',
+          'share/texmf-dist/tex/latex/base/latex.ltx',
+          'share/texmf-dist/tex/latex/latex.ltx'
+        ];
+        latexLtxPaths.forEach(function (path) {
+          if (path !== name) addFile(path, bytes.subarray(contentStart, contentStart + size));
+        });
+      }
       // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
       if (name.toLowerCase().endsWith('.tfm')) {
         var lower = name.toLowerCase();

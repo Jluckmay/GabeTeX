@@ -702,44 +702,62 @@
 
   function compileWithTectonic(files, mainFile) {
     return new Promise(function (resolve, reject) {
-      var worker = new Worker(new URL('tectonic-worker.js?v=' + Date.now(), editorScriptUrl));
-      var requestId = ++compileRequestId;
-      compileWorker = worker;
-      var timeout = window.setTimeout(function () {
-        worker.terminate();
-        compileWorker = null;
-        reject(new Error(translate('editor.compileTimeout')));
-      }, 180000);
+      // Fetch worker source and create a blob URL to bypass aggressive
+      // browser caching of Web Workers. The ?v=Date.now() query param alone
+      // is not always sufficient to force a fresh fetch.
+      var workerUrl = new URL('tectonic-worker.js?v=' + Date.now(), editorScriptUrl).href;
+      fetch(workerUrl, { cache: 'no-store' })
+        .then(function (response) {
+          if (!response.ok) throw new Error('Could not load worker: HTTP ' + response.status);
+          return response.text();
+        })
+        .then(function (sourceText) {
+          var blob = new Blob([sourceText], { type: 'application/javascript' });
+          var blobUrl = URL.createObjectURL(blob);
+          var worker = new Worker(blobUrl);
+          var requestId = ++compileRequestId;
+          compileWorker = worker;
+          var timeout = window.setTimeout(function () {
+            worker.terminate();
+            compileWorker = null;
+            URL.revokeObjectURL(blobUrl);
+            reject(new Error(translate('editor.compileTimeout')));
+          }, 180000);
 
-      function finish(error, result) {
-        window.clearTimeout(timeout);
-        worker.terminate();
-        if (compileWorker === worker) compileWorker = null;
-        if (error) reject(error);
-        else resolve(result);
-      }
+          function finish(error, result) {
+            window.clearTimeout(timeout);
+            worker.terminate();
+            compileWorker = null;
+            URL.revokeObjectURL(blobUrl);
+            if (error) reject(error);
+            else resolve(result);
+          }
 
-      worker.addEventListener('message', function (event) {
-        var message = event.data;
-        if (!message || (message.id !== undefined && message.id !== requestId)) return;
-        if (message.type === 'progress') {
-          setPreviewStatus(message.key);
-        } else if (message.type === 'result') {
-          finish(null, message);
-        } else if (message.type === 'error') {
-          var error = new Error(message.message || translate('editor.compileFailed'));
-          error.log = message.log || '';
-          finish(error);
-        }
-      });
-      worker.addEventListener('error', function (event) {
-        finish(new Error(event.message || translate('editor.compileError')));
-      });
-      try {
-        worker.postMessage({ type: 'compile', id: requestId, files: files, mainFile: mainFile });
-      } catch (error) {
-        finish(error);
-      }
+          worker.addEventListener('message', function (event) {
+            var message = event.data;
+            if (!message || (message.id !== undefined && message.id !== requestId)) return;
+            if (message.type === 'progress') {
+              setPreviewStatus(message.key);
+            } else if (message.type === 'result') {
+              finish(null, message);
+            } else if (message.type === 'error') {
+              var error = new Error(message.message || translate('editor.compileFailed'));
+              error.log = message.log || '';
+              finish(error);
+            }
+          });
+          worker.addEventListener('error', function (event) {
+            finish(new Error(event.message || translate('editor.compileError')));
+          });
+          try {
+            worker.postMessage({ type: 'compile', id: requestId, files: files, mainFile: mainFile });
+          } catch (error) {
+            finish(error);
+          }
+        })
+        .catch(function (error) {
+          reject(error);
+        });
     });
   }
 
