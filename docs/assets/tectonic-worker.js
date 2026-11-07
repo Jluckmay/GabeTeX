@@ -197,7 +197,7 @@ function addTarFiles(bytes) {
         if (lower.startsWith('cmr') && lower.endsWith('.tfm')) {
           var m = lower.match(/^cmr(\d+)\.tfm$/);
           if (m) {
-            var decipoints = parseInt(m[1], 10) * 10;
+            var decipoints = parseInt(m[1], 10) * 100;
             var ecrmName = 'ecrm' + decipoints + '.tfm';
             tfmPaths.forEach(function (path) {
               var ecrmPath = path.replace(/cmr(\d+\.tfm)$/, 'ecrm' + decipoints + '.tfm');
