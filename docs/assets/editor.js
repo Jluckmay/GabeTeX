@@ -30,6 +30,8 @@
   var btnSplit = document.getElementById('btn-split');
   var btnZoomIn = document.getElementById('btn-zoom-in');
   var btnZoomOut = document.getElementById('btn-zoom-out');
+  var btnPagePrev = document.getElementById('btn-page-prev');
+  var btnPageNext = document.getElementById('btn-page-next');
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
   var btnAutoCompile = document.getElementById('btn-autocompile');
   var btnToolbarPresent = document.getElementById('btn-toolbar-present');
@@ -788,6 +790,7 @@
     var pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     var currentPage = 1;
     pcPage.textContent = '1 / ' + pdf.numPages;
+    updatePageNavButtons(currentPage, pdf.numPages);
 
     if ('IntersectionObserver' in window) {
       state.pageObserver = new IntersectionObserver(function (entries) {
@@ -800,6 +803,7 @@
         if (mostVisible) {
           currentPage = Number(mostVisible.target.getAttribute('data-page'));
           pcPage.textContent = currentPage + ' / ' + pdf.numPages;
+          updatePageNavButtons(currentPage, pdf.numPages);
         }
       }, { root: previewFrame, threshold: [0.5, 0.75] });
     }
@@ -1129,8 +1133,36 @@
     updateSlideView();
   }
 
+  function goToPage(n) {
+    var pages = previewFrame.querySelectorAll('.pdf-page');
+    if (!pages.length) return;
+    if (n < 1) n = 1;
+    if (n > pages.length) n = pages.length;
+    var target = pages[n - 1];
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    pcPage.textContent = n + ' / ' + pages.length;
+    updatePageNavButtons(n, pages.length);
+  }
+
+  function updatePageNavButtons(current, total) {
+    if (!btnPagePrev || !btnPageNext) return;
+    btnPagePrev.disabled = current <= 1;
+    btnPageNext.disabled = current >= total;
+  }
+
   slidePrev.addEventListener('click', function () { goToSlide(state.presentationSlide - 1); });
   slideNext.addEventListener('click', function () { goToSlide(state.presentationSlide + 1); });
+  btnPagePrev.addEventListener('click', function () {
+    var pages = previewFrame.querySelectorAll('.pdf-page');
+    var current = Number(pcPage.textContent.split(' / ')[0]) || 1;
+    goToPage(current - 1);
+  });
+  btnPageNext.addEventListener('click', function () {
+    var pages = previewFrame.querySelectorAll('.pdf-page');
+    var current = Number(pcPage.textContent.split(' / ')[0]) || 1;
+    goToPage(current + 1);
+  });
   slideExit.addEventListener('click', function () {
     btnToolbarPresent.setAttribute('aria-pressed', 'false');
     btnToolbarPresent.classList.remove('tb-active');
