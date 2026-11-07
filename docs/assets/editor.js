@@ -742,15 +742,35 @@
   }
 
   function applyPreviewZoom() {
-    pcZoom.textContent = Math.round(state.zoom * 100) + '%';
-    Array.prototype.forEach.call(previewFrame.querySelectorAll('.pdf-page'), function (page) {
-      var width = Number(page.getAttribute('data-width'));
-      var height = Number(page.getAttribute('data-height'));
-      page.style.width = width * state.zoom + 'px';
-      page.style.height = height * state.zoom + 'px';
-      page.querySelector('canvas').style.transform = 'scale(' + state.zoom + ')';
-    });
-  }
+      if (editorWindow.classList.contains('presentation-mode')) return;
+      pcZoom.textContent = Math.round(state.zoom * 100) + '%';
+      Array.prototype.forEach.call(previewFrame.querySelectorAll('.pdf-page'), function (page) {
+        var width = Number(page.getAttribute('data-width'));
+        var height = Number(page.getAttribute('data-height'));
+        page.style.width = width * state.zoom + 'px';
+        page.style.height = height * state.zoom + 'px';
+        page.querySelector('canvas').style.transform = 'scale(' + state.zoom + ')';
+      });
+    }
+
+    function fitSlideToScreen() {
+      if (!editorWindow.classList.contains('presentation-mode')) return;
+      var pages = previewFrame.querySelectorAll('.pdf-page');
+      if (!pages.length) return;
+      var page = pages[state.presentationSlide - 1];
+      if (!page) return;
+      var canvas = page.querySelector('canvas');
+      if (!canvas) return;
+      var pageW = Number(page.getAttribute('data-width'));
+      var pageH = Number(page.getAttribute('data-height'));
+      if (!pageW || !pageH) return;
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var scale = Math.min(vw / pageW, vh / pageH) * 0.96;
+      page.style.width = pageW * scale + 'px';
+      page.style.height = pageH * scale + 'px';
+      canvas.style.transform = 'scale(' + scale + ')';
+    }
 
   async function renderPdf(bytes) {
     var pdfjs = await getPdfJs();
@@ -1069,6 +1089,7 @@
       state.presentationSlide = 1;
       editorWindow.classList.add('presentation-mode');
       updateSlideView();
+      fitSlideToScreen();
       setupSlideKeyboard();
       requestFullscreen(editorWindow);
     } else {
@@ -1097,6 +1118,7 @@
       }
     });
     slideCounter.textContent = state.presentationSlide + ' / ' + pages.length;
+    fitSlideToScreen();
   }
 
   function goToSlide(n) {
@@ -1159,6 +1181,8 @@
       btnToolbarPresent.classList.remove('tb-active');
       editorWindow.classList.remove('presentation-mode');
       teardownSlideKeyboard();
+    } else if (isFull) {
+      fitSlideToScreen();
     }
   });
   document.addEventListener('webkitfullscreenchange', function () {
@@ -1168,6 +1192,8 @@
       btnToolbarPresent.classList.remove('tb-active');
       editorWindow.classList.remove('presentation-mode');
       teardownSlideKeyboard();
+    } else if (isFull) {
+      fitSlideToScreen();
     }
   });
 
@@ -1186,5 +1212,9 @@
 
   /* Expose for debugging */
   window.gabetexEditor = { compile: compile, state: state };
+
+  window.addEventListener('resize', function () {
+    if (editorWindow.classList.contains('presentation-mode')) fitSlideToScreen();
+  });
 
 })();

@@ -330,8 +330,8 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 .editor-window.presentation-mode .pdf-page {
   margin: 0 !important;
   box-shadow: none !important;
-  max-width: 95vw;
-  max-height: 90vh;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 /* Fullscreen presentation mode */

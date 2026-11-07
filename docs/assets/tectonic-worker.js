@@ -180,6 +180,31 @@ function addTarFiles(bytes) {
         tfmPaths.forEach(function (path) {
           if (path !== name) addFile(path, bytes.subarray(contentStart, contentStart + size));
         });
+        // Beamer defaults to sans serif (cmss) which is missing from the bundle.
+        // Map cmr TFM files to cmss names so beamer's \sffamily resolves to a
+        // real font instead of nullfont.
+        if (lower.startsWith('cmr') && lower.endsWith('.tfm')) {
+          var cmssName = 'cmss' + lower.slice(3);
+          tfmPaths.forEach(function (path) {
+            var cmssPath = path.replace(/\/cmr(\d+\.tfm)$/, '/cmss$1').replace(/cmr(\d+\.tfm)$/, 'cmss$1');
+            if (cmssPath !== path && cmssPath !== name) addFile(cmssPath, bytes.subarray(contentStart, contentStart + size));
+          });
+        }
+        // fontenc T1 encoding looks for ecrm (T1-encoded cmr) TFM files which
+        // are missing from the bundle. Map cmr TFM files to ecrm names so
+        // \usepackage[T1]{fontenc} works without nullfont. T1 encoding uses
+        // decipoint naming: cmr10.tfm -> ecrm1000.tfm (10pt = 100 decipoints).
+        if (lower.startsWith('cmr') && lower.endsWith('.tfm')) {
+          var m = lower.match(/^cmr(\d+)\.tfm$/);
+          if (m) {
+            var decipoints = parseInt(m[1], 10) * 10;
+            var ecrmName = 'ecrm' + decipoints + '.tfm';
+            tfmPaths.forEach(function (path) {
+              var ecrmPath = path.replace(/cmr(\d+\.tfm)$/, 'ecrm' + decipoints + '.tfm');
+              if (ecrmPath !== path && ecrmPath !== name) addFile(ecrmPath, bytes.subarray(contentStart, contentStart + size));
+            });
+          }
+        }
       }
       entries++;
     }
@@ -300,16 +325,11 @@ function readOutput(name) {
 }
 
 function stripBeamerPackages(source) {
-  // Beamer has its own font system; packages that require TFM font
-  // metrics missing from the Tectonic WASM bundle are stripped to avoid
-  // cascading font errors that break environments like column/alertblock.
-  return source
-    .replace(/\\usepackage\s*\{lmodern\}/g, '')
-    .replace(/\\usepackage\s*\{amsmath,?\s*amssymb?\}/g, '')
-    .replace(/\\usepackage\s*\{amssymb,?\s*amsmath?\}/g, '')
-    .replace(/\\usepackage\s*\{amsmath\}/g, '')
-    .replace(/\\usepackage\s*\{amssymb\}/g, '')
-    .replace(/\\usepackage\s*\{fontenc\}/g, '');
+  // Beamer has its own font system; class files are fetched at runtime from
+  // GitHub (fetchBeamerFiles). Return the source unchanged so beamer's own
+  // font setup is used. Missing TFM font metric files (cmss for sans serif,
+  // ecrm for T1 encoding) are added as copies of cmr TFM files in addTarFiles.
+  return source;
 }
 
 function stripMathPackages(source) {
@@ -323,22 +343,43 @@ function stripMathPackages(source) {
     .replace(/\\usepackage\s*\{amssymb\}/g, '');
 }
 
+// Removes a \usepackage/\RequirePackage declaration that lists the given
+// package name among the (possibly comma separated) package list.
+function removePackage(source, packageName) {
+  return source.replace(/\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{([^}]*)\}/g, function (match, list) {
+    var tokens = list.split(/\s*,\s*/);
+    var kept = tokens.filter(function (t) { return t !== packageName; });
+    if (kept.length === 0) return '';
+    return match.replace(list, kept.join(', '));
+  });
+}
+
+// Packages that depend on TFM font metrics that are not present in the
+// Tectonic WASM bundle. Loading them makes LaTeX fall back to nullfont,
+// which silently drops every character and yields blank pages.
+var FONT_DEPENDENT_PACKAGES = [
+  'inputenc',
+  'fontenc',
+  'lmodern',
+  'amsmath',
+  'amsfonts',
+  'amssymb',
+  'textcomp',
+  'upgreek'
+];
+
+function stripFontDependentPackages(source) {
+  return FONT_DEPENDENT_PACKAGES.reduce(removePackage, source);
+}
+
 function prepareMathSource(files, mainFile) {
   var source = files[mainFile];
   // Beamer has its own font system; do not inject fontspec.
   // Strip packages that need TFM font metrics missing from the WASM bundle.
   if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
-    source = stripBeamerPackages(source);
-    // Add fontspec/unicode-math with OTF fonts available in the bundle
-    // to replace TFM-based Computer Modern fonts that kpathsea cannot locate.
-    var fontSetup = '\n\\usepackage{fontspec}\n\\setmainfont{lmroman10-regular.otf}\n\\usepackage{unicode-math}\n\\setmathfont{latinmodern-math.otf}\n';
-    // Insert after \documentclass line
-    var documentClass = /\\documentclass(?:\s*\[[^\]]*\])?\s*\{[^}]+\}/.exec(source);
-    if (documentClass) {
-      var classEnd = documentClass.index + documentClass[0].length;
-      source = source.slice(0, classEnd) + fontSetup + source.slice(classEnd);
-    }
-    return source;
+    // Beamer brings its own font setup; only the TFM-dependent packages are
+    // removed and the sans-serif default is redirected to an available font.
+    return stripBeamerPackages(source);
   }
   // Strip amsmath/amssymb for all documents; unicode-math provides math support
   source = stripMathPackages(source);
