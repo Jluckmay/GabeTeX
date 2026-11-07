@@ -243,6 +243,7 @@ var BEAMER_GITHUB_FILES = [
   'beamerbasenotes.sty',
   'beamerbaseoptions.sty',
   'beamerbaseoverlay.sty',
+  'beamerbaserequires.sty',
   'beamerbasearticle.sty',
   'beamerbasesection.sty',
   'beamerbasetemplates.sty',
