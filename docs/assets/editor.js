@@ -700,7 +700,7 @@
 
   function compileWithTectonic(files, mainFile) {
     return new Promise(function (resolve, reject) {
-      var worker = new Worker(new URL('tectonic-worker.js', editorScriptUrl));
+      var worker = new Worker(new URL('tectonic-worker.js?v=' + Date.now(), editorScriptUrl));
       var requestId = ++compileRequestId;
       compileWorker = worker;
       var timeout = window.setTimeout(function () {

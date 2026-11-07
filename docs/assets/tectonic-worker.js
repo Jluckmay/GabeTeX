@@ -395,20 +395,12 @@ function prepareMathSource(files, mainFile) {
   var projectSource = Object.keys(files).map(function (name) { return files[name]; }).join('\n');
   if (!/\$|\\\(|\\\[|\\begin\s*\{(?:equation|align(?:at)?|flalign|gather|multline|displaymath|math|eqnarray)\*?\}/.test(projectSource)) return source;
   if (/\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{[^}]*\bunicode-math\b/.test(projectSource)) return source;
-
-  var mathSetup = '\n\\usepackage{unicode-math}\n\\setmathfont{latinmodern-math.otf}\n';
-  var fontspecPackage = /\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{[^}]*\bfontspec\b[^}]*\}/.exec(source);
-  if (fontspecPackage) {
-    var packageEnd = fontspecPackage.index + fontspecPackage[0].length;
-    return source.slice(0, packageEnd) + mathSetup + source.slice(packageEnd);
-  }
-  if (/\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{[^}]*\bfontspec\b/.test(projectSource)) return source;
-
-  var documentClass = /\\documentclass(?:\s*\[[^\]]*\])?\s*\{[^}]+\}/.exec(source);
-  if (!documentClass) return source;
-  var classEnd = documentClass.index + documentClass[0].length;
-  var fontSetup = '\n\\usepackage{fontspec}\n\\setmainfont{lmroman10-regular.otf}' + mathSetup;
-  return source.slice(0, classEnd) + fontSetup + source.slice(classEnd);
+  // Do NOT inject fontspec/unicode-math for non-beamer documents: the Tectonic
+  // WASM bundle lacks TFM metric files for Computer Modern math fonts
+  // (cmmi, cmsy, cmex), and fontspec/unicode-math would fail to load them.
+  // Let XeLaTeX use its default Computer Modern fonts (cmr/cmmi/cmsy/cmex)
+  // which are present in the bundle.
+  return source;
 }
 
 async function compileDocument(message) {
