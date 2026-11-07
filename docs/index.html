@@ -1438,7 +1438,7 @@ Hello, world!
     var DOWNLOAD_DEB_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-linux-amd64.deb';
     var DOWNLOAD_EXE_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe';
     var DOWNLOAD_MSI_UP = UP_LW_RELEASES + '/latest/download/GabeTeX-windows-x64.msi';
-  var CACHE_KEY = 'gabetex.releases.v2';
+  var CACHE_KEY = 'gabetex.releases.v3';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
   var mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
@@ -2064,6 +2064,12 @@ Hello, world!
                         }
                       });
                       var upstreamEntries = Object.values(mergedUp);
+                      /* Remove fork entries whose version tag already exists
+                         in the upstream (original) repos, so duplicates are
+                         shown only once — from the original repository. */
+                      forkEntries = forkEntries.filter(function (r) {
+                        return !mergedUp[bare(r.tag)];
+                      });
 
                       return forkEntries.concat(upstreamEntries)
                         .sort(function (a, b) {
