@@ -205,13 +205,9 @@ function addTarFiles(bytes) {
             }
           }
           // Map cmr -> cmmi (math italic) for math support
-          if (baseName.startsWith('r')) {
-            var cmmiName = 'cmmi' + baseName.slice(1);
-            tfmPaths.forEach(function (path) {
-              var cmmiPath = path.replace(/cmr(\d+\.tfm)$/, 'cmmi$1').replace(/cmr(\d+\.tfm)$/, 'cmmi$1');
-              if (cmmiPath !== path && cmmiPath !== name) addFile(cmmiPath, bytes.subarray(contentStart, contentStart + size));
-            });
-          }
+          // NOTE: skipped - cmmi*.tfm already exists in the bundle and
+          // overwriting it with cmr content corrupts the font metrics.
+          // cmmi files are found at their original bundle path.
         }
       }
       entries++;
