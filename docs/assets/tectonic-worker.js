@@ -216,6 +216,17 @@ function addTarFiles(bytes) {
               if (cmttPath !== path && cmttPath !== name) addFile(cmttPath, bytes.subarray(contentStart, contentStart + size));
             });
           }
+          // Map cmr -> lmss (Latin Modern Sans Serif) for beamer with T1 fontenc
+          if (baseName.startsWith('r')) {
+            var m = lower.match(/^cmr(\d+)\.tfm$/);
+            if (m) {
+              var size = m[1];
+              tfmPaths.forEach(function (path) {
+                var lmssPath = path.replace(/cmr(\d+\.tfm)$/, 'lmss' + size + '.tfm');
+                if (lmssPath !== path && lmssPath !== name) addFile(lmssPath, bytes.subarray(contentStart, contentStart + size));
+              });
+            }
+          }
           // Map cmr -> cmmi (math italic) for math support
           // NOTE: skipped - cmmi*.tfm already exists in the bundle and
           // overwriting it with cmr content corrupts the font metrics.
@@ -252,6 +263,7 @@ var BEAMER_GITHUB_FILES = [
   'beamerbasemisc.sty',
   'beamerbasemodes.sty',
   'beamerbasenavigation.sty',
+  'beamerbasenavigationsymbols.tex',
   'beamerbasenotes.sty',
   'beamerbaseoptions.sty',
   'beamerbaseoverlay.sty',
@@ -273,7 +285,8 @@ var BEAMER_GITHUB_FILES = [
     'themes/inner/beamerinnerthemedefault.sty',
     'themes/color/beamercolorthemedefault.sty',
     'themes/font/beamerfontthemedefault.sty',
-    'themes/font/beamerfontthemeserif.sty'
+    'themes/font/beamerfontthemeserif.sty',
+    'themes/theme/beamerthemedefault.sty'
   ];
   // Beamer Madrid theme files (loads whale+orchid color, rounded inner, infolines outer)
   var BEAMER_MADRID_THEME_FILES = [
@@ -285,7 +298,20 @@ var BEAMER_GITHUB_FILES = [
   ];
   var XXCOLOR_URL = 'https://raw.githubusercontent.com/pgf-tikz/pgf/master/tex/latex/pgf/utilities/xxcolor.sty';
 
-  async function fetchBeamerFiles() {
+    // Beamer depends on the translator package (loaded via beamerbasetranslator.sty).
+    // translator.sty and its dictionary files are fetched from the translator repo.
+    var TRANSLATOR_GITHUB_ROOT = 'https://raw.githubusercontent.com/josephwright/translator/master/';
+    var TRANSLATOR_FILES = [
+      'translator.sty',
+      'dictionaries/translator-basic-dictionary.sty',
+      'dictionaries/translator-bibliography-dictionary.sty',
+      'dictionaries/translator-environment-dictionary.sty',
+      'dictionaries/translator-months-dictionary.sty',
+      'dictionaries/translator-numbers-dictionary.sty',
+      'dictionaries/translator-theorem-dictionary.sty'
+    ];
+
+    async function fetchBeamerFiles() {
     var allFiles = BEAMER_GITHUB_FILES
       .concat(BEAMER_DEFAULT_THEME_FILES)
       .concat(BEAMER_MADRID_THEME_FILES);
@@ -302,6 +328,25 @@ var BEAMER_GITHUB_FILES = [
         // Non-fatal: some files may not exist
       }
     }
+    // Fetch translator package files (dependency of beamer)
+    for (var i = 0; i < TRANSLATOR_FILES.length; i++) {
+      var name = TRANSLATOR_FILES[i];
+      try {
+        var response = await fetchResource(TRANSLATOR_GITHUB_ROOT + name);
+        var bytes = await response.arrayBuffer();
+        addFile(name, new Uint8Array(bytes));
+        // Also add with TDS path for kpathsea
+        addFile('tex/latex/translator/' + name, new Uint8Array(bytes));
+      } catch (error) {
+        // Non-fatal: some files may not exist
+      }
+    }
+
+    // Beamer's enumerate environment may require enumerate.sty which is not
+    // in the Tectonic WASM bundle. Provide a minimal stub.
+    addFile('enumerate.sty', new TextEncoder().encode('\\ProvidesPackage{enumerate}[2000/08/01]\\endinput'));
+    addFile('tex/latex/enumerate/enumerate.sty', new TextEncoder().encode('\\ProvidesPackage{enumerate}[2000/08/01]\\endinput'));
+
     try {
       var response = await fetchResource(XXCOLOR_URL);
       var bytes = await response.arrayBuffer();
