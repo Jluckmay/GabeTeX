@@ -183,25 +183,33 @@ function addTarFiles(bytes) {
         // Beamer defaults to sans serif (cmss) which is missing from the bundle.
         // Map cmr TFM files to cmss names so beamer's \sffamily resolves to a
         // real font instead of nullfont.
-        if (lower.startsWith('cmr') && lower.endsWith('.tfm')) {
-          var cmssName = 'cmss' + lower.slice(3);
-          tfmPaths.forEach(function (path) {
-            var cmssPath = path.replace(/\/cmr(\d+\.tfm)$/, '/cmss$1').replace(/cmr(\d+\.tfm)$/, 'cmss$1');
-            if (cmssPath !== path && cmssPath !== name) addFile(cmssPath, bytes.subarray(contentStart, contentStart + size));
-          });
-        }
-        // fontenc T1 encoding looks for ecrm (T1-encoded cmr) TFM files which
-        // are missing from the bundle. Map cmr TFM files to ecrm names so
-        // \usepackage[T1]{fontenc} works without nullfont. T1 encoding uses
-        // decipoint naming: cmr10.tfm -> ecrm1000.tfm (10pt = 100 decipoints).
-        if (lower.startsWith('cmr') && lower.endsWith('.tfm')) {
-          var m = lower.match(/^cmr(\d+)\.tfm$/);
-          if (m) {
-            var decipoints = parseInt(m[1], 10) * 100;
-            var ecrmName = 'ecrm' + decipoints + '.tfm';
+        if (lower.startsWith('cm') && lower.endsWith('.tfm')) {
+          var baseName = lower.replace(/^cm/, '');
+          // Map cmr -> cmss (sans serif)
+          if (baseName.startsWith('r')) {
+            var cmssName = 'cmss' + baseName.slice(1);
             tfmPaths.forEach(function (path) {
-              var ecrmPath = path.replace(/cmr(\d+\.tfm)$/, 'ecrm' + decipoints + '.tfm');
-              if (ecrmPath !== path && ecrmPath !== name) addFile(ecrmPath, bytes.subarray(contentStart, contentStart + size));
+              var cmssPath = path.replace(/cmr(\d+\.tfm)$/, 'cmss$1').replace(/cmr(\d+\.tfm)$/, 'cmss$1');
+              if (cmssPath !== path && cmssPath !== name) addFile(cmssPath, bytes.subarray(contentStart, contentStart + size));
+            });
+          }
+          // Map cmr -> ecrm (T1 encoded) for fontenc support
+          if (baseName.startsWith('r')) {
+            var m = lower.match(/^cmr(\d+)\.tfm$/);
+            if (m) {
+              var decipoints = parseInt(m[1], 10) * 100;
+              tfmPaths.forEach(function (path) {
+                var ecrmPath = path.replace(/cmr(\d+\.tfm)$/, 'ecrm' + decipoints + '.tfm');
+                if (ecrmPath !== path && ecrmPath !== name) addFile(ecrmPath, bytes.subarray(contentStart, contentStart + size));
+              });
+            }
+          }
+          // Map cmr -> cmmi (math italic) for math support
+          if (baseName.startsWith('r')) {
+            var cmmiName = 'cmmi' + baseName.slice(1);
+            tfmPaths.forEach(function (path) {
+              var cmmiPath = path.replace(/cmr(\d+\.tfm)$/, 'cmmi$1').replace(/cmr(\d+\.tfm)$/, 'cmmi$1');
+              if (cmmiPath !== path && cmmiPath !== name) addFile(cmmiPath, bytes.subarray(contentStart, contentStart + size));
             });
           }
         }
@@ -336,11 +344,7 @@ function stripMathPackages(source) {
   // Packages that require TFM font metrics missing from the Tectonic WASM
   // bundle are stripped to avoid cascading font errors. unicode-math with
   // OTF fonts (available in the bundle) provides math support instead.
-  return source
-    .replace(/\\usepackage\s*\{amsmath,?\s*amssymb?\}/g, '')
-    .replace(/\\usepackage\s*\{amssymb,?\s*amsmath?\}/g, '')
-    .replace(/\\usepackage\s*\{amsmath\}/g, '')
-    .replace(/\\usepackage\s*\{amssymb\}/g, '');
+  return stripFontDependentPackages(source);
 }
 
 // Removes a \usepackage/\RequirePackage declaration that lists the given
@@ -364,6 +368,7 @@ var FONT_DEPENDENT_PACKAGES = [
   'amsmath',
   'amsfonts',
   'amssymb',
+  'babel',
   'textcomp',
   'upgreek'
 ];
