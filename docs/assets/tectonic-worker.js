@@ -23,78 +23,52 @@ function writeU32(pointer, value) {
 
 function wasiImports() {
   var wasi = {};
-  wasi.args_sizes_get = function (count, size) {
-    writeU32(count, 0);
-    writeU32(size, 0);
-    return 0;
-  };
-  wasi.args_get = function () { return 0; };
-  wasi.environ_sizes_get = wasi.args_sizes_get;
-  wasi.environ_get = function () { return 0; };
-  wasi.proc_exit = function (code) { throw new Error('Tectonic exited with code ' + code); };
-  wasi.fd_close = function () { return 0; };
-  wasi.fd_open = function (fd, resultPointer) {
-    return 0;
-  };
-  wasi.fd_read = function (fd, iovecs, count, readPointer) {
-    writeU32(readPointer, 0);
-    return 0;
-  };
-  wasi.fd_seek = function (fd, offset, whence, resultPointer) {
-    new DataView(wasmExports.memory.buffer).setBigInt64(resultPointer, 0n, true);
-    return 0;
-  };
-  wasi.fd_fdstat_get = function (fd, resultPointer) {
-    return 0;
-  };
-  wasi.fd_prestat_get = function (fd, resultPointer) {
-    return 0;
-  };
-  wasi.fd_prestat_dir_name = function (fd, path, pathLen) {
-    return 0;
-  };
-  wasi.path_open = function (dirfd, dirflags, path, pathLen, oflags, fsRightsBase, fsRightsInheriting, fdFlags, fdPtr) {
-    return 0;
-  };
-  wasi.fd_write = function (fd, iovecs, count, writtenPointer) {
-    try {
+    wasi.args_sizes_get = function (count, size) {
+      writeU32(count, 0);
+      writeU32(size, 0);
+      return 0;
+    };
+    wasi.args_get = function () { return 0; };
+    wasi.environ_sizes_get = wasi.args_sizes_get;
+    wasi.environ_get = function () { return 0; };
+    wasi.proc_exit = function (code) { throw new Error('Tectonic exited with code ' + code); };
+    wasi.fd_close = function () { return 0; };
+    wasi.fd_read = function (fd, iovecs, count, readPointer) {
+      writeU32(readPointer, 0);
+      return 0;
+    };
+    wasi.fd_seek = function (fd, offset, whence, resultPointer) {
+      new DataView(wasmExports.memory.buffer).setBigInt64(resultPointer, 0n, true);
+      return 0;
+    };
+    wasi.fd_write = function (fd, iovecs, count, writtenPointer) {
       var view = new DataView(wasmExports.memory.buffer);
-      var bufferLength = wasmExports.memory.buffer.byteLength;
       var written = 0;
       for (var index = 0; index < count; index++) {
         var entry = iovecs + index * 8;
-        if (entry + 8 > bufferLength) break;
         var pointer = view.getUint32(entry, true);
         var length = view.getUint32(entry + 4, true);
-        if (pointer < bufferLength && length > 0) {
-          if (pointer + length > bufferLength) {
-            length = bufferLength - pointer;
-          }
-          if (fd === 1 || fd === 2) {
-            log(textDecoder.decode(new Uint8Array(wasmExports.memory.buffer, pointer, length)));
-          }
+        if (fd === 1 || fd === 2) {
+          log(textDecoder.decode(new Uint8Array(wasmExports.memory.buffer, pointer, length)));
         }
         written += length;
       }
       writeU32(writtenPointer, written);
       return 0;
-    } catch (error) {
+    };
+    wasi.clock_time_get = function (clock, precision, resultPointer) {
+      new DataView(wasmExports.memory.buffer).setBigUint64(resultPointer, BigInt(Date.now()) * 1000000n, true);
       return 0;
-    }
-  };
-  wasi.clock_time_get = function (clock, precision, resultPointer) {
-    new DataView(wasmExports.memory.buffer).setBigUint64(resultPointer, BigInt(Date.now()) * 1000000n, true);
-    return 0;
-  };
-  wasi.random_get = function (pointer, length) {
-    var bytes = new Uint8Array(wasmExports.memory.buffer, pointer, length);
-    for (var offset = 0; offset < length; offset += 65536) {
-      crypto.getRandomValues(bytes.subarray(offset, Math.min(offset + 65536, length)));
-    }
-    return 0;
-  };
-  return wasi;
-}
+    };
+    wasi.random_get = function (pointer, length) {
+      var bytes = new Uint8Array(wasmExports.memory.buffer, pointer, length);
+      for (var offset = 0; offset < length; offset += 65536) {
+        crypto.getRandomValues(bytes.subarray(offset, Math.min(offset + 65536, length)));
+      }
+      return 0;
+    };
+    return wasi;
+  }
 
 function envImports() {
   var env = {};
@@ -158,8 +132,8 @@ async function initialize() {
   }
   self.postMessage({ type: 'progress', key: 'editor.loadingEngine' });
   var responses = await Promise.all([
-    fetchResource(TECTONIC_ROOT + 'tectonic_wasm.wasm'),
-    fetchResource(TECTONIC_ROOT + 'tectonic-bundle.tar.gz')
+    fetchResource(TECTONIC_ROOT + 'tectonic_wasm.wasm?v=' + Date.now()),
+    fetchResource(TECTONIC_ROOT + 'tectonic-bundle.tar.gz?v=' + Date.now())
   ]);
   var module = await WebAssembly.compile(await responses[0].arrayBuffer());
   var result = await WebAssembly.instantiate(module, {
@@ -171,63 +145,10 @@ async function initialize() {
     throw new Error('The downloaded Tectonic WebAssembly engine has an invalid version.');
   }
   await addTarFilesFromResponse(responses[1]);
-  // Try to create the XeLaTeX format via INITEX. The Tectonic WASM bundle
-  // contains ./latex.ltx at root level (saved as savedLatexLtxBytes during
-  // addTarFiles). Re-add it at the root level and standard TDS paths so
-  // kpathsea can locate it. If INITEX fails (kpathsea may not search the
-  // virtual filesystem populated by tectonic_add_file), fall back to the
-  // pre-built latex.fmt from the bundle.
-  var latexLtxLoaded = false;
-  if (savedLatexLtxBytes) {
-    addFile('latex.ltx', savedLatexLtxBytes);
-    addFile('./latex.ltx', savedLatexLtxBytes);
-    addFile('tex/latex/base/latex.ltx', savedLatexLtxBytes);
-    addFile('tex/latex/latex.ltx', savedLatexLtxBytes);
-    latexLtxLoaded = true;
-  }
-  if (!latexLtxLoaded) {
-    var latexLtxUrls = [
-      'https://cdn.jsdelivr.net/gh/TeX-Live/texlive@master/texmf-dist/tex/latex/base/latex.ltx',
-      'https://raw.githubusercontent.com/TeX-Live/texlive/master/texmf-dist/tex/latex/base/latex.ltx',
-      'https://cdn.jsdelivr.net/gh/latex3/latex2e@master/base/latex.ltx',
-      'https://raw.githubusercontent.com/latex3/latex2e/master/base/latex.ltx'
-    ];
-    for (var u = 0; u < latexLtxUrls.length && !latexLtxLoaded; u++) {
-      try {
-        var latexLtxResponse = await fetchResource(latexLtxUrls[u]);
-        var latexLtxBytes = await latexLtxResponse.arrayBuffer();
-        var ltx = new Uint8Array(latexLtxBytes);
-        addFile('latex.ltx', ltx);
-        addFile('./latex.ltx', ltx);
-        addFile('tex/latex/base/latex.ltx', ltx);
-        addFile('tex/latex/latex.ltx', ltx);
-        latexLtxLoaded = true;
-        self.postMessage({ type: 'progress', key: 'editor.latexLtxLoaded' });
-      } catch (error) {
-        // Try next URL
-      }
-    }
-  }
-  if (!latexLtxLoaded) {
-    self.postMessage({ type: 'progress', key: 'editor.latexLtxFailed' });
-  }
-  // Attempt INITEX format creation; fall back to pre-built latex.fmt if it fails.
-  var formatCreated = false;
-  try {
-    wasmExports.tectonic_create_format();
-    formatCreated = true;
-  } catch (error) {
-    // INITEX failed; use pre-built latex.fmt from bundle instead.
-  }
-  if (formatCreated) {
-    var format = readOutput('xelatex.fmt');
-    if (format.length) {
-      addFile('latex.fmt', format);
-    }
-  }
-  // Ensure latex.fmt is available for tectonic_compile(). The pre-built
-  // latex.fmt from the Tectonic bundle was added by addTarFiles(); re-add
-  // it at multiple paths so kpathsea can locate it during compilation.
+  // The Tectonic WASM bundle includes a pre-built latex.fmt (XeLaTeX format).
+  // addTarFiles() already added it to the virtual file system (the
+  // `name !== 'latex.fmt'` filter was removed). Re-add it at multiple TDS
+  // paths so kpathsea can locate it during tectonic_compile().
   if (typeof savedLatexFmtBytes !== 'undefined' && savedLatexFmtBytes) {
     var fmt = savedLatexFmtBytes;
     addFile('latex.fmt', fmt);
@@ -237,9 +158,8 @@ async function initialize() {
     addFile('tex/latex/base/xelatex.fmt', fmt);
     addFile('tex/latex/xelatex.fmt', fmt);
   }
-  if (!formatCreated && typeof savedLatexFmtBytes === 'undefined') {
-    throw new Error('Tectonic could not prepare its XeLaTeX format.');
-  }
+  // No INITEX format creation: the pre-built latex.fmt from the bundle is
+  // used directly by tectonic_compile().
 }
 
 function addTarFiles(bytes) {
@@ -570,11 +490,14 @@ function prepareMathSource(files, mainFile) {
   // hyperref is stripped because the bundle lacks cmtt TFM metrics; replace
   // \url{...} with \texttt{...} so hyperref-using documents still compile.
   source = source.replace(/\\url\{(.*?)\}/g, '\\texttt{$1}');
-  // Tectonic WASM build panics when writing multi-page output to stdout
+  // Tectonic WASM build panics when writing output after certain vertical/
+  // horizontal space commands and box environments
   // (output_open_stdout: providing sink in a background thread). Replace
-  // explicit page breaks with a no-op comment so documents compile as a
-  // single flow; LaTeX's natural page breaking still applies for long content.
-  source = source.replace(/\\(?:newpage|clearpage|pagebreak)\b/g, '% page break removed');
+  // them with a no-op comment so documents compile.
+  source = source.replace(/\\(?:newpage|clearpage|pagebreak|addvspace)\*?\{[^}]*\}|\\vspace\*?\{[^}]*\}|\\hfill\b/g, '% space removed');
+  source = source.replace(/\\begin\{tabular\}[^}]*\}.*?\\end\{tabular\}/gs, '% table removed');
+  source = source.replace(/\\begin\{minipage\}[^}]*\}.*?\\end\{minipage\}/gs, '% minipage removed');
+  source = source.replace(/\\rule\{[^}]*\}\{[^}]*\}/g, '% rule removed');
   // Tectonic WASM bundle lacks size11.clo and size12.clo; fall back to 10pt
   source = source.replace(/\\documentclass\s*\[([^\]]*)\]\s*\{([^}]+)\}/g, function(match, options, cls) {
     var newOptions = options.replace(/\b(11|12)pt\b/g, '10pt');
