@@ -9,6 +9,9 @@ var textEncoder = new TextEncoder();
 // Saved latex.ltx bytes extracted from the Tectonic bundle tar, used to
 // guarantee visibility to kpathsea during INITEX format creation.
 var savedLatexLtxBytes = null;
+// Saved latex.fmt bytes extracted from the Tectonic bundle tar, used to
+// guarantee visibility to kpathsea during document compilation.
+var savedLatexFmtBytes = null;
 
 function log(text) {
   outputLog = (outputLog + text).slice(-20000);
@@ -142,10 +145,66 @@ async function initialize() {
     throw new Error('The downloaded Tectonic WebAssembly engine has an invalid version.');
   }
   await addTarFilesFromResponse(responses[1]);
-  // The pre-built latex.fmt from the Tectonic bundle was already added to
-  // the virtual file system by addTarFiles(). It will be used by
-  // tectonic_compile() during document compilation, so no INITEX format
-  // creation is needed here.
+  // Ensure latex.ltx is available for INITEX format creation. The Tectonic
+  // WASM bundle contains ./latex.ltx at root level (saved as
+  // savedLatexLtxBytes during addTarFiles). Re-add it at the root level and
+  // standard TDS paths so kpathsea can locate it.
+  var latexLtxLoaded = false;
+  if (savedLatexLtxBytes) {
+    addFile('latex.ltx', savedLatexLtxBytes);
+    addFile('./latex.ltx', savedLatexLtxBytes);
+    addFile('tex/latex/base/latex.ltx', savedLatexLtxBytes);
+    addFile('tex/latex/latex.ltx', savedLatexLtxBytes);
+    latexLtxLoaded = true;
+  }
+  if (!latexLtxLoaded) {
+    var latexLtxUrls = [
+      'https://cdn.jsdelivr.net/gh/TeX-Live/texlive@master/texmf-dist/tex/latex/base/latex.ltx',
+      'https://raw.githubusercontent.com/TeX-Live/texlive/master/texmf-dist/tex/latex/base/latex.ltx',
+      'https://cdn.jsdelivr.net/gh/latex3/latex2e@master/base/latex.ltx',
+      'https://raw.githubusercontent.com/latex3/latex2e/master/base/latex.ltx'
+    ];
+    for (var u = 0; u < latexLtxUrls.length && !latexLtxLoaded; u++) {
+      try {
+        var latexLtxResponse = await fetchResource(latexLtxUrls[u]);
+        var latexLtxBytes = await latexLtxResponse.arrayBuffer();
+        var ltx = new Uint8Array(latexLtxBytes);
+        addFile('latex.ltx', ltx);
+        addFile('./latex.ltx', ltx);
+        addFile('tex/latex/base/latex.ltx', ltx);
+        addFile('tex/latex/latex.ltx', ltx);
+        latexLtxLoaded = true;
+        self.postMessage({ type: 'progress', key: 'editor.latexLtxLoaded' });
+      } catch (error) {
+        // Try next URL
+      }
+    }
+  }
+  if (!latexLtxLoaded) {
+    self.postMessage({ type: 'progress', key: 'editor.latexLtxFailed' });
+  }
+  // Create the XeLaTeX format with retry; INITEX may fail transiently if
+  // latex.ltx is not yet visible in the virtual file system.
+  var formatCreated = false;
+  var lastFormatError = null;
+  for (var attempt = 0; attempt < 3; attempt++) {
+    try {
+      wasmExports.tectonic_create_format();
+      formatCreated = true;
+      break;
+    } catch (error) {
+      lastFormatError = error;
+      await new Promise(function (resolve) { setTimeout(resolve, 500); });
+    }
+  }
+  if (!formatCreated) {
+    throw lastFormatError || new Error('Tectonic could not create its format.');
+  }
+  var format = readOutput('xelatex.fmt');
+  if (!format.length) {
+    throw new Error('Tectonic could not prepare its XeLaTeX format.');
+  }
+  addFile('latex.fmt', format);
 }
 
 function addTarFiles(bytes) {
@@ -186,6 +245,10 @@ function addTarFiles(bytes) {
         latexLtxPaths.forEach(function (path) {
           if (path !== name) addFile(path, bytes.subarray(contentStart, contentStart + size));
         });
+      }
+      // Save the pre-built latex.fmt from the bundle for use by tectonic_compile().
+      if (name.toLowerCase() === 'latex.fmt' || name.toLowerCase().endsWith('/latex.fmt')) {
+        savedLatexFmtBytes = bytes.subarray(contentStart, contentStart + size);
       }
       // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
       if (name.toLowerCase().endsWith('.tfm')) {
