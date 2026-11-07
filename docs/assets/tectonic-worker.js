@@ -175,7 +175,11 @@ function addTarFiles(bytes) {
           'tfm/' + family + '/' + name,
           'fonts/tfm/' + name,
           'texmf-dist/' + base,
-          'texmf/fonts/tfm/' + family + '/' + name
+          'texmf-dist/fonts/tfm/' + family + '/' + name,
+          'texmf/fonts/tfm/' + family + '/' + name,
+          'texmf/fonts/tfm/public/' + family + '/' + name,
+          'share/texmf/fonts/tfm/' + family + '/' + name,
+          'share/texmf-dist/fonts/tfm/' + family + '/' + name
         ];
         tfmPaths.forEach(function (path) {
           if (path !== name) addFile(path, bytes.subarray(contentStart, contentStart + size));
@@ -203,6 +207,14 @@ function addTarFiles(bytes) {
                 if (ecrmPath !== path && ecrmPath !== name) addFile(ecrmPath, bytes.subarray(contentStart, contentStart + size));
               });
             }
+          }
+          // Map cmr -> cmtt (typewriter) for \url and similar
+          if (baseName.startsWith('r')) {
+            var cmttName = 'cmtt' + baseName.slice(1);
+            tfmPaths.forEach(function (path) {
+              var cmttPath = path.replace(/cmr(\d+\.tfm)$/, 'cmtt$1').replace(/cmr(\d+\.tfm)$/, 'cmtt$1');
+              if (cmttPath !== path && cmttPath !== name) addFile(cmttPath, bytes.subarray(contentStart, contentStart + size));
+            });
           }
           // Map cmr -> cmmi (math italic) for math support
           // NOTE: skipped - cmmi*.tfm already exists in the bundle and
@@ -367,7 +379,8 @@ var FONT_DEPENDENT_PACKAGES = [
   'amssymb',
   'babel',
   'textcomp',
-  'upgreek'
+  'upgreek',
+  'hyperref'
 ];
 
 function stripFontDependentPackages(source) {
@@ -385,6 +398,9 @@ function prepareMathSource(files, mainFile) {
   }
   // Strip amsmath/amssymb for all documents; unicode-math provides math support
   source = stripMathPackages(source);
+  // hyperref is stripped because the bundle lacks cmtt TFM metrics; replace
+  // \url{...} with \texttt{...} so hyperref-using documents still compile.
+  source = source.replace(/\\url\{(.*?)\}/g, '\\texttt{$1}');
   // Tectonic WASM bundle lacks size11.clo and size12.clo; fall back to 10pt
   source = source.replace(/\\documentclass\s*\[([^\]]*)\]\s*\{([^}]+)\}/g, function(match, options, cls) {
     var newOptions = options.replace(/\b(11|12)pt\b/g, '10pt');
