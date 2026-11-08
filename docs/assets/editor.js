@@ -792,21 +792,7 @@
 
     function fitSlideToScreen() {
       if (!editorWindow.classList.contains('presentation-mode')) return;
-      var pages = previewFrame.querySelectorAll('.pdf-page');
-      if (!pages.length) return;
-      var page = pages[state.presentationSlide - 1];
-      if (!page) return;
-      var canvas = page.querySelector('canvas');
-      if (!canvas) return;
-      var pageW = Number(page.getAttribute('data-width'));
-      var pageH = Number(page.getAttribute('data-height'));
-      if (!pageW || !pageH) return;
-      var vw = window.innerWidth;
-      var vh = window.innerHeight;
-      var scale = Math.min(vw / pageW, vh / pageH) * 0.96;
-      page.style.width = pageW * scale + 'px';
-      page.style.height = pageH * scale + 'px';
-      canvas.style.transform = 'scale(' + scale + ')';
+      renderPresentationSlide(state.presentationSlide);
     }
 
   async function renderPdf(bytes) {
@@ -818,6 +804,9 @@
     var loadingTask = pdfjs.getDocument({ data: new Uint8Array(bytes) });
     state.pdfLoadingTask = loadingTask;
     var pdf = await loadingTask.promise;
+    state.pdfDoc = pdf;
+    state.pdfBytes = bytes;
+    presentationCache = {};
     var availableWidth = Math.max(240, previewFrame.clientWidth - 32);
     var firstPage = await pdf.getPage(1);
     var firstViewport = firstPage.getViewport({ scale: 1 });
@@ -1129,8 +1118,10 @@
       // Enter presentation mode
       state.presentationSlide = 1;
       editorWindow.classList.add('presentation-mode');
+      if (slideOverlay) slideOverlay.hidden = false;
+      var stage = getPresentationStage();
+      if (stage) stage.hidden = false;
       updateSlideView();
-      fitSlideToScreen();
       setupSlideKeyboard();
       requestFullscreen(editorWindow);
     } else {
@@ -1144,41 +1135,130 @@
   var slidePrev = document.getElementById('slide-prev');
   var slideNext = document.getElementById('slide-next');
   var slideExit = document.getElementById('slide-exit');
+  var presentationStage = document.getElementById('presentation-stage');
+  var presentationCache = {};
+  var presentationRendering = 0;
+
+  function getPresentationStage() {
+    if (!presentationStage) {
+      presentationStage = document.getElementById('presentation-stage');
+    }
+    if (!presentationStage && previewFrame && previewFrame.parentElement) {
+      presentationStage = document.createElement('div');
+      presentationStage.id = 'presentation-stage';
+      presentationStage.className = 'presentation-stage';
+      presentationStage.hidden = true;
+      previewFrame.parentElement.insertBefore(presentationStage, slideOverlay || null);
+    }
+    return presentationStage;
+  }
+
+  async function renderPresentationSlide(slideNum) {
+    if (!editorWindow.classList.contains('presentation-mode')) return;
+    if (!state.pdfDoc || slideNum < 1 || slideNum > state.pdfDoc.numPages) return;
+
+    var stage = getPresentationStage();
+    if (!stage) return;
+
+    var container = previewFrame.parentElement || stage.parentElement || document.body;
+    var vw = container.clientWidth || window.innerWidth;
+    var vh = container.clientHeight || window.innerHeight;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+
+    var currentSeq = ++presentationRendering;
+
+    try {
+      var page = await state.pdfDoc.getPage(slideNum);
+      if (currentSeq !== presentationRendering || !editorWindow.classList.contains('presentation-mode')) return;
+
+      var unscaled = page.getViewport({ scale: 1 });
+      var scale = Math.min((vw * 0.96) / unscaled.width, (vh * 0.96) / unscaled.height);
+      var cssW = Math.round(unscaled.width * scale);
+      var cssH = Math.round(unscaled.height * scale);
+      var canvasW = Math.round(cssW * dpr);
+      var canvasH = Math.round(cssH * dpr);
+
+      var cacheKey = slideNum + '_' + canvasW + 'x' + canvasH;
+      var canvas = presentationCache[cacheKey];
+
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        var ctx = canvas.getContext('2d', { alpha: false });
+        await page.render({
+          canvasContext: ctx,
+          viewport: page.getViewport({ scale: scale * dpr })
+        }).promise;
+        if (currentSeq !== presentationRendering || !editorWindow.classList.contains('presentation-mode')) return;
+        presentationCache[cacheKey] = canvas;
+      } else {
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+      }
+
+      if (state.presentationSlide === slideNum) {
+        stage.replaceChildren(canvas);
+      }
+
+      // Pre-render next slide in cache for instant transitions
+      if (slideNum + 1 <= state.pdfDoc.numPages) {
+        var nextNum = slideNum + 1;
+        var nextKey = nextNum + '_' + canvasW + 'x' + canvasH;
+        if (!presentationCache[nextKey]) {
+          state.pdfDoc.getPage(nextNum).then(function (nextPage) {
+            var nextCanvas = document.createElement('canvas');
+            nextCanvas.width = canvasW;
+            nextCanvas.height = canvasH;
+            nextCanvas.style.width = cssW + 'px';
+            nextCanvas.style.height = cssH + 'px';
+            var nextCtx = nextCanvas.getContext('2d', { alpha: false });
+            nextPage.render({
+              canvasContext: nextCtx,
+              viewport: nextPage.getViewport({ scale: scale * dpr })
+            }).promise.then(function () {
+              presentationCache[nextKey] = nextCanvas;
+            }).catch(function () {});
+          }).catch(function () {});
+        }
+      }
+    } catch (err) {
+      console.warn('Presentation render failed:', err);
+    }
+  }
 
   function exitPresentationMode() {
     btnToolbarPresent.setAttribute('aria-pressed', 'false');
     btnToolbarPresent.classList.remove('tb-active');
     editorWindow.classList.remove('presentation-mode');
+    if (slideOverlay) slideOverlay.hidden = true;
+    var stage = getPresentationStage();
+    if (stage) {
+      stage.hidden = true;
+      stage.replaceChildren();
+    }
     teardownSlideKeyboard();
     exitFullscreen();
-    var pages = previewFrame.querySelectorAll('.pdf-page');
-    pages.forEach(function (page) {
-      page.style.display = 'block';
-    });
     applyPreviewZoom();
-    var current = Number(pcPage.textContent.split(' / ')[0]) || 1;
+    var current = state.presentationSlide || Number(pcPage.textContent.split(' / ')[0]) || 1;
     goToPage(current);
   }
 
   function updateSlideView() {
     if (!editorWindow.classList.contains('presentation-mode')) return;
-    var pages = previewFrame.querySelectorAll('.pdf-page');
-    pages.forEach(function (page, i) {
-      var pageNum = i + 1;
-      if (pageNum === state.presentationSlide) {
-        page.style.display = 'block';
-      } else {
-        page.style.display = 'none';
-      }
-    });
-    slideCounter.textContent = state.presentationSlide + ' / ' + pages.length;
-    fitSlideToScreen();
+    var totalPages = state.pdfDoc ? state.pdfDoc.numPages : previewFrame.querySelectorAll('.pdf-page').length;
+    if (slideCounter) slideCounter.textContent = state.presentationSlide + ' / ' + totalPages;
+    var stage = getPresentationStage();
+    if (stage) stage.hidden = false;
+    renderPresentationSlide(state.presentationSlide);
   }
 
   function goToSlide(n) {
-    var pages = previewFrame.querySelectorAll('.pdf-page');
+    var totalPages = state.pdfDoc ? state.pdfDoc.numPages : previewFrame.querySelectorAll('.pdf-page').length;
     if (n < 1) n = 1;
-    if (n > pages.length) n = pages.length;
+    if (n > totalPages) n = totalPages;
     state.presentationSlide = n;
     updateSlideView();
   }
@@ -1282,7 +1362,8 @@
     if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
       exitPresentationMode();
     } else if (isFull) {
-      fitSlideToScreen();
+      presentationCache = {};
+      renderPresentationSlide(state.presentationSlide);
     }
   });
   document.addEventListener('webkitfullscreenchange', function () {
@@ -1290,7 +1371,8 @@
     if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
       exitPresentationMode();
     } else if (isFull) {
-      fitSlideToScreen();
+      presentationCache = {};
+      renderPresentationSlide(state.presentationSlide);
     }
   });
 
@@ -1311,7 +1393,10 @@
   window.gabetexEditor = { compile: compile, state: state };
 
   window.addEventListener('resize', function () {
-    if (editorWindow.classList.contains('presentation-mode')) fitSlideToScreen();
+    if (editorWindow.classList.contains('presentation-mode')) {
+      presentationCache = {};
+      renderPresentationSlide(state.presentationSlide);
+    }
   });
 
 })();

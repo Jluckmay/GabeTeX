@@ -322,16 +322,31 @@ html.dark .editor-window { box-shadow: 0 20px 40px -10px rgba(0,0,0,.5); }
 .editor-window.presentation-mode .editor-body { overflow: hidden; }
 .editor-window.presentation-mode .preview-wrap { overflow: hidden; }
 .editor-window.presentation-mode #preview-frame {
-  display: flex !important;
+  display: none !important;
+}
+.editor-window.presentation-mode .pdf-page {
+  display: none !important;
+}
+.presentation-stage {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  background: #000;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
-.editor-window.presentation-mode .pdf-page {
-  margin: 0 !important;
-  box-shadow: none !important;
-  max-width: none !important;
-  max-height: none !important;
+.editor-window.presentation-mode .presentation-stage {
+  display: flex !important;
+}
+.presentation-stage canvas {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  background: #fff;
+  display: block;
 }
 
 /* Fullscreen presentation mode */
