@@ -6,12 +6,6 @@ var wasmExports;
 var outputLog = '';
 var textDecoder = new TextDecoder();
 var textEncoder = new TextEncoder();
-// Saved latex.ltx bytes extracted from the Tectonic bundle tar, used to
-// guarantee visibility to kpathsea during INITEX format creation.
-var savedLatexLtxBytes = null;
-// Saved latex.fmt bytes extracted from the Tectonic bundle tar, used to
-// guarantee visibility to kpathsea during document compilation.
-var savedLatexFmtBytes = null;
 
 function log(text) {
   outputLog = (outputLog + text).slice(-20000);
@@ -179,19 +173,27 @@ function addFile(name, bytes) {
 }
 
 async function fetchResource(url) {
-  var response = await fetch(url);
-  if (!response.ok) throw new Error('Could not download ' + url + ' (HTTP ' + response.status + ').');
-  return response;
+  try {
+    var response = await fetch(url);
+    if (response.ok) return response;
+  } catch (e) {}
+  if (url.indexOf('cdn.jsdelivr.net') !== -1) {
+    var fallback = url.replace('https://cdn.jsdelivr.net/gh/nl5887/tectonic-wasm@' + TECTONIC_REVISION + '/output/', 'https://raw.githubusercontent.com/nl5887/tectonic-wasm/' + TECTONIC_REVISION + '/output/');
+    var fbResponse = await fetch(fallback);
+    if (fbResponse.ok) return fbResponse;
+  }
+  throw new Error('Could not download ' + url);
 }
 
 async function initialize() {
+  if (wasmExports) return;
   if (typeof DecompressionStream !== 'function') {
     throw new Error('This browser does not support gzip decompression required by Tectonic.');
   }
   self.postMessage({ type: 'progress', key: 'editor.loadingEngine' });
   var responses = await Promise.all([
-    fetchResource(TECTONIC_ROOT + 'tectonic_wasm.wasm?v=' + Date.now()),
-    fetchResource(TECTONIC_ROOT + 'tectonic-bundle.tar.gz?v=' + Date.now())
+    fetchResource(TECTONIC_ROOT + 'tectonic_wasm.wasm'),
+    fetchResource(TECTONIC_ROOT + 'tectonic-bundle.tar.gz')
   ]);
   var module = await WebAssembly.compile(await responses[0].arrayBuffer());
   var result = await WebAssembly.instantiate(module, {
@@ -203,21 +205,12 @@ async function initialize() {
     throw new Error('The downloaded Tectonic WebAssembly engine has an invalid version.');
   }
   await addTarFilesFromResponse(responses[1]);
-  // The Tectonic WASM bundle includes a pre-built latex.fmt (XeLaTeX format).
-  // addTarFiles() already added it to the virtual file system (the
-  // `name !== 'latex.fmt'` filter was removed). Re-add it at multiple TDS
-  // paths so kpathsea can locate it during tectonic_compile().
-  if (typeof savedLatexFmtBytes !== 'undefined' && savedLatexFmtBytes) {
-    var fmt = savedLatexFmtBytes;
-    addFile('latex.fmt', fmt);
-    addFile('./latex.fmt', fmt);
-    addFile('xelatex.fmt', fmt);
-    addFile('tex/latex/base/latex.fmt', fmt);
-    addFile('tex/latex/base/xelatex.fmt', fmt);
-    addFile('tex/latex/xelatex.fmt', fmt);
+  wasmExports.tectonic_create_format();
+  var format = readOutput('xelatex.fmt');
+  if (!format.length) {
+    throw new Error('Tectonic could not prepare its XeLaTeX format.');
   }
-  // No INITEX format creation: the pre-built latex.fmt from the bundle is
-  // used directly by tectonic_compile().
+  addFile('latex.fmt', format);
 }
 
 function addTarFiles(bytes) {
@@ -234,36 +227,9 @@ function addTarFiles(bytes) {
     var size = sizeText ? parseInt(sizeText, 8) : 0;
     var type = header[156];
     var contentStart = offset + 512;
-    if ((type === 48 || type === 0) && name && size >= 0 && contentStart + size <= bytes.length) {
+    if ((type === 48 || type === 0) && name && name !== 'latex.fmt' && size >= 0 && contentStart + size <= bytes.length) {
       addFile(name, bytes.subarray(contentStart, contentStart + size));
-      // Re-add latex.ltx under multiple TDS paths so INITEX can locate it
-      // when creating the XeLaTeX format.
-      if (name.toLowerCase() === 'latex.ltx' || name.toLowerCase().endsWith('/latex.ltx')) {
-        // Save the raw bytes for explicit re-addition in initialize()
-        savedLatexLtxBytes = bytes.subarray(contentStart, contentStart + size);
-        var latexLtxPaths = [
-          name,
-          'tex/latex/base/latex.ltx',
-          'tex/latex/latex.ltx',
-          'latex.ltx',
-          'texmf-dist/tex/latex/base/latex.ltx',
-          'texmf-dist/tex/latex/latex.ltx',
-          'texmf/tex/latex/base/latex.ltx',
-          'texmf/tex/latex/latex.ltx',
-          'share/texmf/tex/latex/base/latex.ltx',
-          'share/texmf/tex/latex/latex.ltx',
-          'share/texmf-dist/tex/latex/base/latex.ltx',
-          'share/texmf-dist/tex/latex/latex.ltx'
-        ];
-        latexLtxPaths.forEach(function (path) {
-          if (path !== name) addFile(path, bytes.subarray(contentStart, contentStart + size));
-        });
-      }
-      // Save the pre-built latex.fmt from the bundle for use by tectonic_compile().
-      if (name.toLowerCase() === 'latex.fmt' || name.toLowerCase().endsWith('/latex.fmt')) {
-        savedLatexFmtBytes = bytes.subarray(contentStart, contentStart + size);
-      }
-      // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
+                  // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
       if (name.toLowerCase().endsWith('.tfm')) {
         var lower = name.toLowerCase();
         var family = lower.startsWith('ms') ? 'amsfonts' : 'cm';
@@ -320,9 +286,9 @@ function addTarFiles(bytes) {
           if (baseName.startsWith('r')) {
             var m = lower.match(/^cmr(\d+)\.tfm$/);
             if (m) {
-              var size = m[1];
+              var fontPt = m[1];
               tfmPaths.forEach(function (path) {
-                var lmssPath = path.replace(/cmr(\d+\.tfm)$/, 'lmss' + size + '.tfm');
+                var lmssPath = path.replace(/cmr(\d+\.tfm)$/, 'lmss' + fontPt + '.tfm');
                 if (lmssPath !== path && lmssPath !== name) addFile(lmssPath, bytes.subarray(contentStart, contentStart + size));
               });
             }
