@@ -56,6 +56,37 @@ function wasiImports() {
       writeU32(writtenPointer, written);
       return 0;
     };
+    // WASI stubs needed by Tectonic's output_open_stdout (WASI-IO layer).
+    // Without these, calling fd_open/fd_prestat_get/path_open traps the VM
+    // and causes a non-unwinding Rust panic at output_open_stdout.
+    // We must write valid values to output pointers so Tectonic doesn't
+    // read uninitialized memory and panic.
+    wasi.fd_open = function (dirfd, dirFlags, pathPointer, pathLen, oflags, fsRightsBase, fsRightsInheriting, fdFlags, resultPointer) {
+      writeU32(resultPointer, 3); // return a valid fd number
+      return 0;
+    };
+    wasi.fd_fdstat_get = function (fd, resultPointer) {
+      // __wasi_fdstat_t: fs_filetype (u8), fs_flags (u8), fs_rights_base (u64), fs_rights_inheriting (u64)
+      // Write zeros for all fields (24 bytes total on 32-bit WASM)
+      var view = new DataView(wasmExports.memory.buffer);
+      view.setUint8(resultPointer, 0); // fs_filetype = 0 (unknown)
+      view.setUint8(resultPointer + 1, 0); // fs_flags = 0
+      view.setBigUint64(resultPointer + 2, 0n, true); // fs_rights_base
+      view.setBigUint64(resultPointer + 10, 0n, true); // fs_rights_inheriting
+      return 0;
+    };
+    wasi.fd_prestat_get = function (fd, resultPointer) {
+      // __wasi_prestat_t: pr_type (u8), pr_dir (u32) padding
+      var view = new DataView(wasmExports.memory.buffer);
+      view.setUint8(resultPointer, 0); // pr_type = 0 (no preopened dirs)
+      view.setUint32(resultPointer + 1, 0, true); // padding
+      return 0;
+    };
+    wasi.fd_prestat_dir_name = function () { return 0; };
+    wasi.path_open = function (dirfd, dirFlags, pathPointer, pathLen, oflags, fsRightsBase, fsRightsInheriting, fdFlags, resultPointer) {
+      writeU32(resultPointer, 4); // return a valid fd number
+      return 0;
+    };
     wasi.clock_time_get = function (clock, precision, resultPointer) {
       new DataView(wasmExports.memory.buffer).setBigUint64(resultPointer, BigInt(Date.now()) * 1000000n, true);
       return 0;
@@ -494,7 +525,7 @@ function prepareMathSource(files, mainFile) {
   // horizontal space commands and box environments
   // (output_open_stdout: providing sink in a background thread). Replace
   // them with a no-op comment so documents compile.
-  source = source.replace(/\\(?:newpage|clearpage|pagebreak|addvspace)\*?\{[^}]*\}|\\vspace\*?\{[^}]*\}|\\hfill\b/g, '% space removed');
+  source = source.replace(/\\(?:newpage|clearpage|pagebreak)\b|\\addvspace\{[^}]*\}|\\vspace\*?\{[^}]*\}|\\hfill\b/g, '% space removed');
   source = source.replace(/\\begin\{tabular\}[^}]*\}.*?\\end\{tabular\}/gs, '% table removed');
   source = source.replace(/\\begin\{minipage\}[^}]*\}.*?\\end\{minipage\}/gs, '% minipage removed');
   source = source.replace(/\\rule\{[^}]*\}\{[^}]*\}/g, '% rule removed');
