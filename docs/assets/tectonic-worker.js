@@ -205,6 +205,36 @@ async function initialize() {
     throw new Error('The downloaded Tectonic WebAssembly engine has an invalid version.');
   }
   await addTarFilesFromResponse(responses[1]);
+
+  // Fallback font definition files for Latin Modern families in Tectonic WASM bundle
+  var tulmssFallback = '\\ProvidesFile{tulmss.fd}[2021/07/23 v1.8a Latin Modern Sans mapped to Roman]\n' +
+    '\\DeclareFontFamily{TU}{lmss}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{m}{n}{<->sub*lmr/m/n}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{m}{it}{<->sub*lmr/m/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{m}{sl}{<->sub*lmr/m/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{bx}{n}{<->sub*lmr/bx/n}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{bx}{it}{<->sub*lmr/bx/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{bx}{sl}{<->sub*lmr/bx/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmss}{b}{n}{<->sub*lmr/bx/n}{}\n' +
+    '\\endinput';
+  var tulmssData = textEncoder.encode(tulmssFallback);
+  addFile('tulmss.fd', tulmssData);
+  addFile('tex/latex/lm/tulmss.fd', tulmssData);
+
+  var tulmttFallback = '\\ProvidesFile{tulmtt.fd}[2021/07/23 v1.8a Latin Modern Typewriter mapped to Roman]\n' +
+    '\\DeclareFontFamily{TU}{lmtt}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{m}{n}{<->sub*lmr/m/n}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{m}{it}{<->sub*lmr/m/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{m}{sl}{<->sub*lmr/m/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{bx}{n}{<->sub*lmr/bx/n}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{bx}{it}{<->sub*lmr/bx/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{bx}{sl}{<->sub*lmr/bx/it}{}\n' +
+    '\\DeclareFontShape{TU}{lmtt}{b}{n}{<->sub*lmr/bx/n}{}\n' +
+    '\\endinput';
+  var tulmttData = textEncoder.encode(tulmttFallback);
+  addFile('tulmtt.fd', tulmttData);
+  addFile('tex/latex/lm/tulmtt.fd', tulmttData);
+
   wasmExports.tectonic_create_format();
   var format = readOutput('xelatex.fmt');
   if (!format.length) {
@@ -233,20 +263,25 @@ function addTarFiles(bytes) {
         var fileData = bytes.subarray(contentStart, contentStart + size);
         var sansName = name.replace('lmroman', 'lmsans');
         addFile(sansName, fileData);
+        var monoName = name.replace('lmroman', 'lmmono');
+        addFile(monoName, fileData);
         if (name === 'lmroman10-regular.otf') {
           [
             'lmroman5-regular.otf', 'lmroman6-regular.otf', 'lmroman7-regular.otf', 'lmroman8-regular.otf', 'lmroman9-regular.otf',
             'lmromanslant8-regular.otf', 'lmromanslant9-regular.otf', 'lmromanslant10-regular.otf', 'lmromanslant12-regular.otf', 'lmromanslant17-regular.otf',
             'lmromancaps10-regular.otf', 'lmromanunsl10-regular.otf', 'lmromandemi10-regular.otf',
             'lmsans8-regular.otf', 'lmsans9-regular.otf', 'lmsans10-regular.otf', 'lmsans12-regular.otf', 'lmsans17-regular.otf',
-            'lmsansdemicond10-regular.otf'
+            'lmsansdemicond10-regular.otf',
+            'lmmono10-regular.otf', 'lmmono8-regular.otf', 'lmmono9-regular.otf', 'lmmono12-regular.otf',
+            'lmmonoslant10-regular.otf', 'lmmonolt10-regular.otf', 'lmmonoltcond10-regular.otf'
           ].forEach(function (s) { addFile(s, fileData); });
         }
         if (name === 'lmroman10-bold.otf') {
           [
             'lmroman5-bold.otf', 'lmroman6-bold.otf', 'lmroman7-bold.otf', 'lmroman8-bold.otf', 'lmroman9-bold.otf',
             'lmromanslant10-bold.otf',
-            'lmsans10-bold.otf', 'lmsans12-bold.otf'
+            'lmsans10-bold.otf', 'lmsans12-bold.otf',
+            'lmmono10-bold.otf', 'lmmonolt10-bold.otf'
           ].forEach(function (s) { addFile(s, fileData); });
         }
         if (name === 'lmroman10-italic.otf') {
@@ -254,11 +289,12 @@ function addTarFiles(bytes) {
             'lmroman8-italic.otf', 'lmroman9-italic.otf', 'lmroman12-italic.otf',
             'lmromancaps10-oblique.otf', 'lmromandemi10-oblique.otf',
             'lmsans8-oblique.otf', 'lmsans9-oblique.otf', 'lmsans10-oblique.otf', 'lmsans12-oblique.otf', 'lmsans17-oblique.otf',
-            'lmsansdemicond10-oblique.otf'
+            'lmsansdemicond10-oblique.otf',
+            'lmmono10-italic.otf', 'lmmonolt10-oblique.otf', 'lmmono10-oblique.otf'
           ].forEach(function (s) { addFile(s, fileData); });
         }
         if (name === 'lmroman10-bolditalic.otf') {
-          ['lmsans10-boldoblique.otf'].forEach(function (s) { addFile(s, fileData); });
+          ['lmsans10-boldoblique.otf', 'lmmonolt10-boldoblique.otf'].forEach(function (s) { addFile(s, fileData); });
         }
       }
                   // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
@@ -557,8 +593,7 @@ var FONT_DEPENDENT_PACKAGES = [
   'textcomp',
   'upgreek',
   'hyperref',
-  'geometry',
-  'enumitem'
+  'geometry'
 ];
 
 function stripFontDependentPackages(source) {
@@ -570,6 +605,8 @@ function prepareMathSource(files, mainFile) {
   if (!source) return source;
   // Fix \\ followed by [ being parsed as \\[<length>]
   source = source.replace(/\\(\s*\[)/g, '\\\\relax$1');
+  // Normalize [label=$\bullet$] to textbullet to prevent undefined math font family 2 (OMS)
+  source = source.replace(/\[\s*label\s*=\s*\$\s*\\bullet\s*\$\s*\]/g, '[label=\\\\textbullet]');
   // Provide \\HUGE if used
   if (/\\HUGE\b/.test(source) && !/\\(?:re)?newcommand\*?\{\\HUGE\}/.test(source)) {
     source = source.replace(/\\begin\{document\}/, '\\providecommand{\\HUGE}{\\Huge}\n\\begin{document}');
