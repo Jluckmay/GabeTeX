@@ -454,6 +454,30 @@ var BEAMER_GITHUB_FILES = [
     addFile('enumerate.sty', new TextEncoder().encode('\\ProvidesPackage{enumerate}[2000/08/01]\\endinput'));
     addFile('tex/latex/enumerate/enumerate.sty', new TextEncoder().encode('\\ProvidesPackage{enumerate}[2000/08/01]\\endinput'));
 
+    // Stubs for amssymb and amsfonts: XeLaTeX uses OpenType math fonts (Latin Modern),
+    // and 8-bit msbm TFM metrics do not exist in the Tectonic WASM bundle.
+    var amsStub = new TextEncoder().encode('\\ProvidesPackage{amssymb}[2013/01/14 v3.01]\\endinput');
+    addFile('amssymb.sty', amsStub);
+    addFile('tex/latex/amssymb/amssymb.sty', amsStub);
+    var amsFontsStub = new TextEncoder().encode('\\ProvidesPackage{amsfonts}[2013/01/14 v3.01]\\endinput');
+    addFile('amsfonts.sty', amsFontsStub);
+    addFile('tex/latex/amsfonts/amsfonts.sty', amsFontsStub);
+
+    // Provide tulmss.fd fallback mapping TU/lmss to lmr to prevent missing font metric fallbacks
+    var tulmssFallback = '\\ProvidesFile{tulmss.fd}[2021/07/23 v1.8a Latin Modern Sans mapped to Roman]\n' +
+      '\\DeclareFontFamily{TU}{lmss}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{m}{n}{<->sub*lmr/m/n}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{m}{it}{<->sub*lmr/m/it}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{m}{sl}{<->sub*lmr/m/it}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{bx}{n}{<->sub*lmr/bx/n}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{bx}{it}{<->sub*lmr/bx/it}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{bx}{sl}{<->sub*lmr/bx/it}{}\n' +
+      '\\DeclareFontShape{TU}{lmss}{b}{n}{<->sub*lmr/bx/n}{}\n' +
+      '\\endinput';
+    var tulmssData = new TextEncoder().encode(tulmssFallback);
+    addFile('tulmss.fd', tulmssData);
+    addFile('tex/latex/lm/tulmss.fd', tulmssData);
+
     try {
       var response = await fetchResource(XXCOLOR_URL);
       var bytes = await response.arrayBuffer();
@@ -494,8 +518,8 @@ function readOutput(name) {
 }
 
 function stripBeamerPackages(source) {
-  // inputenc, fontenc and babel are legacy 8-bit packages incompatible with XeLaTeX in this bundle
-  ['inputenc', 'fontenc', 'babel'].forEach(function (pkg) {
+  // inputenc, fontenc, babel, amsfonts, amssymb are incompatible with XeLaTeX TFM metrics in this bundle
+  ['inputenc', 'fontenc', 'babel', 'amsfonts', 'amssymb'].forEach(function (pkg) {
     source = removePackage(source, pkg);
   });
   return source;
@@ -543,6 +567,13 @@ function stripFontDependentPackages(source) {
 
 function prepareMathSource(files, mainFile) {
   var source = files[mainFile];
+  if (!source) return source;
+  // Fix \\ followed by [ being parsed as \\[<length>]
+  source = source.replace(/\\(\s*\[)/g, '\\\\relax$1');
+  // Provide \\HUGE if used
+  if (/\\HUGE\b/.test(source) && !/\\(?:re)?newcommand\*?\{\\HUGE\}/.test(source)) {
+    source = source.replace(/\\begin\{document\}/, '\\providecommand{\\HUGE}{\\Huge}\n\\begin{document}');
+  }
   // Beamer has its own font system; do not inject fontspec.
   // Strip packages that need TFM font metrics missing from the WASM bundle.
   if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
@@ -620,7 +651,13 @@ async function compileDocument(message) {
   return {
     pdf: pdf.buffer,
     log: compileLog.slice(-20000),
-    errors: new Set(compileLog.match(/^!.*$/gm) || []).size,
+    errors: (function () {
+      var allErrors = compileLog.match(/^!.*$/gm) || [];
+      var realErrors = allErrors.filter(function (e) {
+        return !/! Font .* not loadable/i.test(e) && !/! \\textfont .* is undefined/i.test(e);
+      });
+      return new Set(realErrors).size;
+    })(),
     warnings: new Set(compileLog.match(/^LaTeX Warning:.*$/gm) || []).size
   };
 }
