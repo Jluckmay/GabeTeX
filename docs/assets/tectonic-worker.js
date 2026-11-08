@@ -66,25 +66,54 @@ function wasiImports() {
       return 0;
     };
     wasi.fd_fdstat_get = function (fd, resultPointer) {
-      // __wasi_fdstat_t: fs_filetype (u8), fs_flags (u8), fs_rights_base (u64), fs_rights_inheriting (u64)
-      // Write zeros for all fields (24 bytes total on 32-bit WASM)
+      // __wasi_fdstat_t layout (32-bit WASM):
+      //   offset 0: fs_filetype (u8)
+      //   offset 1: fs_flags (u8)
+      //   offset 2-7: padding (6 bytes)
+      //   offset 8: fs_rights_base (u64)
+      //   offset 16: fs_rights_inheriting (u64)
+      // Total: 24 bytes
       var view = new DataView(wasmExports.memory.buffer);
       view.setUint8(resultPointer, 0); // fs_filetype = 0 (unknown)
       view.setUint8(resultPointer + 1, 0); // fs_flags = 0
-      view.setBigUint64(resultPointer + 2, 0n, true); // fs_rights_base
-      view.setBigUint64(resultPointer + 10, 0n, true); // fs_rights_inheriting
+      // Zero out padding bytes 2-7
+      for (var p = 2; p < 8; p++) view.setUint8(resultPointer + p, 0);
+      view.setBigUint64(resultPointer + 8, 0n, true); // fs_rights_base
+      view.setBigUint64(resultPointer + 16, 0n, true); // fs_rights_inheriting
       return 0;
     };
     wasi.fd_prestat_get = function (fd, resultPointer) {
-      // __wasi_prestat_t: pr_type (u8), pr_dir (u32) padding
+      // __wasi_prestat_t layout:
+      //   offset 0: pr_type (u8)
+      //   offset 1-3: padding (3 bytes)
+      //   offset 4: pr_dir (u32)
+      // Total: 8 bytes
       var view = new DataView(wasmExports.memory.buffer);
       view.setUint8(resultPointer, 0); // pr_type = 0 (no preopened dirs)
-      view.setUint32(resultPointer + 1, 0, true); // padding
+      view.setUint8(resultPointer + 1, 0); // padding
+      view.setUint8(resultPointer + 2, 0); // padding
+      view.setUint8(resultPointer + 3, 0); // padding
+      view.setUint32(resultPointer + 4, 0, true); // pr_dir = 0
       return 0;
     };
     wasi.fd_prestat_dir_name = function () { return 0; };
     wasi.path_open = function (dirfd, dirFlags, pathPointer, pathLen, oflags, fsRightsBase, fsRightsInheriting, fdFlags, resultPointer) {
       writeU32(resultPointer, 4); // return a valid fd number
+      return 0;
+    };
+    wasi.fd_filestat_get = function (fd, resultPointer) {
+      // __wasi_filestat_t layout:
+      //   offset 0: st_dev (u64)
+      //   offset 8: st_ino (u64)
+      //   offset 16: st_nlink (u64)
+      //   offset 24: st_size (u64)
+      //   offset 32: st_atim (u64)
+      //   offset 40: st_mtim (u64)
+      //   offset 48: st_ctim (u64)
+      //   offset 56: st_filetype (u8)
+      // Total: 56 bytes (with padding)
+      var view = new DataView(wasmExports.memory.buffer);
+      for (var p = 0; p < 56; p++) view.setUint8(resultPointer + p, 0);
       return 0;
     };
     wasi.clock_time_get = function (clock, precision, resultPointer) {
