@@ -736,6 +736,14 @@
         function cleanup() {
           window.clearTimeout(timeout);
           worker.removeEventListener('message', onMessage);
+          worker.removeEventListener('error', onError);
+        }
+
+        function onError(event) {
+          cleanup();
+          worker.terminate();
+          if (compileWorker === worker) compileWorker = null;
+          reject(new Error(event && event.message ? event.message : translate('editor.compileError')));
         }
 
         function onMessage(event) {
@@ -759,6 +767,7 @@
         }
 
         worker.addEventListener('message', onMessage);
+        worker.addEventListener('error', onError);
         try {
           worker.postMessage({ type: 'compile', id: requestId, files: files, mainFile: mainFile });
         } catch (error) {
