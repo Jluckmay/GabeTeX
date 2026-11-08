@@ -102,20 +102,18 @@ function wasiImports() {
       return 0;
     };
     wasi.fd_filestat_get = function (fd, resultPointer) {
-      // __wasi_filestat_t layout:
-      //   offset 0: st_dev (u64)
-      //   offset 8: st_ino (u64)
-      //   offset 16: st_nlink (u64)
-      //   offset 24: st_size (u64)
-      //   offset 32: st_atim (u64)
-      //   offset 40: st_mtim (u64)
-      //   offset 48: st_ctim (u64)
-      //   offset 56: st_filetype (u8)
-      // Total: 56 bytes (with padding)
+      // __wasi_filestat_t layout: 56 bytes, all zeros
       var view = new DataView(wasmExports.memory.buffer);
       for (var p = 0; p < 56; p++) view.setUint8(resultPointer + p, 0);
       return 0;
     };
+    wasi.fd_allocate = function () { return 0; };
+    wasi.fd_sync = function () { return 0; };
+    wasi.fd_tell = function (fd, resultPointer) {
+      writeU32(resultPointer, 0);
+      return 0;
+    };
+    wasi.path_filestat_get = function () { return 0; };
     wasi.clock_time_get = function (clock, precision, resultPointer) {
       new DataView(wasmExports.memory.buffer).setBigUint64(resultPointer, BigInt(Date.now()) * 1000000n, true);
       return 0;
@@ -557,6 +555,7 @@ function prepareMathSource(files, mainFile) {
   source = source.replace(/\\(?:newpage|clearpage|pagebreak)\b|\\addvspace\{[^}]*\}|\\vspace\*?\{[^}]*\}|\\hfill\b/g, '% space removed');
   source = source.replace(/\\begin\{tabular\}[^}]*\}.*?\\end\{tabular\}/gs, '% table removed');
   source = source.replace(/\\begin\{minipage\}[^}]*\}.*?\\end\{minipage\}/gs, '% minipage removed');
+  source = source.replace(/\\begin\{center\}.*?\\end\{center\}/gs, '% center removed');
   source = source.replace(/\\rule\{[^}]*\}\{[^}]*\}/g, '% rule removed');
   // Tectonic WASM bundle lacks size11.clo and size12.clo; fall back to 10pt
   source = source.replace(/\\documentclass\s*\[([^\]]*)\]\s*\{([^}]+)\}/g, function(match, options, cls) {
