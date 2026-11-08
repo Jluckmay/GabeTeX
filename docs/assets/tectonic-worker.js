@@ -229,6 +229,38 @@ function addTarFiles(bytes) {
     var contentStart = offset + 512;
     if ((type === 48 || type === 0) && name && name !== 'latex.fmt' && size >= 0 && contentStart + size <= bytes.length) {
       addFile(name, bytes.subarray(contentStart, contentStart + size));
+      if (name.indexOf('lmroman') !== -1 && name.endsWith('.otf')) {
+        var fileData = bytes.subarray(contentStart, contentStart + size);
+        var sansName = name.replace('lmroman', 'lmsans');
+        addFile(sansName, fileData);
+        if (name === 'lmroman10-regular.otf') {
+          [
+            'lmroman5-regular.otf', 'lmroman6-regular.otf', 'lmroman7-regular.otf', 'lmroman8-regular.otf', 'lmroman9-regular.otf',
+            'lmromanslant8-regular.otf', 'lmromanslant9-regular.otf', 'lmromanslant10-regular.otf', 'lmromanslant12-regular.otf', 'lmromanslant17-regular.otf',
+            'lmromancaps10-regular.otf', 'lmromanunsl10-regular.otf', 'lmromandemi10-regular.otf',
+            'lmsans8-regular.otf', 'lmsans9-regular.otf', 'lmsans10-regular.otf', 'lmsans12-regular.otf', 'lmsans17-regular.otf',
+            'lmsansdemicond10-regular.otf'
+          ].forEach(function (s) { addFile(s, fileData); });
+        }
+        if (name === 'lmroman10-bold.otf') {
+          [
+            'lmroman5-bold.otf', 'lmroman6-bold.otf', 'lmroman7-bold.otf', 'lmroman8-bold.otf', 'lmroman9-bold.otf',
+            'lmromanslant10-bold.otf',
+            'lmsans10-bold.otf', 'lmsans12-bold.otf'
+          ].forEach(function (s) { addFile(s, fileData); });
+        }
+        if (name === 'lmroman10-italic.otf') {
+          [
+            'lmroman8-italic.otf', 'lmroman9-italic.otf', 'lmroman12-italic.otf',
+            'lmromancaps10-oblique.otf', 'lmromandemi10-oblique.otf',
+            'lmsans8-oblique.otf', 'lmsans9-oblique.otf', 'lmsans10-oblique.otf', 'lmsans12-oblique.otf', 'lmsans17-oblique.otf',
+            'lmsansdemicond10-oblique.otf'
+          ].forEach(function (s) { addFile(s, fileData); });
+        }
+        if (name === 'lmroman10-bolditalic.otf') {
+          ['lmsans10-boldoblique.otf'].forEach(function (s) { addFile(s, fileData); });
+        }
+      }
                   // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
       if (name.toLowerCase().endsWith('.tfm')) {
         var lower = name.toLowerCase();
@@ -386,10 +418,14 @@ var BEAMER_GITHUB_FILES = [
       try {
         var response = await fetchResource(BEAMER_GITHUB_ROOT + name);
         var bytes = await response.arrayBuffer();
-        // Add file at root level (for simple lookups)
-        addFile(name, new Uint8Array(bytes));
-        // Also add with TDS path for kpathsea
-        addFile('tex/latex/beamer/' + name, new Uint8Array(bytes));
+        var u8 = new Uint8Array(bytes);
+        addFile(name, u8);
+        var baseName = name.split('/').pop();
+        if (baseName !== name) {
+          addFile(baseName, u8);
+          addFile('tex/latex/beamer/' + baseName, u8);
+        }
+        addFile('tex/latex/beamer/' + name, u8);
       } catch (error) {
         // Non-fatal: some files may not exist
       }
@@ -400,9 +436,14 @@ var BEAMER_GITHUB_FILES = [
       try {
         var response = await fetchResource(TRANSLATOR_GITHUB_ROOT + name);
         var bytes = await response.arrayBuffer();
-        addFile(name, new Uint8Array(bytes));
-        // Also add with TDS path for kpathsea
-        addFile('tex/latex/translator/' + name, new Uint8Array(bytes));
+        var u8 = new Uint8Array(bytes);
+        addFile(name, u8);
+        var baseName = name.split('/').pop();
+        if (baseName !== name) {
+          addFile(baseName, u8);
+          addFile('tex/latex/translator/' + baseName, u8);
+        }
+        addFile('tex/latex/translator/' + name, u8);
       } catch (error) {
         // Non-fatal: some files may not exist
       }
@@ -453,10 +494,10 @@ function readOutput(name) {
 }
 
 function stripBeamerPackages(source) {
-  // Beamer has its own font system; class files are fetched at runtime from
-  // GitHub (fetchBeamerFiles). Return the source unchanged so beamer's own
-  // font setup is used. Missing TFM font metric files (cmss for sans serif,
-  // ecrm for T1 encoding) are added as copies of cmr TFM files in addTarFiles.
+  // inputenc, fontenc and babel are legacy 8-bit packages incompatible with XeLaTeX in this bundle
+  ['inputenc', 'fontenc', 'babel'].forEach(function (pkg) {
+    source = removePackage(source, pkg);
+  });
   return source;
 }
 
