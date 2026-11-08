@@ -297,8 +297,15 @@ function addTarFiles(bytes) {
           ['lmsans10-boldoblique.otf', 'lmmonolt10-boldoblique.otf'].forEach(function (s) { addFile(s, fileData); });
         }
       }
-                  // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
+      // Re-add TFM files under multiple TDS paths so kpathsea can locate them.
+      // Also register extensionless font names so Tectonic WASM doesn't fall back
+      // to outline files (.pfb/.otf) and trigger Bad metric (TFM) errors.
       if (name.toLowerCase().endsWith('.tfm')) {
+        var tfmData = bytes.subarray(contentStart, contentStart + size);
+        var noExt = name.replace(/\.tfm$/i, '');
+        addFile(noExt, tfmData);
+        var baseNoExt = noExt.split('/').pop();
+        if (baseNoExt !== noExt) addFile(baseNoExt, tfmData);
         var lower = name.toLowerCase();
         var family = lower.startsWith('ms') ? 'amsfonts' : 'cm';
         var base = 'fonts/tfm/public/' + family + '/' + name;
@@ -326,6 +333,8 @@ function addTarFiles(bytes) {
           // Map cmr -> cmss (sans serif)
           if (baseName.startsWith('r')) {
             var cmssName = 'cmss' + baseName.slice(1);
+            var cmssNoExt = cmssName.replace(/\.tfm$/i, '');
+            addFile(cmssNoExt, tfmData);
             tfmPaths.forEach(function (path) {
               var cmssPath = path.replace(/cmr(\d+\.tfm)$/, 'cmss$1').replace(/cmr(\d+\.tfm)$/, 'cmss$1');
               if (cmssPath !== path && cmssPath !== name) addFile(cmssPath, bytes.subarray(contentStart, contentStart + size));
@@ -336,6 +345,8 @@ function addTarFiles(bytes) {
             var m = lower.match(/^cmr(\d+)\.tfm$/);
             if (m) {
               var decipoints = parseInt(m[1], 10) * 100;
+              var ecrmName = 'ecrm' + decipoints;
+              addFile(ecrmName, tfmData);
               tfmPaths.forEach(function (path) {
                 var ecrmPath = path.replace(/cmr(\d+\.tfm)$/, 'ecrm' + decipoints + '.tfm');
                 if (ecrmPath !== path && ecrmPath !== name) addFile(ecrmPath, bytes.subarray(contentStart, contentStart + size));
@@ -345,6 +356,8 @@ function addTarFiles(bytes) {
           // Map cmr -> cmtt (typewriter) for \url and similar
           if (baseName.startsWith('r')) {
             var cmttName = 'cmtt' + baseName.slice(1);
+            var cmttNoExt = cmttName.replace(/\.tfm$/i, '');
+            addFile(cmttNoExt, tfmData);
             tfmPaths.forEach(function (path) {
               var cmttPath = path.replace(/cmr(\d+\.tfm)$/, 'cmtt$1').replace(/cmr(\d+\.tfm)$/, 'cmtt$1');
               if (cmttPath !== path && cmttPath !== name) addFile(cmttPath, bytes.subarray(contentStart, contentStart + size));
@@ -355,6 +368,8 @@ function addTarFiles(bytes) {
             var m = lower.match(/^cmr(\d+)\.tfm$/);
             if (m) {
               var fontPt = m[1];
+              var lmssName = 'lmss' + fontPt;
+              addFile(lmssName, tfmData);
               tfmPaths.forEach(function (path) {
                 var lmssPath = path.replace(/cmr(\d+\.tfm)$/, 'lmss' + fontPt + '.tfm');
                 if (lmssPath !== path && lmssPath !== name) addFile(lmssPath, bytes.subarray(contentStart, contentStart + size));
@@ -605,8 +620,6 @@ function prepareMathSource(files, mainFile) {
   if (!source) return source;
   // Fix \\ followed by [ being parsed as \\[<length>]
   source = source.replace(/\\(\s*\[)/g, '\\\\relax$1');
-  // Normalize [label=$\bullet$] to textbullet to prevent undefined math font family 2 (OMS)
-  source = source.replace(/\[\s*label\s*=\s*\$\s*\\bullet\s*\$\s*\]/g, '[label=\\\\textbullet]');
   // Provide \\HUGE if used
   if (/\\HUGE\b/.test(source) && !/\\(?:re)?newcommand\*?\{\\HUGE\}/.test(source)) {
     source = source.replace(/\\begin\{document\}/, '\\providecommand{\\HUGE}{\\Huge}\n\\begin{document}');
@@ -623,15 +636,6 @@ function prepareMathSource(files, mainFile) {
   // hyperref is stripped because the bundle lacks cmtt TFM metrics; replace
   // \url{...} with \texttt{...} so hyperref-using documents still compile.
   source = source.replace(/\\url\{(.*?)\}/g, '\\texttt{$1}');
-  // Tectonic WASM build panics when writing output after certain vertical/
-  // horizontal space commands and box environments
-  // (output_open_stdout: providing sink in a background thread). Replace
-  // them with a no-op comment so documents compile.
-  source = source.replace(/\\(?:newpage|clearpage|pagebreak)\b|\\addvspace\{[^}]*\}|\\vspace\*?\{[^}]*\}|\\hfill\b/g, '% space removed');
-  source = source.replace(/\\begin\{tabular\}[^}]*\}.*?\\end\{tabular\}/gs, '% table removed');
-  source = source.replace(/\\begin\{minipage\}[^}]*\}.*?\\end\{minipage\}/gs, '% minipage removed');
-  source = source.replace(/\\begin\{center\}.*?\\end\{center\}/gs, '% center removed');
-  source = source.replace(/\\rule\{[^}]*\}\{[^}]*\}/g, '% rule removed');
   // Tectonic WASM bundle lacks size11.clo and size12.clo; fall back to 10pt
   source = source.replace(/\\documentclass\s*\[([^\]]*)\]\s*\{([^}]+)\}/g, function(match, options, cls) {
     var newOptions = options.replace(/\b(11|12)pt\b/g, '10pt');
