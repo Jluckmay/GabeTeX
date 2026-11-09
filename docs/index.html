@@ -391,7 +391,11 @@ html[data-os="linux"] .also-linux { display: inline; }
 .meta span + span::before { content: "·"; margin: 0 .45em; }
 .hero-shot { position: relative; max-width: calc(var(--max-wide) + 2 * var(--gutter)); margin: clamp(36px, 5vw, 64px) auto 0; padding: 0 var(--gutter); }
 .hero-shot img { width: 100%; height: auto; }
-.themed-shot { display: none; width: 100%; height: auto; }
+.themed-shot {
+  display: none; width: 100%; height: auto;
+  border-radius: clamp(12px, 1.4vw, 18px);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .45), 0 0 0 1px var(--hairline-strong);
+}
 html.dark[data-lang="pt"] .shot-dark-pt,
 html:not(.dark)[data-lang="pt"] .shot-light-pt,
 html.dark[data-lang="en"] .shot-dark-en,
@@ -849,16 +853,16 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 
     </div>
     <figure class="hero-shot h-5" style="margin-bottom:0">
-      <img class="themed-shot shot-dark-pt" src="assets/screenshots/project-dark-pt.png" width="2600" height="1640" fetchpriority="high"
+      <img class="themed-shot shot-dark-pt" src="assets/screenshots/project-dark-pt.png" width="2600" height="1576" fetchpriority="high"
            alt="A janela de projeto do GabeTeX: a barra lateral de arquivos à esquerda, o editor LaTeX no meio e a pré-visualização do PDF ao vivo à direita."
            data-i18n-attr="alt:shots.projectAlt">
-      <img class="themed-shot shot-light-pt" src="assets/screenshots/project-light-pt.png" width="2600" height="1640" fetchpriority="high"
+      <img class="themed-shot shot-light-pt" src="assets/screenshots/project-light-pt.png" width="2600" height="1576" fetchpriority="high"
            alt="A janela de projeto do GabeTeX: a barra lateral de arquivos à esquerda, o editor LaTeX no meio e a pré-visualização do PDF ao vivo à direita."
            data-i18n-attr="alt:shots.projectAlt">
-      <img class="themed-shot shot-dark-en" src="assets/screenshots/project-dark-en.png" width="2600" height="1640" fetchpriority="high"
+      <img class="themed-shot shot-dark-en" src="assets/screenshots/project-dark-en.png" width="2600" height="1576" fetchpriority="high"
            alt="The GabeTeX project window: the file sidebar on the left, the LaTeX editor in the middle and the live PDF preview on the right."
            data-i18n-attr="alt:shots.projectAlt">
-      <img class="themed-shot shot-light-en" src="assets/screenshots/project-light-en.png" width="2600" height="1640" fetchpriority="high"
+      <img class="themed-shot shot-light-en" src="assets/screenshots/project-light-en.png" width="2600" height="1576" fetchpriority="high"
            alt="The GabeTeX project window: the file sidebar on the left, the LaTeX editor in the middle and the live PDF preview on the right."
            data-i18n-attr="alt:shots.projectAlt">
       <figcaption data-i18n="shots.project">Your whole project in one window: the files, the source, and the PDF compiling live beside it.</figcaption>
@@ -965,16 +969,16 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
       </div>
       <p class="try" aria-hidden="true"><span class="try-fine" data-i18n="sync.try">Try it: click a word on either side.</span><span class="try-coarse" data-i18n="sync.tryTouch">Try it: tap a word on either side.</span></p>
       <figure class="sync-shot reveal">
-        <img class="themed-shot shot-dark-pt" src="assets/screenshots/sync-dark-pt.png" width="2600" height="1640" loading="lazy" decoding="async"
+        <img class="themed-shot shot-dark-pt" src="assets/screenshots/sync-dark-pt.png" width="2600" height="1576" loading="lazy" decoding="async"
              alt="O GabeTeX indo de uma palavra no PDF para a mesma palavra no código LaTeX, que recebe um breve destaque."
              data-i18n-attr="alt:shots.syncAlt">
-        <img class="themed-shot shot-light-pt" src="assets/screenshots/sync-light-pt.png" width="2600" height="1640" loading="lazy" decoding="async"
+        <img class="themed-shot shot-light-pt" src="assets/screenshots/sync-light-pt.png" width="2600" height="1576" loading="lazy" decoding="async"
              alt="O GabeTeX indo de uma palavra no PDF para a mesma palavra no código LaTeX, que recebe um breve destaque."
              data-i18n-attr="alt:shots.syncAlt">
-        <img class="themed-shot shot-dark-en" src="assets/screenshots/sync-dark-en.png" width="2600" height="1640" loading="lazy" decoding="async"
+        <img class="themed-shot shot-dark-en" src="assets/screenshots/sync-dark-en.png" width="2600" height="1576" loading="lazy" decoding="async"
              alt="GabeTeX jumping from a word in the PDF to the same word in the LaTeX source, which is briefly highlighted."
              data-i18n-attr="alt:shots.syncAlt">
-        <img class="themed-shot shot-light-en" src="assets/screenshots/sync-light-en.png" width="2600" height="1640" loading="lazy" decoding="async"
+        <img class="themed-shot shot-light-en" src="assets/screenshots/sync-light-en.png" width="2600" height="1576" loading="lazy" decoding="async"
              alt="GabeTeX jumping from a word in the PDF to the same word in the LaTeX source, which is briefly highlighted."
              data-i18n-attr="alt:shots.syncAlt">
         <figcaption data-i18n="shots.sync">In GabeTeX: a double-click in the PDF opened the section file at that word. With Follow cursor in PDF, the preview also keeps up as you move.</figcaption>
@@ -1084,16 +1088,16 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
         </div>
       </div>
       <figure class="reveal" style="--stagger:1">
-        <img class="themed-shot shot-dark-pt" src="assets/screenshots/welcome-dark-pt.png" width="2000" height="1400" loading="lazy" decoding="async"
+        <img class="themed-shot shot-dark-pt" src="assets/screenshots/welcome-dark-pt.png" width="2000" height="1336" loading="lazy" decoding="async"
              alt="A janela de boas-vindas do GabeTeX com os projetos recentes, rótulos coloridos e filtros."
              data-i18n-attr="alt:shots.welcomeAlt">
-        <img class="themed-shot shot-light-pt" src="assets/screenshots/welcome-light-pt.png" width="2000" height="1400" loading="lazy" decoding="async"
+        <img class="themed-shot shot-light-pt" src="assets/screenshots/welcome-light-pt.png" width="2000" height="1336" loading="lazy" decoding="async"
              alt="A janela de boas-vindas do GabeTeX com os projetos recentes, rótulos coloridos e filtros."
              data-i18n-attr="alt:shots.welcomeAlt">
-        <img class="themed-shot shot-dark-en" src="assets/screenshots/welcome-dark-en.png" width="2000" height="1400" loading="lazy" decoding="async"
+        <img class="themed-shot shot-dark-en" src="assets/screenshots/welcome-dark-en.png" width="2000" height="1336" loading="lazy" decoding="async"
              alt="The GabeTeX Welcome window listing recent projects with color labels and filter chips."
              data-i18n-attr="alt:shots.welcomeAlt">
-        <img class="themed-shot shot-light-en" src="assets/screenshots/welcome-light-en.png" width="2000" height="1400" loading="lazy" decoding="async"
+        <img class="themed-shot shot-light-en" src="assets/screenshots/welcome-light-en.png" width="2000" height="1336" loading="lazy" decoding="async"
              alt="The GabeTeX Welcome window listing recent projects with color labels and filter chips."
              data-i18n-attr="alt:shots.welcomeAlt">
         <figcaption data-i18n="shots.welcome">The Welcome window, with color labels and filters.</figcaption>
