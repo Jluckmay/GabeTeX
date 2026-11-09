@@ -41,14 +41,14 @@
   if (q) lang = q[1];
   if (!lang) { try { lang = localStorage.getItem('gabetex.lang'); } catch (e) {} }
   if (lang !== 'en' && lang !== 'pt') {
-    lang = 'en';
     var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
     for (var i = 0; i < list.length; i++) {
       var l = String(list[i]).toLowerCase();
       if (l.indexOf('pt') === 0) { lang = 'pt'; break; }
-      if (l.indexOf('en') === 0) break;
+      if (l.indexOf('en') === 0) { lang = 'en'; break; }
     }
   }
+  lang = lang === 'pt' ? 'pt' : 'en';
   d.setAttribute('data-lang', lang);
   d.lang = lang === 'pt' ? 'pt-BR' : 'en';
   d.setAttribute('data-view', location.hash === '#versions' ? 'versions' : location.hash === '#editor' ? 'editor' : 'overview');
@@ -64,9 +64,11 @@
   var isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
   if (isDark) {
     root.classList.add('dark');
+    root.classList.remove('light');
     if (toggle) toggle.setAttribute('aria-pressed', 'true');
-  } else if (saved === 'light') {
+  } else {
     root.classList.add('light');
+    root.classList.remove('dark');
   }
 })();
 </script>
@@ -76,14 +78,14 @@
   --canvas: #050505;
   --alt: #080808;
   --raised: #0d0d0d;
-  --tile: #0b0b0b;
-  --tile-raised: #050505;
-  --paper: #0d0d0d;
+  --tile: #111113;
+  --tile-raised: #09090b;
+  --paper: #ffffff;
   --ink: #ebebeb;
   --ink-2: #aaa;
   --ink-3: rgba(235, 235, 235, .38);
-  --on-tile: #080808;
-  --on-tile-2: #aaa;
+  --on-tile: #f5f5f7;
+  --on-tile-2: #a1a1a6;
   --accent: #a30f18;
   --btn-fill: #a30f18;
   --accent-hover: #d51e2b;
@@ -128,14 +130,14 @@
     --canvas: #f5f5f7;
     --alt: #eaeaea;
     --raised: #ffffff;
-    --tile: #d9d9d9;
-    --tile-raised: #f5f5f7;
+    --tile: #18181b;
+    --tile-raised: #0f0f11;
     --paper: #ffffff;
     --ink: #1a1a1a;
     --ink-2: #666;
     --ink-3: rgba(26, 26, 26, .38);
-    --on-tile: #eaeaea;
-    --on-tile-2: #666;
+    --on-tile: #f5f5f7;
+    --on-tile-2: #a1a1a6;
     --accent: #7f0b13;
     --btn-fill: #7f0b13;
     --accent-hover: #a30f18;
@@ -165,14 +167,14 @@ html.dark {
   --canvas: #050505;
   --alt: #080808;
   --raised: #0d0d0d;
-  --tile: #0b0b0b;
-  --tile-raised: #050505;
-  --paper: #0d0d0d;
+  --tile: #111113;
+  --tile-raised: #09090b;
+  --paper: #ffffff;
   --ink: #ebebeb;
   --ink-2: #aaa;
   --ink-3: rgba(235, 235, 235, .38);
-  --on-tile: #080808;
-  --on-tile-2: #aaa;
+  --on-tile: #f5f5f7;
+  --on-tile-2: #a1a1a6;
   --accent: #a30f18;
   --btn-fill: #a30f18;
   --accent-hover: #d51e2b;
@@ -197,14 +199,14 @@ html.light {
   --canvas: #f5f5f7;
   --alt: #eaeaea;
   --raised: #ffffff;
-  --tile: #d9d9d9;
-  --tile-raised: #f5f5f7;
+  --tile: #18181b;
+  --tile-raised: #0f0f11;
   --paper: #ffffff;
   --ink: #1a1a1a;
   --ink-2: #666;
   --ink-3: rgba(26, 26, 26, .38);
-  --on-tile: #eaeaea;
-  --on-tile-2: #666;
+  --on-tile: #f5f5f7;
+  --on-tile-2: #a1a1a6;
   --accent: #7f0b13;
   --btn-fill: #7f0b13;
   --accent-hover: #a30f18;
@@ -419,7 +421,7 @@ html:not(.dark):not([data-lang="en"]) .shot-light-pt { display: block; }
   font: 400 14px/1.7 var(--font-mono); letter-spacing: 0; color: rgba(245, 245, 247, .88);
 }
 .src::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 72px; background: linear-gradient(rgba(29, 29, 31, 0), var(--tile-raised)); pointer-events: none; }
-@media (prefers-color-scheme: dark) { .src::after { background: linear-gradient(rgba(0, 0, 0, 0), #000); } }
+/* .src::after uses var(--tile-raised) */
 .src .ln { display: grid; grid-template-columns: 2.9em minmax(0, 1fr); padding-right: 18px; }
 .src .ln::before { content: attr(data-n); text-align: right; padding-right: 1.2em; color: rgba(245, 245, 247, .28); user-select: none; }
 .src .t { white-space: pre-wrap; overflow-wrap: anywhere; padding-left: 2ch; text-indent: -2ch; }
@@ -847,16 +849,16 @@ figcaption { margin: 14px auto 0; max-width: var(--max-text); text-align: center
 
     </div>
     <figure class="hero-shot h-5" style="margin-bottom:0">
-      <img class="themed-shot shot-dark-pt" src="assets/screenshots/project-dark-pt.png" width="2600" height="1640" decoding="async" fetchpriority="high"
+      <img class="themed-shot shot-dark-pt" src="assets/screenshots/project-dark-pt.png" width="2600" height="1640" fetchpriority="high"
            alt="A janela de projeto do GabeTeX: a barra lateral de arquivos à esquerda, o editor LaTeX no meio e a pré-visualização do PDF ao vivo à direita."
            data-i18n-attr="alt:shots.projectAlt">
-      <img class="themed-shot shot-light-pt" src="assets/screenshots/project-light-pt.png" width="2600" height="1640" decoding="async" loading="lazy"
+      <img class="themed-shot shot-light-pt" src="assets/screenshots/project-light-pt.png" width="2600" height="1640" fetchpriority="high"
            alt="A janela de projeto do GabeTeX: a barra lateral de arquivos à esquerda, o editor LaTeX no meio e a pré-visualização do PDF ao vivo à direita."
            data-i18n-attr="alt:shots.projectAlt">
-      <img class="themed-shot shot-dark-en" src="assets/screenshots/project-dark-en.png" width="2600" height="1640" decoding="async" loading="lazy"
+      <img class="themed-shot shot-dark-en" src="assets/screenshots/project-dark-en.png" width="2600" height="1640" fetchpriority="high"
            alt="The GabeTeX project window: the file sidebar on the left, the LaTeX editor in the middle and the live PDF preview on the right."
            data-i18n-attr="alt:shots.projectAlt">
-      <img class="themed-shot shot-light-en" src="assets/screenshots/project-light-en.png" width="2600" height="1640" decoding="async" loading="lazy"
+      <img class="themed-shot shot-light-en" src="assets/screenshots/project-light-en.png" width="2600" height="1640" fetchpriority="high"
            alt="The GabeTeX project window: the file sidebar on the left, the LaTeX editor in the middle and the live PDF preview on the right."
            data-i18n-attr="alt:shots.projectAlt">
       <figcaption data-i18n="shots.project">Your whole project in one window: the files, the source, and the PDF compiling live beside it.</figcaption>
