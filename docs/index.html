@@ -4,8 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>GabeTeX — a native LaTeX editor for macOS, also for Linux and Windows</title>
-<meta name="description" content="GabeTeX is a free, open-source LaTeX editor, native to macOS 26 and also available for Linux and Windows, made for writing mathematics in multi-file projects: it compiles while you type, syncs PDF and source word for word, and installs missing packages for you.">
+<title>GabeTeX — a multiplatform LaTeX editor made for writing mathematics in multi-file projects</title>
+<meta name="description" content="GabeTeX is a free, open-source, multiplatform LaTeX editor for macOS, Linux and Windows, made for writing mathematics in multi-file projects: it compiles while you type, syncs PDF and source word for word, and installs missing packages for you.">
 <link rel="canonical" href="https://gabe-rbo.github.io/GabeTeX/">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
@@ -15,8 +15,8 @@
 <meta name="color-scheme" content="light dark">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="GabeTeX">
-<meta property="og:title" content="GabeTeX — a native LaTeX editor for macOS, also for Linux and Windows">
-<meta property="og:description" content="Free and open source. Native to macOS, also for Linux and Windows. Made for writing mathematics in multi-file projects: it compiles while you type, syncs PDF and source word for word, and installs missing packages for you.">
+<meta property="og:title" content="GabeTeX — a multiplatform LaTeX editor made for writing mathematics in multi-file projects">
+<meta property="og:description" content="Free and open source. Multiplatform: macOS, Linux and Windows. Made for writing mathematics in multi-file projects: it compiles while you type, syncs PDF and source word for word, and installs missing packages for you.">
 <meta property="og:url" content="https://gabe-rbo.github.io/GabeTeX/">
 <meta property="og:image" content="https://gabe-rbo.github.io/GabeTeX/assets/og.png">
 <meta property="og:image:width" content="1280">
@@ -25,8 +25,8 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:locale:alternate" content="pt_BR">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="GabeTeX — a native LaTeX editor for macOS, also for Linux and Windows">
-<meta name="twitter:description" content="Free and open source. Native to macOS, also for Linux and Windows. Made for writing mathematics in multi-file projects.">
+<meta name="twitter:title" content="GabeTeX — a multiplatform LaTeX editor made for writing mathematics in multi-file projects">
+<meta name="twitter:description" content="Free and open source. Multiplatform: macOS, Linux and Windows. Made for writing mathematics in multi-file projects.">
 <meta name="twitter:image" content="https://gabe-rbo.github.io/GabeTeX/assets/og.png">
 <meta name="twitter:image:alt" content="The GabeTeX app icon next to the words: GabeTeX, a native LaTeX editor for macOS.">
 <link rel="preload" as="style" href="assets/editor.css">
@@ -300,10 +300,11 @@ html.js[data-view="editor"] #overview, html.js[data-view="editor"] #versions { d
   background: none; cursor: pointer; white-space: nowrap; text-align: center;
   font: 600 14px/1 var(--font-sans); letter-spacing: -.016em; color: var(--seg-ink); transition: color .2s var(--ease-out);
 }
-.seg [aria-current="page"], .seg [aria-pressed="true"] { color: var(--canvas); }
+.seg [aria-current="page"], .seg [aria-pressed="true"] { color: var(--ink); }
 @media (hover: hover) and (pointer: fine) {
   .seg a:hover, .seg button:hover { color: var(--ink); text-decoration: none; }
   .nav .seg a:hover, .nav .seg button:hover { color: var(--accent-hover); }
+  .nav .seg [aria-current="page"]:hover, .nav .seg [aria-pressed="true"]:hover { color: var(--ink); }
 }
 .seg-sm a, .seg-sm button { padding: 0 11px; }
 
@@ -2029,10 +2030,10 @@ Hello, world!
     'js.repo': 'Ver o repositório no GitHub',
                 'js.upstream': 'Upstream (gabe-rbo)',
         'js.copiedLive': 'Comando copiado.',
-    'js.title': 'GabeTeX — editor LaTeX multiplataform, também para Linux e Windows',
+    'js.title': 'GabeTeX — editor LaTeX multiplataforma feito para escrever matemática em projetos multiarquivos',
     'js.titleVersions': 'Versões — GabeTeX',
     'js.titleEditor': 'Editor online — GabeTeX',
-    'js.desc': 'O GabeTeX é um editor LaTeX livre, de código aberto e multiplataform para macOS, Linux e Windows, feito para quem escreve matemática em projetos de vários arquivos: compila enquanto você digita, sincroniza PDF e código palavra por palavra e instala os pacotes que faltam.',
+    'js.desc': 'O GabeTeX é um editor LaTeX livre, de código aberto e multiplataforma para macOS, Linux e Windows, feito para quem escreve matemática em projetos de vários arquivos: compila enquanto você digita, sincroniza PDF e código palavra por palavra e instala os pacotes que faltam.',
     'nav.theme': 'Alternar entre temas claro e escuro',
     'nav.editor': 'Editor online'
   };
