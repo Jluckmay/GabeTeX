@@ -2736,6 +2736,14 @@ Hello, world!
       var direct = target.closest('.hit');
       if (direct) return direct;
       var paper = target.closest('.paper');
+      if (!paper) {
+        var wrap = target.closest('.paper-wrap');
+        if (wrap) paper = wrap.querySelector('.paper:not([hidden])') || wrap.querySelector('.paper');
+      }
+      if (!paper) {
+        var curPdf = els().pdf;
+        if (curPdf) paper = curPdf;
+      }
       if (!paper) return null;
       var hits = paper.querySelectorAll('.hit');
       if (!hits || !hits.length) return null;
@@ -2744,13 +2752,15 @@ Hello, world!
         var r = hits[i].getBoundingClientRect();
         var cx = r.left + r.width / 2;
         var cy = r.top + r.height / 2;
-        var d = Math.hypot(clientX - cx, clientY - cy);
+        var d = (typeof clientX === 'number' && typeof clientY === 'number')
+          ? Math.hypot(clientX - cx, clientY - cy)
+          : 0;
         if (d < bestDist) {
           bestDist = d;
           best = hits[i];
         }
       }
-      return bestDist <= 80 ? best : null;
+      return best || hits[0];
     }
 
     function jumpToSource(hit, clientX, clientY) {
