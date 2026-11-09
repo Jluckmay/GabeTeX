@@ -19,3 +19,4 @@ node_modules/
 /beamer_*.tex
 /beamer_*.js
 /set_editor.js
+out/
