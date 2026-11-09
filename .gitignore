@@ -1,4 +1,21 @@
 .DS_Store
 claude/
 .agentwork/
-.bg/
+# Antigravity runtime and state
+.antigravity/
+.antigravity-runtime/
+
+# Development artifacts (root level)
+node_modules/
+/package-lock.json
+/package.json
+
+# Test scripts and artifacts (root level)
+/test_*.js
+/test_output.html
+/find_*.py
+/apply_*.py
+/*.tfm
+/beamer_*.tex
+/beamer_*.js
+/set_editor.js

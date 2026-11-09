@@ -374,10 +374,13 @@ html:not(.dark):not([data-lang="en"]) .shot-light-pt { display: block; }
 .panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); gap: 20px; align-items: stretch; }
 .pane-label { display: block; margin: 0 0 10px 4px; font: 600 13px/1 var(--font-sans); letter-spacing: -.01em; color: var(--ink-2); }
 .src {
-  position: relative; overflow: hidden;
+  position: relative; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth;
   height: calc(100% - 23px); margin: 0; padding: 18px 0 20px; border-radius: var(--r-lg);
   font: 400 14px/1.7 var(--font-mono); letter-spacing: 0;
+  scrollbar-width: thin;
 }
+.src:focus-visible { outline: 1.5px solid var(--accent, #0071e3); outline-offset: -1px; }
+.src ::selection { background: rgba(0, 113, 227, .25); }
 .src .ln { display: grid; grid-template-columns: 2.9em minmax(0, 1fr); padding-right: 18px; }
 .src .t { white-space: pre-wrap; overflow-wrap: anywhere; padding-left: 2ch; text-indent: -2ch; }
 .src .w { position: relative; isolation: isolate; cursor: pointer; }
@@ -391,6 +394,7 @@ html:not(.dark):not([data-lang="en"]) .shot-light-pt { display: block; }
 .paper {
   flex: 1; display: flex; align-items: flex-start; border-radius: 4px; background: #ffffff; color: #1d1d1f;
   padding: clamp(14px, 3.4%, 30px) clamp(10px, 3.4%, 30px) clamp(18px, 4.5%, 40px);
+  user-select: none; -webkit-user-select: none;
 }
 .paper svg { width: 100%; height: auto; overflow: visible; }
 .paper .hl { fill: var(--sync-hl); opacity: 0; transform: scaleX(.6); transform-box: fill-box; transform-origin: 0 50%; transition: opacity .45s var(--ease-inout), transform .45s var(--ease-inout); }
@@ -2576,17 +2580,176 @@ Hello, world!
       later(function () { caption('a'); }, 7400);
       later(cycle, 8000);
     }
+    var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '') || /Macintosh/.test(navigator.userAgent || '');
+    var chipKbd = chip ? chip.querySelector('kbd') : null;
+    if (chipKbd) chipKbd.textContent = isMac ? '⌘' : 'Ctrl';
+
     function flash(el) {
       if (!el) return;
       el.classList.remove('on'); void el.getBoundingClientRect(); el.classList.add('on');
-      clearTimeout(el._t); el._t = setTimeout(function () { el.classList.remove('on'); }, 1300);
+      clearTimeout(el._t); el._t = setTimeout(function () { el.classList.remove('on'); }, 1800);
     }
+
+    function findHitAt(target, clientX, clientY) {
+      if (!target) return null;
+      var direct = target.closest('.hit');
+      if (direct) return direct;
+      var paper = target.closest('.paper');
+      if (!paper) return null;
+      var hits = paper.querySelectorAll('.hit');
+      if (!hits || !hits.length) return null;
+      var best = null, bestDist = Infinity;
+      for (var i = 0; i < hits.length; i++) {
+        var r = hits[i].getBoundingClientRect();
+        var cx = r.left + r.width / 2;
+        var cy = r.top + r.height / 2;
+        var d = Math.hypot(clientX - cx, clientY - cy);
+        if (d < bestDist) {
+          bestDist = d;
+          best = hits[i];
+        }
+      }
+      return bestDist <= 80 ? best : null;
+    }
+
+    function jumpToSource(hit, clientX, clientY) {
+      if (!hit) return;
+      var k = hit.getAttribute('data-k');
+      var target = srcW(k);
+      if (!target) return;
+
+      takenOver = true;
+      stop();
+      clearAll();
+      caption('a');
+
+      // 1. Position and animate rings at exact click/touch coordinates
+      var b = box.getBoundingClientRect();
+      var rx, ry;
+      if (typeof clientX === 'number' && typeof clientY === 'number') {
+        rx = clientX - b.left;
+        ry = clientY - b.top;
+      } else {
+        var p = pos(hit);
+        rx = p.x;
+        ry = p.y + p.h / 2;
+      }
+      rings.style.transform = 'translate(' + rx + 'px,' + ry + 'px)';
+      rings.classList.remove('go');
+      void rings.offsetWidth;
+      rings.classList.add('go');
+
+      // 2. Focus code editor on the left
+      var srcEl = els().src;
+      if (srcEl) {
+        if (!srcEl.hasAttribute('tabindex')) srcEl.setAttribute('tabindex', '0');
+        try { srcEl.focus({ preventScroll: true }); } catch (_) {}
+      }
+
+      // 3. Smooth scroll to exact line
+      var ln = target.closest('.ln') || target;
+      if (typeof ln.scrollIntoView === 'function') {
+        try {
+          ln.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+        } catch (_) {
+          ln.scrollIntoView(false);
+        }
+      }
+
+      // 4. Highlight and select word in LaTeX source
+      flash(target);
+      try {
+        var sel = window.getSelection();
+        if (sel) {
+          var range = document.createRange();
+          range.selectNodeContents(target);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      } catch (_) {}
+    }
+
+    function jumpToPdf(w) {
+      if (!w) return;
+      var k = w.getAttribute('data-k');
+      var dest = pdfH(k);
+      if (!dest) return;
+
+      takenOver = true;
+      stop();
+      clearAll();
+      caption('b');
+
+      // 1. Position chip and press state on word in editor
+      placeChip(k);
+      chip.classList.add('on');
+      clearTimeout(chip._t);
+      chip._t = setTimeout(function () { chip.classList.remove('on'); }, 1800);
+
+      w.classList.add('press');
+      setTimeout(function () { w.classList.remove('press'); }, 450);
+
+      // 2. Flash highlight in PDF
+      flash(dest);
+
+      // 3. Trigger rings on the PDF destination word
+      var destHit = pdfHit(k);
+      if (destHit) {
+        placeRings(k);
+        rings.classList.remove('go');
+        void rings.offsetWidth;
+        rings.classList.add('go');
+      }
+    }
+
+    // Double-click on PDF side (.paper-wrap / .paper / .hit)
+    box.addEventListener('dblclick', function (e) {
+      var paper = e.target.closest('.paper-wrap') || e.target.closest('.paper');
+      if (!paper) return;
+      e.preventDefault();
+      var hit = findHitAt(e.target, e.clientX, e.clientY);
+      if (hit) {
+        jumpToSource(hit, e.clientX, e.clientY);
+      }
+    });
+
+    // Touch double-tap detection for mobile devices
+    var lastTouchTime = 0, lastTouchX = 0, lastTouchY = 0;
+    box.addEventListener('touchend', function (e) {
+      var paper = e.target.closest('.paper-wrap') || e.target.closest('.paper');
+      if (!paper) return;
+      var t = e.changedTouches && e.changedTouches[0];
+      if (!t) return;
+      var now = Date.now();
+      var dt = now - lastTouchTime;
+      var dist = Math.hypot(t.clientX - lastTouchX, t.clientY - lastTouchY);
+      if (dt > 40 && dt < 400 && dist < 35) {
+        e.preventDefault();
+        var hit = findHitAt(e.target, t.clientX, t.clientY);
+        if (hit) {
+          jumpToSource(hit, t.clientX, t.clientY);
+        }
+        lastTouchTime = 0;
+      } else {
+        lastTouchTime = now;
+        lastTouchX = t.clientX;
+        lastTouchY = t.clientY;
+      }
+    }, { passive: false });
+
+    // Click in source code (Ctrl/Cmd + click or standard click)
     box.addEventListener('click', function (e) {
-      var w = e.target.closest('.w'), hit = e.target.closest('.hit');
-      if (!w && !hit) return;
-      takenOver = true; stop(); clearAll(); capA.classList.remove('on'); capB.classList.remove('on');
-      if (w) { flash(pdfH(w.getAttribute('data-k'))); capB.classList.add('on'); }
-      else { flash(srcW(hit.getAttribute('data-k'))); capA.classList.add('on'); }
+      var w = e.target.closest('.w');
+      if (w) {
+        jumpToPdf(w);
+        return;
+      }
+      var hit = e.target.closest('.hit');
+      if (hit) {
+        // Single click on PDF: hint that double-click is needed
+        takenOver = true;
+        caption('a');
+      }
     });
     function start() { if (!playing && !takenOver) { stop(); cycle(); } }
     if (reduced() || !('IntersectionObserver' in window)) {
