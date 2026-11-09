@@ -1772,8 +1772,10 @@ Hello, world!
 <script>
 (function () {
   'use strict';
+  var REPO_FORK = 'Jluckmay/GabeTeX';
   var REPO_MAC = 'gabe-rbo/GabeTeX-macOS';
   var REPO_LW = 'gabe-rbo/GabeTeX-Linux-Windows';
+  var API_FORK = 'https://api.github.com/repos/' + REPO_FORK + '/releases?per_page=30';
   var API_MAC = 'https://api.github.com/repos/' + REPO_MAC + '/releases?per_page=30';
   var API_LW = 'https://api.github.com/repos/' + REPO_LW + '/releases?per_page=30';
   var RELEASES_URL = 'https://github.com/' + REPO_MAC + '/releases';
@@ -1783,7 +1785,7 @@ Hello, world!
   var LATEST_DEB = LW_RELEASES + '/latest/download/GabeTeX-linux-amd64.deb';
   var LATEST_EXE = LW_RELEASES + '/latest/download/GabeTeX-windows-x64-setup.exe';
   var LATEST_MSI = LW_RELEASES + '/latest/download/GabeTeX-windows-x64.msi';
-  var CACHE_KEY = 'gabetex.releases.v3';
+  var CACHE_KEY = 'gabetex.releases.v4';
   var CACHE_MS = 10 * 60 * 1000;
   var root = document.documentElement;
   var mqReduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
@@ -2028,7 +2030,8 @@ Hello, world!
     'js.latestDlWin': 'Baixar para Windows',
     'js.empty': 'Ainda não há versões publicadas.',
     'js.repo': 'Ver o repositório no GitHub',
-                'js.upstream': 'Upstream (gabe-rbo)',
+    'js.fork': 'Fork (Jluckmay/GabeTeX)',
+    'js.upstream': 'Upstream (gabe-rbo)',
         'js.copiedLive': 'Comando copiado.',
     'js.title': 'GabeTeX — editor LaTeX multiplataforma feito para escrever matemática em projetos multiarquivos',
     'js.titleVersions': 'Versões — GabeTeX',
@@ -2054,7 +2057,8 @@ Hello, world!
     'js.latestDlWin': 'Download for Windows',
     'js.empty': 'No releases yet.',
     'js.repo': 'View the repository on GitHub',
-                'js.upstream': 'Upstream (gabe-rbo)',
+    'js.fork': 'Fork (Jluckmay/GabeTeX)',
+    'js.upstream': 'Upstream (gabe-rbo)',
         'js.copiedLive': 'Command copied.',
     'hero.downloadLinux': 'Download for Linux',
     'hero.downloadWindows': 'Download for Windows',
@@ -2346,18 +2350,26 @@ Hello, world!
         if (!Array.isArray(list)) return [];
         return list.filter(function (r) { return r && !r.draft; });
       }
-      pending = Promise.all([getJson(API_MAC), getJson(API_LW)])
+      pending = Promise.all([getJson(API_FORK), getJson(API_MAC), getJson(API_LW)])
       .then(function (results) {
-        var macList = published(results[0]).map(function (r) { return slim(r, 'mac'); });
-        var lwList = published(results[1]).map(function (r) { return slim(r, 'lw'); });
-        var merged = {};
-        macList.concat(lwList).forEach(function (r) {
+        var forkReleases = published(results[0]);
+        var upMac = published(results[1]);
+        var lw = published(results[2]);
+
+        /* Fork releases: one entry per release */
+        var forkEntries = forkReleases.map(function (r) { return slim(r, 'fork'); });
+
+        /* Upstream releases: merge macOS + Linux/Windows by version tag */
+        var mergedUp = {};
+        var upAll = upMac.map(function (r) { return slim(r, 'mac-up'); })
+          .concat(lw.map(function (r) { return slim(r, 'lw-up'); }));
+        upAll.forEach(function (r) {
           var key = bare(r.tag);
           if (!key) return;
-          if (!merged[key]) {
-            merged[key] = r;
+          if (!mergedUp[key]) {
+            mergedUp[key] = r;
           } else {
-            var existing = merged[key];
+            var existing = mergedUp[key];
             if (Date.parse(r.date || 0) > Date.parse(existing.date || 0)) existing.date = r.date;
             existing.assets = existing.assets.concat(r.assets);
             if (!existing.html && r.html) existing.html = r.html;
@@ -2366,7 +2378,13 @@ Hello, world!
             existing.pre = existing.pre || r.pre;
           }
         });
-        var list = Object.values(merged)
+        var upstreamEntries = Object.values(mergedUp);
+        /* Remove fork entries whose version tag already exists in upstream */
+        forkEntries = forkEntries.filter(function (r) {
+          return !mergedUp[bare(r.tag)];
+        });
+
+        var list = forkEntries.concat(upstreamEntries)
           .sort(function (a, b) { return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0); });
         writeCache(list);
         applyDownloadLinks();
@@ -2502,7 +2520,9 @@ Hello, world!
       if (r.name && plainName !== ver && r.name !== r.tag) meta.push('<span>' + esc(r.name) + '</span>');
       if (r.date) meta.push('<span><time datetime="' + esc(r.date) + '">' + esc(fmtDate(r.date)) + '</time></span>');
       /* repository badge */
-            var notesHtml = r.html ? clean(filterNotesByLanguage(r.html, lang)) : '<p>' + esc(t('js.noNotes')) + '</p>';
+      var srcLabel = r.repo === 'fork' ? t('js.fork') : t('js.upstream');
+      meta.push('<span class="entry-source">' + esc(srcLabel) + '</span>');
+      var notesHtml = r.html ? clean(filterNotesByLanguage(r.html, lang)) : '<p>' + esc(t('js.noNotes')) + '</p>';
       var notes = (i === 0 || isLatest) ? '<div class="notes">' + notesHtml + '</div>'
         : '<details class="notes-details"><summary>' + esc(t('js.notes')) + '</summary><div class="notes">' + notesHtml + '</div></details>';
       var acts = '<div class="entry-actions">' +
