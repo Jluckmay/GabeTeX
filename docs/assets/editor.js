@@ -1304,7 +1304,51 @@
     exitPresentationMode();
   });
 
-  previewFrame.addEventListener('scroll', function () {
+  
+
+  /* ---------- reverse sync: double click on PDF to jump to LaTeX source ---------- */
+  if (previewFrame) {
+    previewFrame.addEventListener('dblclick', function (e) {
+      if (!source) return;
+      var page = e.target.closest('.pdf-page');
+      if (!page) {
+        var allPages = previewFrame.querySelectorAll('.pdf-page');
+        if (allPages.length) page = allPages[0];
+      }
+      if (!page) return;
+
+      var rect = page.getBoundingClientRect();
+      var pageRatio = (e.clientY - rect.top) / rect.height;
+      if (pageRatio < 0) pageRatio = 0;
+      if (pageRatio > 1) pageRatio = 1;
+
+      var pageNum = Number(page.getAttribute('data-page-number')) || 1;
+      var totalPages = state.pdfDoc ? state.pdfDoc.numPages : 1;
+
+      var text = source.value;
+      var lines = text.split('\n');
+      var totalLines = lines.length;
+      var targetLine = Math.floor(((pageNum - 1 + pageRatio) / totalPages) * totalLines);
+      if (targetLine < 0) targetLine = 0;
+      if (targetLine >= totalLines) targetLine = totalLines - 1;
+
+      var charPos = 0;
+      for (var i = 0; i < targetLine; i++) {
+        charPos += lines[i].length + 1;
+      }
+
+      source.focus();
+      source.setSelectionRange(charPos, charPos + (lines[targetLine] ? lines[targetLine].length : 0));
+      updateCursor();
+
+      var lineHeight = source.scrollHeight / totalLines;
+      source.scrollTo({
+        top: Math.max(0, targetLine * lineHeight - source.clientHeight / 2),
+        behavior: 'smooth'
+      });
+    });
+  }
+previewFrame.addEventListener('scroll', function () {
     if (editorWindow.classList.contains('presentation-mode')) return;
     var pages = previewFrame.querySelectorAll('.pdf-page');
     if (!pages.length) return;

@@ -94,6 +94,34 @@ html.dark {
   color-scheme: dark;
 }
 
+html.light {
+  --canvas: #ffffff;
+  --alt: #f4f4f5;
+  --raised: #ffffff;
+  --tile: #27272a;
+  --tile-raised: #18181b;
+  --paper: #ffffff;
+  --ink: #09090b;
+  --ink-2: #71717a;
+  --ink-3: rgba(0, 0, 0, .38);
+  --on-tile: #ffffff;
+  --on-tile-2: #a1a1aa;
+  --accent: #3b82f6;
+  --btn-fill: #3b82f6;
+  --accent-hover: #2563eb;
+  --focus: #60a5fa;
+  --accent-tint: rgba(59, 130, 246, .1);
+  --hairline: rgba(0, 0, 0, .1);
+  --hairline-strong: rgba(0, 0, 0, .18);
+  --fill: rgba(0, 0, 0, .06);
+  --glass-bg: rgba(255, 255, 255, .8);
+  --glass-rim: rgba(0, 0, 0, .08);
+  --warn: #f59e0b;
+  --ok: #22c55e;
+  --err: #ef4444;
+  color-scheme: light;
+}
+
 /* ===== TeX-logo wordmark: T, a lowered E, X ===== */
 .tex { white-space: nowrap; }
 .tex-e { display: inline-block; transform: translateY(.22em); margin: 0 -.1em 0 -.15em; }
