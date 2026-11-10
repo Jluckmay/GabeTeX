@@ -5,7 +5,7 @@
   --raised: #161616;
   --tile: #0f0f0f;
   --tile-raised: #0a0a0a;
-  --paper: #ffffff;
+  --paper: #161616;
   --ink: #ffffff;
   --ink-2: #a1a1aa;
   --ink-3: rgba(255, 255, 255, .3);
@@ -45,7 +45,7 @@
     --raised: #ffffff;
     --tile: #d9d9d9;
     --tile-raised: #f5f5f7;
-    --paper: #ffffff;
+    --paper: #f5f5f7;
     --ink: #1a1a1a;
     --ink-2: #666;
     --ink-3: rgba(26, 26, 26, .38);
@@ -74,7 +74,7 @@ html.dark {
   --raised: #161616;
   --tile: #0f0f0f;
   --tile-raised: #0a0a0a;
-  --paper: #ffffff;
+  --paper: #161616;
   --ink: #ffffff;
   --ink-2: #a1a1aa;
   --ink-3: rgba(255, 255, 255, .3);
@@ -100,7 +100,7 @@ html.light {
   --raised: #ffffff;
   --tile: #27272a;
   --tile-raised: #18181b;
-  --paper: #ffffff;
+  --paper: #f4f4f5;
   --ink: #09090b;
   --ink-2: #71717a;
   --ink-3: rgba(0, 0, 0, .38);
