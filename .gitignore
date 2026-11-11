@@ -21,3 +21,6 @@ node_modules/
 /set_editor.js
 out/
 
+# AppImage build artifacts (transient extracted tooling directory)
+squashfs-root/
+
