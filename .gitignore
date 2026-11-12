@@ -20,3 +20,4 @@ node_modules/
 /beamer_*.js
 /set_editor.js
 out/
+/squashfs-root/
