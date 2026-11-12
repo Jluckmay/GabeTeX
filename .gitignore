@@ -24,3 +24,4 @@ out/
 # AppImage build artifacts (transient extracted tooling directory)
 squashfs-root/
 
+/squashfs-root/
