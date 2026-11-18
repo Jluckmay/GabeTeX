@@ -516,12 +516,14 @@ var BEAMER_GITHUB_FILES = [
       'dictionaries/translator-theorem-dictionary.sty'
     ];
 
+    var beamerFilesLoaded = false;
+
     async function fetchBeamerFiles() {
+    if (beamerFilesLoaded) return;
     var allFiles = BEAMER_GITHUB_FILES
       .concat(BEAMER_DEFAULT_THEME_FILES)
       .concat(BEAMER_MADRID_THEME_FILES);
-    for (var i = 0; i < allFiles.length; i++) {
-      var name = allFiles[i];
+    await Promise.all(allFiles.map(async function (name) {
       try {
         var response = await fetchResource(BEAMER_GITHUB_ROOT + name);
         var bytes = await response.arrayBuffer();
@@ -536,10 +538,9 @@ var BEAMER_GITHUB_FILES = [
       } catch (error) {
         // Non-fatal: some files may not exist
       }
-    }
+    }));
     // Fetch translator package files (dependency of beamer)
-    for (var i = 0; i < TRANSLATOR_FILES.length; i++) {
-      var name = TRANSLATOR_FILES[i];
+    await Promise.all(TRANSLATOR_FILES.map(async function (name) {
       try {
         var response = await fetchResource(TRANSLATOR_GITHUB_ROOT + name);
         var bytes = await response.arrayBuffer();
@@ -554,7 +555,7 @@ var BEAMER_GITHUB_FILES = [
       } catch (error) {
         // Non-fatal: some files may not exist
       }
-    }
+    }));
 
     // Beamer's enumerate environment may require enumerate.sty which is not
     // in the Tectonic WASM bundle. Provide a minimal stub.
@@ -563,7 +564,7 @@ var BEAMER_GITHUB_FILES = [
 
     // Stubs for amssymb and amsfonts: XeLaTeX uses OpenType math fonts (Latin Modern),
     // and 8-bit msbm TFM metrics do not exist in the Tectonic WASM bundle.
-    var amsStub = new TextEncoder().encode('\\ProvidesPackage{amssymb}[2013/01/14 v3.01]\\endinput');
+    var amsStub = new TextEncoder().encode('\\ProvidesPackage{amssymb}[2013/01/14 v3.01]\n\\providecommand{\\blacktriangleright}{\\ensuremath{\\triangleright}}\n\\providecommand{\\square}{\\framebox[1.1ex]{\\rule{0pt}{1ex}}}\n\\endinput');
     addFile('amssymb.sty', amsStub);
     addFile('tex/latex/amssymb/amssymb.sty', amsStub);
     var amsFontsStub = new TextEncoder().encode('\\ProvidesPackage{amsfonts}[2013/01/14 v3.01]\\endinput');
@@ -593,6 +594,7 @@ var BEAMER_GITHUB_FILES = [
     } catch (error) {
       // Non-fatal
     }
+    beamerFilesLoaded = true;
     // size11.clo and size12.clo are provided by unpackSupplementalFiles
   }
 
@@ -620,8 +622,8 @@ function readOutput(name) {
 }
 
 function stripBeamerPackages(source) {
-  // inputenc, fontenc, babel, amsfonts, amssymb are incompatible with XeLaTeX TFM metrics in this bundle
-  ['inputenc', 'fontenc', 'babel', 'amsfonts', 'amssymb'].forEach(function (pkg) {
+  // inputenc, fontenc, lmodern, textcomp, upgreek, babel, amsfonts, amssymb are incompatible with XeLaTeX TFM metrics in this bundle
+  ['inputenc', 'fontenc', 'lmodern', 'textcomp', 'upgreek', 'babel', 'amsfonts', 'amssymb'].forEach(function (pkg) {
     source = removePackage(source, pkg);
   });
   return source;
@@ -727,15 +729,16 @@ async function compileDocument(message) {
     wasmExports.free(inputPointer);
   }
   var texLog = textDecoder.decode(readOutput('texput.log'));
+  var combinedLog = outputLog && texLog ? outputLog + '\n' + texLog : (texLog || outputLog);
   if (engineFailure) {
     var failure = new Error(engineFailure && engineFailure.message ? engineFailure.message : String(engineFailure));
-    failure.log = texLog || outputLog;
+    failure.log = combinedLog;
     throw failure;
   }
   var pdf = readOutput('texput.pdf');
   if (pdf.length < 5 || textDecoder.decode(pdf.subarray(0, 5)) !== '%PDF-') {
     var invalid = new Error('Tectonic did not produce a valid PDF.');
-    invalid.log = texLog || outputLog;
+    invalid.log = combinedLog;
     throw invalid;
   }
   var compileLog = texLog || outputLog;
