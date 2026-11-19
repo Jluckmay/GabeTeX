@@ -35,7 +35,36 @@
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
   var btnAutoCompile = document.getElementById('btn-autocompile');
   var btnToolbarPresent = document.getElementById('btn-toolbar-present');
+  var btnToolbarIssues = document.getElementById('btn-toolbar-issues');
+  var btnCloseCompile = document.getElementById('btn-close-compile');
+  var btnSidebar = document.getElementById('btn-sidebar');
+  var tbSidebarSlot = document.getElementById('tb-sidebar-slot');
+  var sidebarHead = document.querySelector('.sidebar-head');
+  var editorDocTitle = document.getElementById('editor-doc-title');
+  var statusCompileCapsule = document.querySelector('.status-compile-capsule');
   var fileList = document.getElementById('file-list');
+
+  function fileIconSvg(name) {
+    var dot = name.lastIndexOf('.');
+    var ext = dot !== -1 ? name.slice(dot + 1).toLowerCase() : '';
+    if (ext === 'bib') {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h3v15H4zM8.5 4.5h3v15h-3zM13.3 5.6l2.9-.8 3.9 14.6-2.9.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    if (ext === 'sty' || ext === 'cls') {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h3.2a1.8 1.8 0 1 1 3.6 0H15v3.2a1.8 1.8 0 1 1 0 3.6V18H11.8a1.8 1.8 0 1 0-3.6 0H5v-3.2a1.8 1.8 0 1 0 0-3.6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'pdf' || ext === 'eps' || ext === 'svg') {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5h15a1.5 1.5 0 0 1 1.5 1.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11A1.5 1.5 0 0 1 4.5 5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 16l4.6-4.6 3.4 3.4 2.6-2.6 6.4 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15.5" cy="9" r="1.5" fill="currentColor"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 2.8h7.8l4.2 4.2v12.5a1.7 1.7 0 0 1-1.7 1.7H6.5a1.7 1.7 0 0 1-1.7-1.7V4.5a1.7 1.7 0 0 1 1.7-1.7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v4.3h4.3M8.3 11.5h7.4M8.3 14.5h7.4M8.3 17.5h4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  function mainStarSvg() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c.3 0 .6.2.7.5l2.4 5 5.4.8c.7.1 1 .9.5 1.4l-3.9 3.8.9 5.4c.1.7-.6 1.2-1.2.9L12 17.8l-4.8 2.6c-.6.3-1.3-.2-1.2-.9l.9-5.4-3.9-3.8c-.5-.5-.2-1.3.5-1.4l5.4-.8 2.4-5c.1-.3.4-.5.7-.5Z" fill="currentColor"/></svg>';
+  }
+  function setDownloadDisabled(disabled) {
+    btnDownload.disabled = disabled;
+    if (btnToolbarDownload) btnToolbarDownload.disabled = disabled;
+  }
   var tabList = document.querySelector('.tab-list');
   var tabFiles = document.getElementById('tab-files');
   var tabOutline = document.getElementById('tab-outline');
@@ -175,18 +204,29 @@
   function updateErrorStatus() {
     var key = state.errors === 1 ? 'editor.errorsOne' : 'editor.errorsMany';
     statusErrors.textContent = translate(key, [state.errors]);
+    statusErrors.classList.toggle('has-errors', state.errors > 0);
+    if (statusErrors.parentElement) statusErrors.parentElement.classList.toggle('has-errors', state.errors > 0);
   }
   function updateWarningStatus() {
     var key = state.warnings === 1 ? 'editor.warningsOne' : 'editor.warningsMany';
     statusWarnings.textContent = translate(key, [state.warnings]);
+    statusWarnings.classList.toggle('has-warnings', state.warnings > 0);
+    if (statusWarnings.parentElement) statusWarnings.parentElement.classList.toggle('has-warnings', state.warnings > 0);
+  }
+  function setCompilePanelVisible(visible) {
+    compilePanel.hidden = !visible;
+    var exp = visible ? 'true' : 'false';
+    statusErrors.setAttribute('aria-expanded', exp);
+    statusWarnings.setAttribute('aria-expanded', exp);
+    if (btnToolbarIssues) {
+      btnToolbarIssues.setAttribute('aria-expanded', exp);
+      btnToolbarIssues.classList.toggle('tb-active', visible);
+    }
   }
   function showCompileOutput() {
     var isHidden = compilePanel.hidden;
-    compilePanel.hidden = !isHidden;
-    statusErrors.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-    statusWarnings.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    setCompilePanelVisible(isHidden);
     if (isHidden) {
-      compilePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       compileOutput.focus({ preventScroll: true });
     }
   }
@@ -194,14 +234,20 @@
     var label = translate(state.compiling ? 'editor.compiling' : 'editor.compile');
     btnCompile.setAttribute('aria-label', label);
     btnCompile.title = label;
-    if (state.compiling) btnCompile.setAttribute('aria-busy', 'true');
-    else btnCompile.removeAttribute('aria-busy');
+    btnCompile.classList.toggle('busy', !!state.compiling);
+    if (state.compiling) {
+      btnCompile.setAttribute('aria-busy', 'true');
+      if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', 'compiling');
+    } else {
+      btnCompile.removeAttribute('aria-busy');
+    }
   }
   function updateHistoryButton() {
     btnHistory.disabled = (state.historyIndex[state.activeFile] || 0) <= 0;
   }
   function updateTranslatedUI() {
     source.setAttribute('aria-label', translate('editor.sourceLabel', [state.activeFile]));
+    if (editorDocTitle) editorDocTitle.textContent = state.activeFile;
     updateCompileButton();
     updateCompileStatus();
     updateErrorStatus();
@@ -253,6 +299,7 @@
     var showFiles = tab === 'files';
     tabFiles.classList.toggle('active', showFiles);
     tabOutline.classList.toggle('active', !showFiles);
+    if (tabFiles.parentNode) tabFiles.parentNode.setAttribute('data-index', showFiles ? '0' : '1');
     tabFiles.setAttribute('aria-selected', showFiles ? 'true' : 'false');
     tabOutline.setAttribute('aria-selected', showFiles ? 'false' : 'true');
     tabFiles.tabIndex = showFiles ? 0 : -1;
@@ -268,7 +315,7 @@
     tabList.innerHTML = '';
     state.openFiles.forEach(function (name, index) {
       var group = document.createElement('div');
-      group.className = 'etab-group';
+      group.className = 'etab-group' + (name === state.activeFile ? ' active' : '');
       group.setAttribute('role', 'presentation');
       var tab = document.createElement('button');
       tab.type = 'button';
@@ -281,7 +328,7 @@
       tab.setAttribute('data-file', name);
         var fileIcon = document.createElement('span');
         fileIcon.className = 'etab-file-icon';
-        fileIcon.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-6l-2-2z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        fileIcon.innerHTML = fileIconSvg(name);
         var nameSpan = document.createElement('span');
         nameSpan.textContent = name;
         tab.appendChild(fileIcon);
@@ -337,6 +384,7 @@
     if (!state.history[name]) state.history[name] = [source.value];
     if (typeof state.historyIndex[name] !== 'number') state.historyIndex[name] = state.history[name].length - 1;
     source.setAttribute('aria-label', translate('editor.sourceLabel', [name]));
+    if (editorDocTitle) editorDocTitle.textContent = name;
     renderTabs();
     renderFileList();
     renderGutter();
@@ -393,12 +441,14 @@
   /* ---------- file tree ---------- */
   function renderFileList() {
     fileList.innerHTML = '';
-    Object.keys(state.files).forEach(function (name) {
+    var keys = Object.keys(state.files);
+    var mainFile = Object.prototype.hasOwnProperty.call(state.files, 'main.tex') ? 'main.tex' : keys[0];
+    keys.forEach(function (name) {
       var li = document.createElement('li');
       li.className = 'ft-item ft-file' + (name === state.activeFile ? ' active' : '');
         var star = document.createElement('span');
         star.className = 'ft-star';
-        star.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3.5l-1.5 4.5-4.5.5-1.5-4.5L2 8l4.5 1.5L8 16l1.5-4.5L14 8z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        star.innerHTML = fileIconSvg(name);
         var open = document.createElement('button');
         open.type = 'button';
         open.className = 'ft-open';
@@ -414,6 +464,13 @@
         remove.addEventListener('click', function () { deleteFile(name); });
         li.appendChild(star);
         li.appendChild(open);
+        if (name === mainFile) {
+          var mainStar = document.createElement('span');
+          mainStar.className = 'ft-main-star';
+          mainStar.setAttribute('aria-hidden', 'true');
+          mainStar.innerHTML = mainStarSvg();
+          li.appendChild(mainStar);
+        }
         li.appendChild(remove);
         fileList.appendChild(li);
       });
@@ -883,9 +940,7 @@
     previewFrame.style.display = 'none';
     previewControls.hidden = true;
     clearOutput();
-    compilePanel.hidden = false;
-    statusErrors.setAttribute('aria-expanded', 'true');
-    statusWarnings.setAttribute('aria-expanded', 'true');
+    setCompilePanelVisible(true);
     previewFrame.setAttribute('aria-busy', 'true');
     if (state.pageObserver) state.pageObserver.disconnect();
     state.pageObserver = null;
@@ -900,7 +955,7 @@
     previewFrame.replaceChildren();
     if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
     state.pdfBlobUrl = null;
-    btnDownload.disabled = true;
+    setDownloadDisabled(true);
 
     try {
       var result = await compileWithTectonic(state.files, state.activeFile);
@@ -908,7 +963,7 @@
       var url = URL.createObjectURL(blob);
       if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
       state.pdfBlobUrl = url;
-      btnDownload.disabled = false;
+      setDownloadDisabled(false);
       pdfGenerated = true;
       if (result.log) appendOutput(result.log, result.errors ? 'warn' : '');
       appendOutput(
@@ -917,6 +972,7 @@
       );
       state.errors = result.errors || 0;
       state.warnings = result.warnings || 0;
+      if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', state.errors ? 'failed' : 'succeeded');
       previewFrame.style.display = 'block';
       await renderPdf(result.pdf);
       previewEmpty.hidden = true;
@@ -943,6 +999,7 @@
         state.errors = 1;
         state.warnings = 0;
       }
+      if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', 'failed');
     } finally {
       previewFrame.removeAttribute('aria-busy');
       state.compiling = false;
@@ -959,6 +1016,16 @@
   });
   statusErrors.addEventListener('click', showCompileOutput);
   statusWarnings.addEventListener('click', showCompileOutput);
+  if (btnToolbarIssues) btnToolbarIssues.addEventListener('click', showCompileOutput);
+  if (btnCloseCompile) btnCloseCompile.addEventListener('click', function () { setCompilePanelVisible(false); });
+  if (btnSidebar) {
+    btnSidebar.addEventListener('click', function () {
+      var collapsed = editorWindow.classList.toggle('no-sidebar');
+      btnSidebar.setAttribute('aria-pressed', collapsed ? 'false' : 'true');
+      if (collapsed && tbSidebarSlot) tbSidebarSlot.appendChild(btnSidebar);
+      else if (!collapsed && sidebarHead) sidebarHead.appendChild(btnSidebar);
+    });
+  }
   btnHistory.addEventListener('click', undoEdit);
   tabFiles.addEventListener('click', function () { setSidebarTab('files'); });
   tabOutline.addEventListener('click', function () {
@@ -976,6 +1043,7 @@
   btnSplit.addEventListener('click', function () {
     var split = editorWindow.classList.toggle('is-split-view');
     btnSplit.setAttribute('aria-pressed', split ? 'true' : 'false');
+    btnSplit.classList.toggle('tb-active', split);
   });
 
   /* ---------- draggable dividers ---------- */
@@ -988,6 +1056,7 @@
       var startX = event.clientX;
       var startSidebar = parseInt(getComputedStyle(editorSidebar).width, 10);
       var startPreview = parseInt(getComputedStyle(editorPreviewPane).width, 10);
+      editorWindow.classList.add('is-resizing');
 
       function onMouseMove(moveEvent) {
         var dx = moveEvent.clientX - startX;
@@ -997,6 +1066,7 @@
       function onMouseUp() {
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
+        editorWindow.classList.remove('is-resizing');
         if (onEnd) onEnd();
       }
 
@@ -1085,7 +1155,7 @@
     a.click();
     document.body.removeChild(a);
   });
-  btnDownload.disabled = true;
+  setDownloadDisabled(true);
 
   /* ---------- preview zoom ---------- */
   btnZoomIn.addEventListener('click', function () {
