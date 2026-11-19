@@ -671,6 +671,9 @@ function prepareMathSource(files, mainFile) {
   if (/\\HUGE\b/.test(source) && !/\\(?:re)?newcommand\*?\{\\HUGE\}/.test(source)) {
     source = source.replace(/\\begin\{document\}/, '\\providecommand{\\HUGE}{\\Huge}\n\\begin{document}');
   }
+  var now = new Date();
+  var dateInit = '\\year=' + now.getFullYear() + '\\month=' + (now.getMonth() + 1) + '\\day=' + now.getDate() + '\\relax ';
+  source = source.replace(/\\begin\{document\}/, function (m) { return m + dateInit; });
   // Beamer has its own font system; do not inject fontspec.
   // Strip packages that need TFM font metrics missing from the WASM bundle.
   if (/\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(source)) {
