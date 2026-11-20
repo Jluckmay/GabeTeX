@@ -82,23 +82,13 @@ editor that treats that as the normal case. It has three goals:
 
 ## Online editor
 
-The website's editor is static and compiles in the browser: a Web Worker runs the pinned
-[Tectonic WebAssembly build](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
-and [PDF.js](https://github.com/mozilla/pdf.js) renders the result. Project source is not sent to a compilation
-server. The first compilation downloads the engine and its bundled TeX packages from GitHub; PDF.js is loaded from
-jsDelivr. An internet connection is therefore required for the first compile.
-
-The browser editor currently supports XeLaTeX and the packages included in Tectonic's bundle; it does not install
-additional TeX packages on demand. This is separate from the desktop apps described above.
-The source editor includes an opt-in prose spell checker for English and Brazilian Portuguese. It ignores LaTeX
-commands, comments, math, and verbatim environments; checking happens locally in the browser. The first check downloads
-pinned [Typo.js](https://www.npmjs.com/package/typo-js) and the selected Hunspell dictionary
-([English](https://www.npmjs.com/package/dictionary-en), [Portuguese](https://www.npmjs.com/package/dictionary-pt))
-from jsDelivr. The source text is never sent.
-For conventional math documents that do not already load `unicode-math`, the editor selects the bundled Latin Modern
-OpenType math font to avoid missing formula glyphs. The upstream WebAssembly build still has a known limitation with
-TeX Font Metric (TFM) fonts such as Computer Modern, so some documents can report font-metric errors. The editor
-exposes those diagnostics rather than treating a PDF with TeX errors as a clean compile.
+The website's editor (`docs/`) uses the same Liquid Glass layout as the desktop application (left file/outline sidebar,
+unified 52px glass toolbar, pill tabs, split source & PDF preview with floating zoom/page capsule, collapsible output
+drawer, and Beamer presentation mode) and compiles directly in the browser: a Web Worker runs the SHA-256-verified
+pinned [Tectonic WebAssembly build](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
+and [PDF.js](https://github.com/mozilla/pdf.js) renders the result. Project source is never sent to a compilation
+server. Multi-file projects automatically resolve `main.tex` (or `% !TEX root`) when compiling from an included section
+file.
 
 <p align="center">
   <img src="docs/assets/screenshots/sync.png" width="800" alt="Jumping between the PDF and the source: the target word is highlighted briefly">
@@ -110,14 +100,15 @@ exposes those diagnostics rather than treating a PDF with TeX errors as a clean 
 
 ## Get GabeTeX
 
-- **macOS:** download [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg),
-  drag the app to Applications, and install a TeX distribution such as [MacTeX](https://tug.org/mactex/).
-  Installation notes, the first-launch "Open Anyway" step, shortcuts and build instructions are in the
-  [GabeTeX-macOS README](https://github.com/Jluckmay/GabeTeX-macOS#readme).
-- **Linux and Windows:** not released yet. One Tauri 2 codebase serves both systems; follow
-  [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) (planned packages: AppImage, `.deb`, `.exe`, `.msi`).
+- **macOS:** download [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX/releases/latest/download/GabeTeX.dmg),
+  drag the app to Applications, and install a TeX distribution such as [MacTeX](https://tug.org/mactex/) (or use the
+  built-in Tectonic WASM compiler). Installation notes, the first-launch "Open Anyway" step, shortcuts and build
+  instructions are in the [GabeTeX-macOS README](https://github.com/Jluckmay/GabeTeX-macOS#readme).
+- **Linux and Windows:** download the latest `.AppImage`, `.deb`, Windows NSIS `.exe` installer (with optional
+  integrated TinyTeX setup), or `.msi` from [Releases](https://github.com/Jluckmay/GabeTeX/releases/latest); see
+  [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) for build and packaging instructions.
 
-The [website](https://jluckmay.github.io/GabeTeX/) lists every macOS version with its release notes.
+The [website](https://jluckmay.github.io/GabeTeX/) lists every release with its release notes and includes the online editor.
 
 ## Repository structure
 

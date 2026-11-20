@@ -83,24 +83,14 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 
 ## Editor online
 
-O editor do site é estático e compila no navegador: um Web Worker executa a versão fixada do
-[Tectonic WebAssembly](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
-e o [PDF.js](https://github.com/mozilla/pdf.js) exibe o resultado. O código do projeto não é enviado a um servidor
-de compilação. Na primeira compilação, o navegador baixa o mecanismo e os pacotes TeX incluídos no bundle pelo GitHub;
-o PDF.js é carregado pelo jsDelivr. Por isso, é necessária uma conexão com a internet para compilar pela primeira vez.
-
-Atualmente, o editor no navegador aceita XeLaTeX e os pacotes incluídos no bundle do Tectonic; ele não instala outros
-pacotes TeX sob demanda. Isso é separado dos aplicativos de desktop descritos acima.
-O editor inclui um corretor ortográfico opcional para prosa em inglês e português brasileiro. Ele ignora comandos
-LaTeX, comentários, matemática e ambientes literais; a verificação acontece localmente no navegador. Na primeira
-verificação, [Typo.js](https://www.npmjs.com/package/typo-js) e o dicionário Hunspell selecionado
-([inglês](https://www.npmjs.com/package/dictionary-en), [português](https://www.npmjs.com/package/dictionary-pt))
-são baixados do jsDelivr. O texto do projeto não é enviado.
-Em documentos matemáticos convencionais que ainda não carregam `unicode-math`, o editor seleciona a fonte matemática
-OpenType Latin Modern incluída no bundle para evitar símbolos ausentes nas fórmulas. O build WebAssembly upstream
-ainda tem uma limitação conhecida com fontes TeX Font Metric (TFM), como Computer Modern, então alguns documentos
-podem apresentar erros de métricas. O editor mostra esses diagnósticos em vez de tratar um PDF com erros TeX como
-uma compilação sem erros.
+O editor do site (`docs/`) utiliza o mesmo layout Liquid Glass da aplicação desktop (barra lateral esquerda de arquivos
+e estrutura, barra superior unificada de 52px, abas em pílula, visão dividida de código e PDF com cápsula flutuante de
+zoom/páginas, gaveta inferior de saída recolhível e Modo Apresentação Beamer) e compila diretamente no navegador: um
+Web Worker executa a versão fixada e verificada via SHA-256 do
+[Tectonic WebAssembly](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727), e o
+[PDF.js](https://github.com/mozilla/pdf.js) renderiza o PDF. O código do projeto nunca é enviado a um servidor. Projetos
+com múltiplos arquivos resolvem automaticamente o `main.tex` (ou `% !TEX root`) ao compilar a partir de um arquivo de
+seção incluído.
 
 <p align="center">
   <img src="docs/assets/screenshots/sync.png" width="800" alt="Saltando entre o PDF e o código: a palavra de destino é destacada por um instante">
@@ -112,12 +102,13 @@ uma compilação sem erros.
 
 ## Obtenha o GabeTeX
 
-- **macOS:** baixe o [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg),
-  arraste o app para Aplicativos e instale uma distribuição TeX, como o [MacTeX](https://tug.org/mactex/).
-  Instruções de instalação, o passo "Abrir Mesmo Assim" do primeiro uso, atalhos e como compilar estão no
-  [README do GabeTeX-macOS](https://github.com/Jluckmay/GabeTeX-macOS#readme).
-- **Linux e Windows:** ainda não lançados. Um único código Tauri 2 atende os dois sistemas; acompanhe o
-  [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) (pacotes previstos: AppImage, `.deb`, `.exe`, `.msi`).
+- **macOS:** baixe o [GabeTeX.dmg](https://github.com/Jluckmay/GabeTeX/releases/latest/download/GabeTeX.dmg),
+  arraste o app para Aplicativos e instale uma distribuição TeX, como o [MacTeX](https://tug.org/mactex/) (ou utilize o
+  compilador Tectonic WASM embutido). Instruções de instalação, o passo "Abrir Mesmo Assim" do primeiro uso, atalhos e
+  como compilar estão no [README do GabeTeX-macOS](https://github.com/Jluckmay/GabeTeX-macOS#readme).
+- **Linux e Windows:** baixe a versão mais recente em `.AppImage`, `.deb`, instalador Windows NSIS `.exe` (com opção
+  integrada de instalação do TinyTeX) ou `.msi` em [Releases](https://github.com/Jluckmay/GabeTeX/releases/latest); veja
+  [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) para instruções de compilação e pacotes.
 
 O [site](https://jluckmay.github.io/GabeTeX/) lista todas as versões do macOS, com as notas de cada uma.
 

@@ -937,9 +937,9 @@ html.dark #sync .paper {
         </a>
         <a class="pill pill-ghost" href="https://github.com/Jluckmay/GabeTeX" data-i18n="hero.github">View on GitHub</a>
       </div>
-      <p class="also h-3" id="hero-also"><span class="also-def" data-i18n="hero.also">Available for Linux (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-x86_64.AppImage">.AppImage</a> / <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a>), Windows (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64-setup.exe">.exe</a>) and MacOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/download/v1.0.0/GabeTeX.dmg">.dmg</a>).</span><span class="also-linux" data-i18n="hero.alsoLinux">GabeTeX is native to macOS (<a href="https://github.com/Jluckmay/GabeTeX/releases/latest/download/GabeTeX.dmg">Download for Mac</a>). This is the Linux edition, built with Tauri; on Debian or Ubuntu, get the <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a> instead.</span></p>
+      <p class="also h-3" id="hero-also"><span class="also-def" data-i18n="hero.also">Available for Linux (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-x86_64.AppImage">.AppImage</a> / <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a>), Windows (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64-setup.exe">.exe</a>) and MacOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg">.dmg</a>).</span><span class="also-linux" data-i18n="hero.alsoLinux">GabeTeX is native to macOS (<a href="https://github.com/Jluckmay/GabeTeX/releases/latest/download/GabeTeX.dmg">Download for Mac</a>). This is the Linux edition, built with Tauri; on Debian or Ubuntu, get the <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a> instead.</span></p>
       <div class="meta-slot h-4" id="meta-slot">
-        <p class="meta"><span class="num" id="ver">v1.1.0</span><span class="num" id="size" hidden></span><span data-i18n="hero.os">macOS 26 or later (Apple Silicon)</span><span data-i18n="hero.os2">Linux and Windows</span><span data-i18n="hero.free">free and open source</span></p>
+        <p class="meta"><span class="num" id="ver">v1.1.1</span><span class="num" id="size" hidden></span><span data-i18n="hero.os">macOS 26 or later (Apple Silicon)</span><span data-i18n="hero.os2">Linux and Windows</span><span data-i18n="hero.free">free and open source</span></p>
         <p class="next"><a href="#install" data-i18n="hero.next">Next: install and open GabeTeX</a></p>
       </div>
 
@@ -2010,7 +2010,7 @@ Hello, world!
     'hero.downloadWindows': 'Baixar para Windows',
     'hero.started': 'Download iniciado',
     'hero.github': 'Ver no GitHub',
-    'hero.also': 'Disponível para Linux (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-x86_64.AppImage">.AppImage</a> / <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a>), Windows (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64-setup.exe">.exe</a>) e MacOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/download/v1.0.0/GabeTeX.dmg">.dmg</a>).',
+    'hero.also': 'Disponível para Linux (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-x86_64.AppImage">.AppImage</a> / <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a>), Windows (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64-setup.exe">.exe</a>) e MacOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg">.dmg</a>).',
     'hero.alsoLinux': 'O GabeTeX é nativo do macOS (<a href="https://github.com/Jluckmay/GabeTeX/releases/latest/download/GabeTeX.dmg">Baixar para Mac</a>). Esta é a edição para Linux, feita com Tauri; no Debian ou no Ubuntu, baixe o <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a>.',
     'hero.os': 'macOS 26 ou posterior (Apple Silicon)',
     'hero.os2': 'Linux e Windows',
@@ -2411,9 +2411,13 @@ Hello, world!
     windows: [DOWNLOAD_EXE, 'hero.downloadWindows']
   };
   function applyDownloadLinks() {
-    if (!OS_ASSET[OS]) return;
     OS_ASSET.linux[0] = DOWNLOAD_LINUX;
     OS_ASSET.windows[0] = DOWNLOAD_EXE;
+    if (!OS_ASSET[OS]) {
+      dl.href = DOWNLOAD_MAC;
+      navDl.href = DOWNLOAD_MAC;
+      return;
+    }
     dl.href = OS_ASSET[OS][0]; navDl.href = OS_ASSET[OS][0];
     var dlLabel = dl.querySelector('.def[data-i18n]');
     dlLabel.setAttribute('data-i18n', OS_ASSET[OS][1]); dlLabel.innerHTML = t(OS_ASSET[OS][1]);
@@ -2428,13 +2432,24 @@ Hello, world!
   /* ---------- releases: fetch from macOS and Linux/Windows repos, merge by version ---------- */
   var state = null, pending = null, heroLatest = null, lastFail = 0;
   var currentDownloadSrc = 'primary';
-  function usePrimaryDownloads() {
+  function usePrimaryDownloads(latestRelease) {
     currentDownloadSrc = 'primary';
     DOWNLOAD_MAC = RELEASES_URL + '/latest/download/GabeTeX.dmg';
     DOWNLOAD_LINUX = RELEASES_URL + '/latest/download/GabeTeX-linux-x86_64.AppImage';
     DOWNLOAD_DEB = RELEASES_URL + '/latest/download/GabeTeX-linux-amd64.deb';
     DOWNLOAD_EXE = RELEASES_URL + '/latest/download/GabeTeX-windows-x64-setup.exe';
     DOWNLOAD_MSI = RELEASES_URL + '/latest/download/GabeTeX-windows-x64.msi';
+    var assets = (latestRelease && latestRelease.assets) || [];
+    assets.forEach(function (a) {
+      var name = String((a && a.name) || '');
+      var url = String((a && (a.browser_download_url || a.url)) || '');
+      if (!url) return;
+      if (/\.dmg$/i.test(name)) DOWNLOAD_MAC = url;
+      else if (/\.AppImage$/i.test(name)) DOWNLOAD_LINUX = url;
+      else if (/\.deb$/i.test(name)) DOWNLOAD_DEB = url;
+      else if (/-setup\.exe$/i.test(name)) DOWNLOAD_EXE = url;
+      else if (/\.msi$/i.test(name) && (!/pt-BR/i.test(name) || DOWNLOAD_MSI.indexOf('/latest/download/') !== -1)) DOWNLOAD_MSI = url;
+    });
   }
   function useUpstreamDownloads() {
     currentDownloadSrc = 'fallback';
@@ -2475,7 +2490,7 @@ Hello, world!
     function fetchReleases(mode) {
       if (mode !== 'network') {
             var c = readCache(); if (c) {
-              if (c.src === 'fallback') useUpstreamDownloads(); else usePrimaryDownloads();
+              if (c.src === 'fallback') useUpstreamDownloads(); else usePrimaryDownloads(latestOf(c.list));
               applyDownloadLinks();
               return Promise.resolve(c.list);
             }
@@ -2505,7 +2520,7 @@ Hello, world!
                       /* Decide download-link source: prefer the fork when it has releases,
                          otherwise fall back to upstream repos. */
                       if (primary.length) {
-                        usePrimaryDownloads();
+                        usePrimaryDownloads(primary[0]);
                       } else {
                         useUpstreamDownloads();
                       }
@@ -2598,8 +2613,9 @@ Hello, world!
         if (!KEEP.test(n.tagName)) { walk(n); while (n.firstChild) node.insertBefore(n.firstChild, n); n.remove(); return; }
         [].slice.call(n.attributes).forEach(function (a) {
           var name = a.name.toLowerCase();
-          if (!ATTRS[name]) n.removeAttribute(a.name);
-          else if ((name === 'href' || name === 'src') && !/^https:\/\//i.test(a.value.trim())) n.removeAttribute(a.name);
+          if (!Object.prototype.hasOwnProperty.call(ATTRS, name)) n.removeAttribute(a.name);
+          else if (name === 'href' && (n.tagName !== 'A' || !/^https:\/\//i.test(a.value.trim()))) n.removeAttribute(a.name);
+          else if (name === 'src' && (n.tagName !== 'IMG' || !/^https:\/\//i.test(a.value.trim()))) n.removeAttribute(a.name);
         });
         if (n.tagName === 'A') {
           if (!n.getAttribute('href')) { walk(n); while (n.firstChild) node.insertBefore(n.firstChild, n); n.remove(); return; }
@@ -2618,27 +2634,43 @@ Hello, world!
   }
   /* filter release notes to show only the section matching the page language */
   function filterNotesByLanguage(html, lang) {
-    var targetLang = lang === 'pt' ? 'Português' : 'English';
-    var otherLang = lang === 'pt' ? 'English' : 'Português';
     var doc = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html');
     var box = doc.body.firstChild;
-    var started = lang === 'en';
+    function isPtHeading(text) {
+      return /(?:^|\b|\()(?:portugu[eê]s|pt-br)(?:\b|\)|$)/i.test(text);
+    }
+    function isEnHeading(text) {
+      return !isPtHeading(text) && (/^english\b/i.test(text) || /^gabetex\s+v?\d/i.test(text));
+    }
+    var hasLangMarker = false;
+    [].slice.call(box.querySelectorAll('h1,h2,h3,h4,h5,h6')).forEach(function (h) {
+      var t = h.textContent.trim();
+      if (isPtHeading(t) || /^english\b/i.test(t)) hasLangMarker = true;
+    });
+    if (!hasLangMarker) return html;
+    var started = lang !== 'pt';
     var parts = [];
     [].slice.call(box.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && node.tagName === 'HR') return;
       if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)) {
         var text = node.textContent.trim();
-        if (text.toLowerCase() === targetLang.toLowerCase() || text.indexOf(targetLang) === 0) {
+        var matchTarget = lang === 'pt' ? isPtHeading(text) : isEnHeading(text);
+        var matchOther = lang === 'pt' ? isEnHeading(text) : isPtHeading(text);
+        if (matchTarget) {
           started = true;
-        } else if (text.toLowerCase() === otherLang.toLowerCase() || text.indexOf(otherLang) === 0) {
+          if (/^gabetex\s+v?\d/i.test(text)) parts.push(node.outerHTML);
+        } else if (matchOther) {
           started = false;
         } else if (started) {
           parts.push(node.outerHTML);
         }
       } else if (started) {
-        parts.push(node.outerHTML);
+        if (node.nodeType === 1) parts.push(node.outerHTML);
+        else if (node.nodeType === 3) parts.push(esc(node.textContent));
       }
     });
-    return parts.join('');
+    var out = parts.join('').trim();
+    return out ? out : html;
   }
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -2700,7 +2732,7 @@ Hello, world!
     if (!force && state && state.status !== 'error') return;
     var cached = force ? null : readCache();
       if (cached) {
-        if (cached.src === 'fallback') useUpstreamDownloads(); else usePrimaryDownloads();
+        if (cached.src === 'fallback') useUpstreamDownloads(); else usePrimaryDownloads(latestOf(cached.list));
         applyDownloadLinks();
         state = { status: cached.list.length ? 'ok' : 'error', list: cached.list };
         renderReleases(true); return;
@@ -3052,8 +3084,9 @@ Hello, world!
   });
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
     if (!localStorage.getItem('gabetex.theme')) {
-      if (e.matches) { root.classList.add('dark'); toggle.setAttribute('aria-pressed', 'true'); }
-      else { root.classList.remove('dark'); toggle.setAttribute('aria-pressed', 'false'); }
+      root.classList.toggle('dark', e.matches);
+      root.classList.toggle('light', !e.matches);
+      toggle.setAttribute('aria-pressed', e.matches ? 'true' : 'false');
     }
   });
 })();

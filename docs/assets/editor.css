@@ -1109,6 +1109,7 @@ html.dark #editor-view {
 #editor-view .editor-window.presentation-mode .editor-status-strip { display: none; }
 
 #editor-view .editor-window.presentation-mode .editor-preview-pane {
+  display: flex;
   width: 100%;
   flex: 1;
   border-left: 0;

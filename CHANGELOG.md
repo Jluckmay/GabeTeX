@@ -21,9 +21,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Overview of releases
 
-- **v1.1.1** (2026-11-19): cross-platform release with Tectonic WASM fallback compiler, Zotero local API BibTeX
-  integration, appearance/theme/accent & Brazilian Portuguese (`pt-BR`) localization, configurable auto-save and
-  multi-language spell checking, VoiceOver/screen reader improvements, integrated Windows TinyTeX installer, and Ubuntu
-  22.04 (`glibc 2.35`) Linux packaging fixes. See [GabeTeX-macOS/CHANGELOG.md](https://github.com/gabe-rbo/GabeTeX-macOS/blob/main/CHANGELOG.md) and [GabeTeX-Linux-Windows/CHANGELOG.md](https://github.com/gabe-rbo/GabeTeX-Linux-Windows/blob/main/CHANGELOG.md).
+- **v1.1.1** (2026-11-19): cross-platform release featuring the redesigned Liquid Glass Online Editor (`docs/`),
+  Tectonic WASM fallback compiler with SHA-256 verification across all editions, Zotero 7 local API (`127.0.0.1:23119`)
+  BibTeX integration, appearance/theme/accent & Brazilian Portuguese (`pt-BR`) localization, configurable auto-save and
+  multi-language spell checking, VoiceOver/screen reader improvements, hardened Tauri CSP & IPC path/symlink security,
+  Windows path-separator normalization, integrated Windows TinyTeX installer, and Ubuntu 22.04 (`glibc 2.35`) Linux
+  packaging fixes. See [GabeTeX-macOS/CHANGELOG.md](https://github.com/gabe-rbo/GabeTeX-macOS/blob/main/CHANGELOG.md) and [GabeTeX-Linux-Windows/CHANGELOG.md](https://github.com/gabe-rbo/GabeTeX-Linux-Windows/blob/main/CHANGELOG.md).
 - **macOS 1.0.0** (2026-10-29): first public release of GabeTeX for macOS. See the
   [macOS changelog](https://github.com/gabe-rbo/GabeTeX-macOS/blob/main/CHANGELOG.md).

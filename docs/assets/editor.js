@@ -80,10 +80,11 @@
 
   function translate(key, values) {
     var value = window.gabetexTranslate ? window.gabetexTranslate(key) : key;
-    (values || []).forEach(function (replacement, index) {
-      value = value.replace(new RegExp('%' + (index + 1), 'g'), replacement);
+    var list = values || [];
+    return String(value).replace(/%(\d+)/g, function (match, digits) {
+      var idx = parseInt(digits, 10) - 1;
+      return idx >= 0 && idx < list.length ? String(list[idx]) : match;
     });
-    return value;
   }
   function updateOutline() {
     var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}|\\begin\s*\{frame\}\s*\{([^}]*)\}|\\begin\s*\{frame\}/g;
@@ -133,20 +134,55 @@
     sidebarOutline.appendChild(list);
   }
 
-  /* ---------- beamer detection ---------- */
+  /* ---------- beamer & root detection ---------- */
+  function hasDocumentClass(sourceText) {
+    return typeof sourceText === 'string' && /^((?:[^%\r\n]|\\.)*?)\\documentclass\b/m.test(sourceText);
+  }
+
   function isBeamerSource(sourceText) {
-    return /\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(sourceText);
+    return typeof sourceText === 'string' && /^((?:[^%\r\n]|\\.)*?)\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/m.test(sourceText);
+  }
+
+  function resolveMainFile() {
+    var keys = Object.keys(state.files);
+    if (!keys.length) return 'main.tex';
+    var active = state.activeFile;
+    var activeText = state.files[active] || '';
+    var magic = activeText.match(/^\s*%\s*!\s*TEX\s+root\s*=\s*([^\r\n]+)/im);
+    if (magic && magic[1]) {
+      var target = magic[1].trim().replace(/^(\.\/|\.\.\/)+/, '');
+      if (Object.prototype.hasOwnProperty.call(state.files, target)) return target;
+    }
+    var activeStem = active ? active.replace(/\.tex$/i, '') : '';
+    if (activeStem && active !== 'main.tex') {
+      for (var i = 0; i < keys.length; i++) {
+        var candidate = keys[i];
+        if (candidate === active) continue;
+        var text = state.files[candidate] || '';
+        if (!hasDocumentClass(text)) continue;
+        var escapedFull = active.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var escapedStem = activeStem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var incRe = new RegExp('\\\\(?:input|include|subfile)\\s*\\{\\s*(?:\\.\\/)?(?:' + escapedFull + '|' + escapedStem + ')\\s*\\}');
+        if (incRe.test(text)) return candidate;
+      }
+    }
+    if (active && hasDocumentClass(activeText)) return active;
+    if (Object.prototype.hasOwnProperty.call(state.files, 'main.tex') && hasDocumentClass(state.files['main.tex'])) {
+      return 'main.tex';
+    }
+    for (var j = 0; j < keys.length; j++) {
+      if (hasDocumentClass(state.files[keys[j]])) return keys[j];
+    }
+    return Object.prototype.hasOwnProperty.call(state.files, 'main.tex') ? 'main.tex' : (active || keys[0]);
   }
 
   function updatePresentationButtonVisibility() {
-    var beamer = isBeamerSource(source.value);
+    var rootName = resolveMainFile();
+    var rootSource = (rootName && state.files[rootName]) || source.value;
+    var beamer = isBeamerSource(rootSource);
     btnToolbarPresent.hidden = !beamer;
     if (!beamer && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
-      btnToolbarPresent.setAttribute('aria-pressed', 'false');
-      btnToolbarPresent.classList.remove('tb-active');
-      editorWindow.classList.remove('presentation-mode');
-      teardownSlideKeyboard();
-      exitFullscreen();
+      exitPresentationMode();
     }
   }
 
@@ -156,6 +192,7 @@
     openFiles: ['main.tex'],
     activeFile: 'main.tex',
     compiling: false,
+    pendingCompile: false,
     lastCompile: 0,
     pdfBlobUrl: null,
     pdfLoadingTask: null,
@@ -257,12 +294,11 @@
     setUploadStatus(state.uploadMessages);
     renderTabs();
     renderFileList();
+    updateOutline();
     updateCursor();
     updateHistoryButton();
   }
   document.addEventListener('gabetex:languagechange', updateTranslatedUI);
-  document.addEventListener('gabetex:languagechange', function () {
-  });
 
   function commitHistorySnapshot() {
     var history = state.history[state.activeFile] || [];
@@ -388,6 +424,7 @@
     renderTabs();
     renderFileList();
     renderGutter();
+    updateOutline();
     setSourceStatus('editor.opened', [name]);
     updateCursor();
     updateHistoryButton();
@@ -429,6 +466,10 @@
     delete state.files[name];
     delete state.history[name];
     delete state.historyIndex[name];
+    if (compileWorker) {
+      compileWorker.terminate();
+      compileWorker = null;
+    }
     if (openIndex !== -1) state.openFiles.splice(openIndex, 1);
     renderTabs();
     renderFileList();
@@ -442,7 +483,7 @@
   function renderFileList() {
     fileList.innerHTML = '';
     var keys = Object.keys(state.files);
-    var mainFile = Object.prototype.hasOwnProperty.call(state.files, 'main.tex') ? 'main.tex' : keys[0];
+    var mainFile = resolveMainFile();
     keys.forEach(function (name) {
       var li = document.createElement('li');
       li.className = 'ft-item ft-file' + (name === state.activeFile ? ' active' : '');
@@ -487,17 +528,19 @@
     addFileError.hidden = true;
     btnAddFile.focus();
   });
+  var VALID_FILE_NAME = /^(?![.\s])[^\\/:*?"<>|\x00-\x1f\x7f\u202a-\u202e]{1,120}$/;
+
   addFileForm.addEventListener('submit', function (event) {
     event.preventDefault();
     var name = newFileName.value.trim();
-    if (!name || /[\\/:*?"<>|]/.test(name) || name === '.' || name === '..') {
+    if (!name || !VALID_FILE_NAME.test(name) || name === '.' || name === '..') {
       addFileError.textContent = translate('editor.invalidFileName');
       addFileError.hidden = false;
       newFileName.focus();
       return;
     }
-    if (/\.tex$/i.test(name) === false) name += '.tex';
-    if (state.files[name]) {
+    if (!/\.(tex|bib|sty|cls)$/i.test(name)) name += '.tex';
+    if (Object.prototype.hasOwnProperty.call(state.files, name)) {
       addFileError.textContent = translate('editor.fileExists');
       addFileError.hidden = false;
       newFileName.focus();
@@ -531,20 +574,22 @@
     });
   }
   function importTexFiles(fileList) {
-    var filesToRead = Array.prototype.slice.call(fileList);
+    var filesToRead = Array.prototype.slice.call(fileList, 0, 50);
     var imported = [];
     var errors = [];
     var pendingNames = Object.create(null);
+    var totalBytes = 0;
     var pending = filesToRead.map(function (file) {
-      if (!/\.tex$/i.test(file.name)) {
+      if (!/\.(tex|bib|sty|cls)$/i.test(file.name)) {
         errors.push({ key: 'editor.uploadInvalidType' });
         return Promise.resolve(null);
       }
-      if (/[\\/:*?"<>|]/.test(file.name) || file.name === '.' || file.name === '..') {
+      if (!VALID_FILE_NAME.test(file.name) || file.name === '.' || file.name === '..') {
         errors.push({ key: 'editor.invalidFileName' });
         return Promise.resolve(null);
       }
-      if (file.size > 100 * 1024) {
+      totalBytes += file.size || 0;
+      if (file.size > 100 * 1024 || totalBytes > 2 * 1024 * 1024) {
         errors.push({ key: 'editor.uploadTooLarge', values: [file.name] });
         return Promise.resolve(null);
       }
@@ -652,86 +697,6 @@
     setPreviewStatus(hasMath ? 'editor.mathDetected' : 'editor.ready');
   }
 
-  /* ---------- prose spell checking ---------- */
-  var skippedTexCommands = {
-    documentclass: 1, usepackage: 1, RequirePackage: 1, input: 1, include: 1,
-    subfile: 1, includeonly: 1, label: 1, ref: 1, pageref: 1, eqref: 1,
-    autoref: 1, cref: 1, Cref: 1, cite: 1, citep: 1, citet: 1,
-    citeauthor: 1, nocite: 1, bibliography: 1, bibliographystyle: 1,
-    bibitem: 1, includegraphics: 1, graphicspath: 1, url: 1, path: 1,
-    nolinkurl: 1, verbatiminput: 1, lstinputlisting: 1, tag: 1, tagform: 1,
-    ensuremath: 1, texttt: 1, lstinline: 1, mintinline: 1
-  };
-  var mathEnvironments = {
-    math: true, displaymath: true, equation: true, align: true, alignat: true,
-    flalign: true, gather: true, multline: true, eqnarray: true, split: true
-  };
-  var literalEnvironments = {
-    verbatim: true, 'verbatim*': true, Verbatim: true, 'Verbatim*': true,
-    lstlisting: true, minted: true, comment: true, alltt: true
-  };
-
-  function skipTexGroup(text, index, open, close) {
-    if (text[index] !== open) return index;
-    var depth = 1;
-    index++;
-    while (index < text.length && depth) {
-      if (text[index] === '\\') {
-        index += 2;
-      } else if (text[index] === open) {
-        depth++;
-        index++;
-      } else if (text[index] === close) {
-        depth--;
-        index++;
-      } else {
-        index++;
-      }
-    }
-    return index;
-  }
-
-  function skipTexWhitespace(text, index) {
-    while (index < text.length && /\s/.test(text[index])) index++;
-    return index;
-  }
-
-  function skipTexOptions(text, index) {
-    index = skipTexWhitespace(text, index);
-    while (text[index] === '[') {
-      index = skipTexGroup(text, index, '[', ']');
-      index = skipTexWhitespace(text, index);
-    }
-    return index;
-  }
-
-  function readTexGroup(text, index) {
-    if (text[index] !== '{') return null;
-    var end = skipTexGroup(text, index, '{', '}');
-    return { value: text.slice(index + 1, Math.max(index + 1, end - 1)), end: end };
-  }
-
-  function skipMathDelimiter(text, index, delimiter) {
-    var closing = delimiter === '\\(' ? '\\)' : delimiter === '\\[' ? '\\]' : delimiter;
-    var cursor = index + delimiter.length;
-    while (cursor < text.length) {
-      var found = text.indexOf(closing, cursor);
-      if (found === -1) return text.length;
-      var slashes = 0;
-      for (var back = found - 1; back >= 0 && text[back] === '\\'; back--) slashes++;
-      var isPartOfDisplayMath = delimiter === '$' && (text[found - 1] === '$' || text[found + 1] === '$');
-      if (slashes % 2 === 0 && !isPartOfDisplayMath) return found + closing.length;
-      cursor = found + closing.length;
-    }
-    return text.length;
-  }
-
-
-
-
-
-
-
   /* ---------- compile ---------- */
   function appendOutput(text, cls) {
     var line = document.createElement('div');
@@ -813,7 +778,7 @@
             resolve(message);
           } else if (message.type === 'error') {
             cleanup();
-            if (message.message === 'unreachable' || (message.log && message.log.indexOf('panicked') !== -1)) {
+            if (/unreachable|out of bounds|stack|panicked|aborted|memory/i.test((message.message || '') + ' ' + (message.log || ''))) {
               worker.terminate();
               if (compileWorker === worker) compileWorker = null;
             }
@@ -927,20 +892,22 @@
   }
 
   async function compile() {
-    if (state.compiling) return;
+    if (state.compiling) {
+      state.pendingCompile = true;
+      return;
+    }
     var start = Date.now();
     var pdfGenerated = false;
-
-    var source = state.files[state.activeFile] || '';
+    var targetMainFile = resolveMainFile();
 
     state.compiling = true;
+    state.pendingCompile = false;
     updateCompileButton();
     setPreviewStatus('editor.compiling');
     previewEmpty.hidden = true;
     previewFrame.style.display = 'none';
     previewControls.hidden = true;
     clearOutput();
-    setCompilePanelVisible(true);
     previewFrame.setAttribute('aria-busy', 'true');
     if (state.pageObserver) state.pageObserver.disconnect();
     state.pageObserver = null;
@@ -952,13 +919,15 @@
       }
       state.pdfLoadingTask = null;
     }
+    state.pdfDoc = null;
+    presentationCache = {};
     previewFrame.replaceChildren();
     if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
     state.pdfBlobUrl = null;
     setDownloadDisabled(true);
 
     try {
-      var result = await compileWithTectonic(state.files, state.activeFile);
+      var result = await compileWithTectonic(state.files, targetMainFile);
       var blob = new Blob([result.pdf], { type: 'application/pdf' });
       var url = URL.createObjectURL(blob);
       if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
@@ -972,6 +941,7 @@
       );
       state.errors = result.errors || 0;
       state.warnings = result.warnings || 0;
+      if (state.errors > 0) setCompilePanelVisible(true);
       if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', state.errors ? 'failed' : 'succeeded');
       previewFrame.style.display = 'block';
       await renderPdf(result.pdf);
@@ -981,6 +951,7 @@
       state.lastCompile = ((Date.now() - start) / 1000).toFixed(1);
       updateCompileStatus();
     } catch (error) {
+      setCompilePanelVisible(true);
       if (error.log) appendOutput(error.log, 'warn');
       var firstError = error.log ? error.log.match(/^!.*$/m) : null;
       if (firstError) appendOutput(firstError[0], 'err');
@@ -1006,6 +977,14 @@
       updateCompileButton();
       updateErrorStatus();
       updateWarningStatus();
+      if (state.pendingCompile) {
+        state.pendingCompile = false;
+        window.setTimeout(function () {
+          compile().catch(function (err) {
+            console.error('Queued compile failed:', err);
+          });
+        }, 50);
+      }
     }
   }
 
@@ -1083,7 +1062,7 @@
     document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
   });
 
-  startDrag(dividerPreview, function (dx, startPreview) {
+  startDrag(dividerPreview, function (dx, _startSidebar, startPreview) {
     var newWidth = Math.max(200, Math.min(600, startPreview - dx));
     document.documentElement.style.setProperty('--preview-width', newWidth + 'px');
   });
@@ -1150,7 +1129,8 @@
     if (!state.pdfBlobUrl) return;
     var a = document.createElement('a');
     a.href = state.pdfBlobUrl;
-    a.download = state.activeFile.replace(/\.tex$/i, '') + '.pdf';
+    var mainName = resolveMainFile() || state.activeFile;
+    a.download = mainName.replace(/\.tex$/i, '') + '.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1183,6 +1163,7 @@
   btnToolbarPresent.addEventListener('click', function () {
     var pressed = btnToolbarPresent.getAttribute('aria-pressed') === 'true';
     if (!pressed) {
+      if (!state.pdfDoc) return;
       btnToolbarPresent.setAttribute('aria-pressed', 'true');
       btnToolbarPresent.classList.add('tb-active');
       // Enter presentation mode
@@ -1388,11 +1369,11 @@
       if (!page) return;
 
       var rect = page.getBoundingClientRect();
-      var pageRatio = (e.clientY - rect.top) / rect.height;
+      var pageRatio = rect.height > 0 ? (e.clientY - rect.top) / rect.height : 0;
       if (pageRatio < 0) pageRatio = 0;
       if (pageRatio > 1) pageRatio = 1;
 
-      var pageNum = Number(page.getAttribute('data-page-number')) || 1;
+      var pageNum = Number(page.getAttribute('data-page')) || Number(page.getAttribute('data-page-number')) || 1;
       var totalPages = state.pdfDoc ? state.pdfDoc.numPages : 1;
 
       var text = source.value;
@@ -1501,6 +1482,10 @@ previewFrame.addEventListener('scroll', function () {
     if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
       exitPresentationMode();
     } else if (isFull) {
+      if (btnToolbarPresent.getAttribute('aria-pressed') !== 'true') {
+        exitFullscreen();
+        return;
+      }
       presentationCache = {};
       renderPresentationSlide(state.presentationSlide);
     }
@@ -1510,6 +1495,10 @@ previewFrame.addEventListener('scroll', function () {
     if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
       exitPresentationMode();
     } else if (isFull) {
+      if (btnToolbarPresent.getAttribute('aria-pressed') !== 'true') {
+        exitFullscreen();
+        return;
+      }
       presentationCache = {};
       renderPresentationSlide(state.presentationSlide);
     }
@@ -1529,7 +1518,7 @@ previewFrame.addEventListener('scroll', function () {
   updateWarningStatus();
 
   /* Expose for debugging */
-  window.gabetexEditor = { compile: compile, state: state };
+  window.gabetexEditor = { compile: compile, state: state, resolveMainFile: resolveMainFile };
 
   window.addEventListener('resize', function () {
     if (editorWindow.classList.contains('presentation-mode')) {
