@@ -1657,6 +1657,9 @@ Scripts/build-app.sh</code></pre>
         <div class="editor-sidebar-wrap">
           <aside class="editor-sidebar" aria-label="Project files" data-i18n-attr="aria-label:editor.projectFiles">
             <div class="sidebar-head">
+              <button type="button" class="ed-glass-circle tb-symbols" id="btn-symbols" title="Math symbols" aria-label="Math symbols" aria-pressed="false" data-i18n-attr="title:editor.mathSymbols;aria-label:editor.mathSymbols">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6.5V5H6.5l6.5 7-6.5 7H18v-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
               <button type="button" class="ed-glass-circle tb-sidebar" id="btn-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar" aria-pressed="true" data-i18n-attr="title:editor.toggleSidebar;aria-label:editor.toggleSidebar">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 17V7A1.5 1.5 0 0 1 4 5.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 5.5v13M5 9h1.5M5 11.5h1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
@@ -1699,6 +1702,26 @@ Scripts/build-app.sh</code></pre>
               </div>
               <div class="sidebar-content hidden" id="sidebar-outline" role="tabpanel" aria-labelledby="tab-outline" hidden>
                 <p class="outline-empty" data-i18n="editor.noOutline">No outline available.</p>
+              </div>
+              <div class="sidebar-content hidden" id="sidebar-symbols" role="region" aria-label="Math symbols" data-i18n-attr="aria-label:editor.mathSymbols" hidden>
+                <div class="ed-sym-search-wrap">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 15l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <input type="search" id="sym-search" class="ed-sym-search" placeholder="Search math symbols…" aria-label="Search math symbols" spellcheck="false" autocomplete="off" data-i18n-attr="placeholder:editor.searchSymbols;aria-label:editor.searchSymbols">
+                  <button type="button" id="sym-search-clear" class="ed-sym-clear" title="Clear search" aria-label="Clear search" data-i18n-attr="title:editor.clearSearch;aria-label:editor.clearSearch" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+                <div id="sym-list" class="ed-sym-list"></div>
+                <div class="ed-sym-preview" id="sym-preview">
+                  <span class="ed-sym-prev-glyph" id="sym-preview-glyph">α</span>
+                  <div class="ed-sym-prev-meta">
+                    <div class="ed-sym-prev-top">
+                      <code class="ed-sym-prev-code" id="sym-preview-code">\alpha</code>
+                      <span class="ed-sym-prev-pkg" id="sym-preview-pkg" hidden></span>
+                    </div>
+                    <span class="ed-sym-prev-name" id="sym-preview-name" data-i18n="editor.symbolsHint">Click to insert at cursor or drag into the editor.</span>
+                  </div>
+                </div>
               </div>
             </div>
           </aside>
@@ -1757,6 +1780,7 @@ Scripts/build-app.sh</code></pre>
 \begin{document}
 Hello, world!
 \end{document}" aria-label="LaTeX source — main.tex"></textarea>
+                  <div id="editor-drop-caret" class="editor-drop-caret" hidden aria-hidden="true"></div>
                 </div>
               </section>
 
@@ -1929,6 +1953,25 @@ Hello, world!
     'editor.openFileTabs': 'Arquivos abertos',
     'editor.files': 'Arquivos',
     'editor.outline': 'Estrutura',
+    'editor.mathSymbols': 'Símbolos Matemáticos',
+    'editor.searchSymbols': 'Buscar símbolos matemáticos…',
+    'editor.clearSearch': 'Limpar busca',
+    'editor.noMatchingSymbols': 'Nenhum símbolo encontrado.',
+    'editor.symbolsHint': 'Clique para inserir no cursor ou arraste para o editor.',
+    'editor.symCat.greekLower': 'Gregas Minúsculas',
+    'editor.symCat.greekUpper': 'Gregas Maiúsculas',
+    'editor.symCat.binaryOps': 'Operadores Binários',
+    'editor.symCat.relations': 'Relações e Comparações',
+    'editor.symCat.setsLogic': 'Conjuntos e Lógica',
+    'editor.symCat.arrows': 'Setas',
+    'editor.symCat.bigOps': 'Grandes Operadores e Cálculo',
+    'editor.symCat.delimiters': 'Delimitadores e Parênteses',
+    'editor.symCat.structures': 'Frações, Raízes e Estruturas',
+    'editor.symCat.accents': 'Acentos e Decorações',
+    'editor.symCat.dots': 'Pontos e Reticências',
+    'editor.symCat.geometryMisc': 'Geometria e Diversos',
+    'editor.symCat.functions': 'Funções Padrão',
+    'editor.symCat.alphabets': 'Alfabetos e Conjuntos Numéricos',
     'editor.addFile': 'Criar arquivo',
     'editor.addFileAria': 'Criar arquivo',
     'editor.newFileName': 'Nome do arquivo',
@@ -2205,6 +2248,25 @@ Hello, world!
     'editor.openFileTabs': 'Open files',
     'editor.files': 'Files',
     'editor.outline': 'Outline',
+    'editor.mathSymbols': 'Math symbols',
+    'editor.searchSymbols': 'Search math symbols…',
+    'editor.clearSearch': 'Clear search',
+    'editor.noMatchingSymbols': 'No matching symbols.',
+    'editor.symbolsHint': 'Click to insert at cursor or drag into the editor.',
+    'editor.symCat.greekLower': 'Greek Lowercase',
+    'editor.symCat.greekUpper': 'Greek Uppercase',
+    'editor.symCat.binaryOps': 'Binary Operators',
+    'editor.symCat.relations': 'Relations & Comparisons',
+    'editor.symCat.setsLogic': 'Sets & Logic',
+    'editor.symCat.arrows': 'Arrows',
+    'editor.symCat.bigOps': 'Big Operators & Calculus',
+    'editor.symCat.delimiters': 'Delimiters & Brackets',
+    'editor.symCat.structures': 'Fractions, Roots & Structures',
+    'editor.symCat.accents': 'Accents & Decorations',
+    'editor.symCat.dots': 'Dots & Ellipses',
+    'editor.symCat.geometryMisc': 'Geometry & Misc',
+    'editor.symCat.functions': 'Standard Functions',
+    'editor.symCat.alphabets': 'Math Alphabets & Fonts',
     'editor.addFile': 'Create file',
     'editor.addFileAria': 'Create file',
     'editor.newFileName': 'File name',
@@ -3098,6 +3160,7 @@ Hello, world!
   if ('requestIdleCallback' in window) requestIdleCallback(loadHeroVersion, { timeout: 2500 }); else setTimeout(loadHeroVersion, 600);
 })();
 </script>
+<script src="assets/math-symbols.js"></script>
 <script src="assets/editor.js"></script>
 </body>
 </html>

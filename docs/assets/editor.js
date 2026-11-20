@@ -38,6 +38,7 @@
   var btnToolbarIssues = document.getElementById('btn-toolbar-issues');
   var btnCloseCompile = document.getElementById('btn-close-compile');
   var btnSidebar = document.getElementById('btn-sidebar');
+  var btnSymbols = document.getElementById('btn-symbols');
   var tbSidebarSlot = document.getElementById('tb-sidebar-slot');
   var sidebarHead = document.querySelector('.sidebar-head');
   var editorDocTitle = document.getElementById('editor-doc-title');
@@ -70,6 +71,16 @@
   var tabOutline = document.getElementById('tab-outline');
   var sidebarFiles = document.getElementById('sidebar-files');
   var sidebarOutline = document.getElementById('sidebar-outline');
+  var sidebarSymbols = document.getElementById('sidebar-symbols');
+  var symSearch = document.getElementById('sym-search');
+  var symSearchClear = document.getElementById('sym-search-clear');
+  var symList = document.getElementById('sym-list');
+  var symPreviewGlyph = document.getElementById('sym-preview-glyph');
+  var symPreviewCode = document.getElementById('sym-preview-code');
+  var symPreviewPkg = document.getElementById('sym-preview-pkg');
+  var symPreviewName = document.getElementById('sym-preview-name');
+  var editorCodeWrap = document.getElementById('editor-code-wrap');
+  var editorDropCaret = document.getElementById('editor-drop-caret');
   var editorApp = document.getElementById('editor-app');
   var editorWindow = document.querySelector('.editor-window');
   var statusCompile = document.getElementById('status-compile');
@@ -297,6 +308,7 @@
     updateOutline();
     updateCursor();
     updateHistoryButton();
+    if (symbolsBuilt) renderMathSymbols();
   }
   document.addEventListener('gabetex:languagechange', updateTranslatedUI);
 
@@ -331,19 +343,36 @@
     setSourceStatus('editor.historyRestored');
     updateHistoryButton();
   }
+  var lastSidebarTab = 'files';
+  var symbolsBuilt = false;
+  var collapsedSymbolCats = {};
   function setSidebarTab(tab) {
     var showFiles = tab === 'files';
+    var showOutline = tab === 'outline';
+    var showSymbols = tab === 'symbols';
+    if (!showSymbols) lastSidebarTab = showOutline ? 'outline' : 'files';
     tabFiles.classList.toggle('active', showFiles);
-    tabOutline.classList.toggle('active', !showFiles);
-    if (tabFiles.parentNode) tabFiles.parentNode.setAttribute('data-index', showFiles ? '0' : '1');
+    tabOutline.classList.toggle('active', showOutline);
+    if (tabFiles.parentNode) {
+      tabFiles.parentNode.setAttribute('data-index', showOutline ? '1' : '0');
+      tabFiles.parentNode.setAttribute('data-inactive', showSymbols ? 'true' : 'false');
+    }
     tabFiles.setAttribute('aria-selected', showFiles ? 'true' : 'false');
-    tabOutline.setAttribute('aria-selected', showFiles ? 'false' : 'true');
+    tabOutline.setAttribute('aria-selected', showOutline ? 'true' : 'false');
     tabFiles.tabIndex = showFiles ? 0 : -1;
-    tabOutline.tabIndex = showFiles ? -1 : 0;
+    tabOutline.tabIndex = showOutline ? 0 : -1;
+    if (btnSymbols) {
+      btnSymbols.classList.toggle('active', showSymbols);
+      btnSymbols.setAttribute('aria-pressed', showSymbols ? 'true' : 'false');
+    }
     sidebarFiles.hidden = !showFiles;
-    sidebarOutline.hidden = showFiles;
+    sidebarOutline.hidden = !showOutline;
+    if (sidebarSymbols) sidebarSymbols.hidden = !showSymbols;
     sidebarFiles.classList.toggle('hidden', !showFiles);
-    sidebarOutline.classList.toggle('hidden', showFiles);
+    sidebarOutline.classList.toggle('hidden', !showOutline);
+    if (sidebarSymbols) sidebarSymbols.classList.toggle('hidden', !showSymbols);
+    if (showOutline) updateOutline();
+    if (showSymbols && !symbolsBuilt) renderMathSymbols();
   }
 
   /* ---------- file tabs ---------- */
@@ -1019,6 +1048,377 @@
     nextTab.focus();
     nextTab.click();
   });
+
+  /* ---------- math symbols panel & click / drag-and-drop insertion ---------- */
+  var suppressSymbolClick = false;
+  var activeSymbolDragCleanup = null;
+  var dropMirror = null;
+
+  function showSymbolPreview(sym) {
+    if (!sym) return;
+    if (symPreviewGlyph) symPreviewGlyph.textContent = sym.display;
+    if (symPreviewCode) symPreviewCode.textContent = sym.code;
+    if (symPreviewPkg) {
+      symPreviewPkg.textContent = sym.pkg ? ('\\usepackage{' + sym.pkg + '}') : '';
+      symPreviewPkg.hidden = !sym.pkg;
+    }
+    if (symPreviewName) symPreviewName.textContent = sym.name;
+  }
+
+  function caretOffsetInsideInserted(code) {
+    var blockBody = code.indexOf('\n  \n');
+    if (blockBody !== -1) return blockBody + 3;
+    var emptyBrace = code.indexOf('{}');
+    if (emptyBrace !== -1) return emptyBrace + 1;
+    var spacedBrace = code.indexOf('{  }');
+    if (spacedBrace !== -1) return spacedBrace + 2;
+    var emptySpaceDelim = code.indexOf('  \\right');
+    if (emptySpaceDelim !== -1) return emptySpaceDelim + 1;
+    var emptyBracket = code.indexOf('[]');
+    if (emptyBracket !== -1) return emptyBracket + 1;
+    return code.length;
+  }
+
+  function insertMathSymbolAt(sym, start, end) {
+    if (!sym || !source) return;
+    var code = sym.code;
+    var val = source.value;
+    var fallback = typeof source.selectionStart === 'number' ? source.selectionStart : val.length;
+    var s = Math.max(0, Math.min(typeof start === 'number' ? start : fallback, val.length));
+    var e = Math.max(s, Math.min(typeof end === 'number' ? end : (typeof source.selectionEnd === 'number' ? source.selectionEnd : s), val.length));
+    commitHistorySnapshot();
+    source.value = val.slice(0, s) + code + val.slice(e);
+    var caret = s + caretOffsetInsideInserted(code);
+    source.focus();
+    source.setSelectionRange(caret, caret);
+    source.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function ensureDropMirror() {
+    if (dropMirror) return dropMirror;
+    dropMirror = document.createElement('div');
+    dropMirror.setAttribute('aria-hidden', 'true');
+    dropMirror.style.position = 'fixed';
+    dropMirror.style.visibility = 'hidden';
+    dropMirror.style.pointerEvents = 'none';
+    dropMirror.style.zIndex = '-1';
+    dropMirror.style.margin = '0';
+    dropMirror.style.border = '0';
+    dropMirror.style.boxSizing = 'border-box';
+    dropMirror.style.whiteSpace = 'pre-wrap';
+    dropMirror.style.wordWrap = 'break-word';
+    dropMirror.style.overflowWrap = 'break-word';
+    var host = document.getElementById('editor-view') || document.body;
+    host.appendChild(dropMirror);
+    return dropMirror;
+  }
+
+  function hideDropCaret() {
+    if (editorDropCaret) editorDropCaret.hidden = true;
+  }
+
+  function resolveTextareaDrop(clientX, clientY) {
+    if (!source || !editorCodeWrap) return null;
+    var sr = source.getBoundingClientRect();
+    if (clientX < sr.left || clientX > sr.right || clientY < sr.top || clientY > sr.bottom) {
+      return null;
+    }
+    var mirror = ensureDropMirror();
+    var cs = getComputedStyle(source);
+    mirror.style.font = cs.font;
+    mirror.style.fontVariantLigatures = cs.fontVariantLigatures;
+    mirror.style.letterSpacing = cs.letterSpacing;
+    mirror.style.wordSpacing = cs.wordSpacing;
+    mirror.style.tabSize = cs.tabSize;
+    mirror.style.lineHeight = cs.lineHeight;
+    mirror.style.paddingTop = cs.paddingTop;
+    mirror.style.paddingRight = cs.paddingRight;
+    mirror.style.paddingBottom = cs.paddingBottom;
+    mirror.style.paddingLeft = cs.paddingLeft;
+    mirror.style.left = (sr.left + source.clientLeft - source.scrollLeft) + 'px';
+    mirror.style.top = (sr.top + source.clientTop - source.scrollTop) + 'px';
+    mirror.style.width = source.clientWidth + 'px';
+
+    var text = source.value;
+    var wrapRect = editorCodeWrap.getBoundingClientRect();
+    var lh = parseFloat(cs.lineHeight) || 21;
+    if (!text.length) {
+      var padLeft = parseFloat(cs.paddingLeft) || 16;
+      var padTop = parseFloat(cs.paddingTop) || 12;
+      return {
+        offset: 0,
+        x: sr.left + source.clientLeft + padLeft - source.scrollLeft - wrapRect.left,
+        y: sr.top + source.clientTop + padTop - source.scrollTop - wrapRect.top,
+        height: lh
+      };
+    }
+
+    mirror.textContent = text + '\u200b';
+    var textNode = mirror.firstChild;
+    var range = document.createRange();
+    function rectAt(idx) {
+      var safe = Math.max(0, Math.min(idx, text.length));
+      range.setStart(textNode, safe);
+      range.collapse(true);
+      var rects = range.getClientRects();
+      return rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+    }
+
+    var firstRect = rectAt(0);
+    var lastRect = rectAt(text.length);
+    var lineFirst = 0;
+    if (clientY <= firstRect.top) {
+      lineFirst = 0;
+    } else if (clientY >= lastRect.bottom) {
+      var loLast = 0;
+      var hiLast = text.length;
+      while (loLast < hiLast) {
+        var midLast = (loLast + hiLast) >> 1;
+        if (Math.abs(rectAt(midLast).top - lastRect.top) < 4) hiLast = midLast;
+        else loLast = midLast + 1;
+      }
+      lineFirst = loLast;
+    } else {
+      var lo = 0;
+      var hi = text.length;
+      while (lo < hi) {
+        var mid = (lo + hi) >> 1;
+        if (rectAt(mid).bottom > clientY) hi = mid;
+        else lo = mid + 1;
+      }
+      lineFirst = lo;
+    }
+
+    var lineTop = rectAt(lineFirst).top;
+    var loEnd = lineFirst;
+    var hiEnd = text.length;
+    while (loEnd < hiEnd) {
+      var midEnd = (loEnd + hiEnd + 1) >> 1;
+      if (rectAt(midEnd).top <= lineTop + 4) loEnd = midEnd;
+      else hiEnd = midEnd - 1;
+    }
+    var lineEnd = loEnd;
+
+    var best = lineFirst;
+    if (clientX <= rectAt(lineFirst).left) {
+      best = lineFirst;
+    } else if (clientX >= rectAt(lineEnd).left) {
+      best = lineEnd;
+    } else {
+      var loX = lineFirst;
+      var hiX = lineEnd;
+      while (loX < hiX) {
+        var midX = (loX + hiX) >> 1;
+        if (rectAt(midX).left >= clientX) hiX = midX;
+        else loX = midX + 1;
+      }
+      best = loX;
+      if (best > lineFirst) {
+        var curDist = Math.abs(rectAt(best).left - clientX);
+        var prevDist = Math.abs(rectAt(best - 1).left - clientX);
+        if (prevDist < curDist) best = best - 1;
+      }
+    }
+
+    var chosen = rectAt(best);
+    var clampedTop = Math.max(sr.top, Math.min(chosen.top, sr.bottom - 4));
+    var clampedLeft = Math.max(sr.left, Math.min(chosen.left, sr.right - 2));
+    return {
+      offset: best,
+      x: clampedLeft - wrapRect.left,
+      y: clampedTop - wrapRect.top,
+      height: Math.max(14, chosen.height || lh)
+    };
+  }
+
+  function showDropCaretAt(drop) {
+    if (!editorDropCaret) return;
+    if (!drop) {
+      editorDropCaret.hidden = true;
+      return;
+    }
+    editorDropCaret.style.transform = 'translate(' + drop.x + 'px, ' + drop.y + 'px)';
+    editorDropCaret.style.height = drop.height + 'px';
+    editorDropCaret.hidden = false;
+  }
+
+  function startSymbolDrag(event, sym) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    if (activeSymbolDragCleanup) activeSymbolDragCleanup();
+    showSymbolPreview(sym);
+    var startX = event.clientX;
+    var startY = event.clientY;
+    var dragging = false;
+    var lastDrop = null;
+    var ghost = null;
+
+    function cleanup() {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
+      if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      ghost = null;
+      document.body.classList.remove('dragging-math-symbol');
+      hideDropCaret();
+      activeSymbolDragCleanup = null;
+    }
+
+    function onMove(ev) {
+      if (!dragging) {
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+        dragging = true;
+        ghost = document.createElement('div');
+        ghost.className = 'ed-sym-drag-ghost';
+        var glyphSpan = document.createElement('span');
+        glyphSpan.className = 'glyph';
+        glyphSpan.textContent = sym.display;
+        var codeEl = document.createElement('code');
+        codeEl.textContent = sym.code;
+        ghost.appendChild(glyphSpan);
+        ghost.appendChild(codeEl);
+        (editorApp || document.body).appendChild(ghost);
+        document.body.classList.add('dragging-math-symbol');
+      }
+      ghost.style.left = (ev.clientX + 12) + 'px';
+      ghost.style.top = (ev.clientY - 14) + 'px';
+      lastDrop = resolveTextareaDrop(ev.clientX, ev.clientY);
+      showDropCaretAt(lastDrop);
+      ghost.classList.toggle('over-editor', !!lastDrop);
+    }
+
+    function onUp(ev) {
+      var wasDragging = dragging;
+      var drop = wasDragging ? resolveTextareaDrop(ev.clientX, ev.clientY) : null;
+      cleanup();
+      if (!wasDragging) return;
+      suppressSymbolClick = true;
+      setTimeout(function () { suppressSymbolClick = false; }, 0);
+      if (drop) insertMathSymbolAt(sym, drop.offset, drop.offset);
+    }
+
+    function onCancel() { cleanup(); }
+
+    activeSymbolDragCleanup = cleanup;
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+  }
+
+  function renderMathSymbols() {
+    if (!symList || !window.GabeTeXMathSymbols) return;
+    symbolsBuilt = true;
+    var query = symSearch ? symSearch.value : '';
+    var searching = String(query).replace(/^\s+|\s+$/g, '').length > 0;
+    var categories = window.GabeTeXMathSymbols.filter(query, translate);
+    symList.innerHTML = '';
+    if (!categories.length) {
+      var empty = document.createElement('p');
+      empty.className = 'ed-sym-empty';
+      empty.textContent = translate('editor.noMatchingSymbols');
+      symList.appendChild(empty);
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < categories.length; i++) {
+      (function (cat) {
+        var expanded = searching || !collapsedSymbolCats[cat.id];
+        var catWrap = document.createElement('div');
+        catWrap.className = 'ed-sym-cat';
+
+        var catBtn = document.createElement('button');
+        catBtn.type = 'button';
+        catBtn.className = 'ed-sym-cat-btn';
+        catBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+
+        var chev = document.createElement('span');
+        chev.className = 'ed-sym-cat-chev';
+        chev.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        var catIcon = document.createElement('span');
+        catIcon.className = 'ed-sym-cat-icon';
+        catIcon.textContent = cat.icon;
+
+        var catTitle = document.createElement('span');
+        catTitle.className = 'ed-sym-cat-title';
+        catTitle.textContent = translate(cat.labelKey);
+
+        var catCount = document.createElement('span');
+        catCount.className = 'ed-sym-cat-count';
+        catCount.textContent = String(cat.symbols.length);
+
+        catBtn.appendChild(chev);
+        catBtn.appendChild(catIcon);
+        catBtn.appendChild(catTitle);
+        catBtn.appendChild(catCount);
+
+        var grid = document.createElement('div');
+        grid.className = 'ed-sym-grid';
+        grid.hidden = !expanded;
+
+        for (var j = 0; j < cat.symbols.length; j++) {
+          (function (sym) {
+            var tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'ed-sym-tile' + (sym.display.length >= 3 ? ' wide' : '');
+            tile.textContent = sym.display;
+            tile.setAttribute('draggable', 'false');
+            tile.setAttribute('data-code', sym.code);
+            tile.title = sym.pkg ? (sym.code + ' — ' + sym.name + ' (\\usepackage{' + sym.pkg + '})') : (sym.code + ' — ' + sym.name);
+            tile.setAttribute('aria-label', sym.name + ' (' + sym.code + ')');
+
+            tile.addEventListener('pointerenter', function () { showSymbolPreview(sym); });
+            tile.addEventListener('focus', function () { showSymbolPreview(sym); });
+            tile.addEventListener('pointerdown', function (e) { startSymbolDrag(e, sym); });
+            tile.addEventListener('click', function () {
+              if (suppressSymbolClick) return;
+              showSymbolPreview(sym);
+              insertMathSymbolAt(sym);
+            });
+            grid.appendChild(tile);
+          })(cat.symbols[j]);
+        }
+
+        catBtn.addEventListener('click', function () {
+          if (searching) return;
+          var next = catBtn.getAttribute('aria-expanded') !== 'true';
+          if (next) delete collapsedSymbolCats[cat.id];
+          else collapsedSymbolCats[cat.id] = true;
+          catBtn.setAttribute('aria-expanded', next ? 'true' : 'false');
+          grid.hidden = !next;
+        });
+
+        catWrap.appendChild(catBtn);
+        catWrap.appendChild(grid);
+        frag.appendChild(catWrap);
+      })(categories[i]);
+    }
+    symList.appendChild(frag);
+  }
+
+  if (btnSymbols) {
+    btnSymbols.addEventListener('click', function () {
+      var active = sidebarSymbols && !sidebarSymbols.hidden;
+      setSidebarTab(active ? lastSidebarTab : 'symbols');
+    });
+  }
+  if (symSearch) {
+    symSearch.addEventListener('input', function () {
+      if (symSearchClear) symSearchClear.hidden = symSearch.value.length === 0;
+      renderMathSymbols();
+    });
+  }
+  if (symSearchClear) {
+    symSearchClear.addEventListener('click', function () {
+      if (symSearch) {
+        symSearch.value = '';
+        symSearch.focus();
+      }
+      symSearchClear.hidden = true;
+      renderMathSymbols();
+    });
+  }
   btnSplit.addEventListener('click', function () {
     var split = editorWindow.classList.toggle('is-split-view');
     btnSplit.setAttribute('aria-pressed', split ? 'true' : 'false');
