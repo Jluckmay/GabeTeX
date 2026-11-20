@@ -14,7 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Categorized **Math Symbols** sidebar panel across macOS (`Σ` / `⌥⌘3`), Linux/Windows (`Σ` / `Ctrl+Alt+3`), and the Online Editor (`docs/`, `#btn-symbols`) with 14 categories (436 symbols covering core LaTeX, `amsmath`, `amssymb`, `mathrsfs`, and `gensymb`), search, live package preview, click-to-insert, drag-and-drop onto exact editor positions, and context-aware automatic `$...$` / `\[...\]` math-delimiter wrapping outside math mode (merging adjacent single `$` delimiters on consecutive insertions).
+- Categorized **Math Symbols** sidebar panel across macOS (`Σ` / `⌥⌘3`), Linux/Windows (`Σ` / `Ctrl+Alt+3`), and the Online Editor (`docs/`, `#btn-symbols`) with 15 categories (470 symbols covering core LaTeX, `amsmath`, `amssymb`, `mathrsfs`, `gensymb`, `mathdots`, `eurosym`, plus a text-mode **Linguistic Symbols** section), search, live package preview, `\log_{}` base-subscript snippet, click-to-insert, drag-and-drop onto exact editor positions, automatic `\usepackage{...}` preamble injection (updating the main document when editing preamble-less included files), and context-aware automatic `$...$` / `\[...\]` math-delimiter wrapping outside math mode (merging adjacent single `$` delimiters on consecutive insertions and skipping text-mode linguistic symbols).
+- Extended LaTeX delimiter auto-pairing (`{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`, and `\begin{env}...\end{env}` auto-close on `}`) and paired `Backspace`/`Delete` deletion across balanced delimiters and empty environments in all three editions.
 
 ### Changed
 
