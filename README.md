@@ -76,15 +76,20 @@ editor that treats that as the normal case. It has three goals:
 - **PDF preview with two-way sync:** built-in viewer with SyncTeX, precise source-to-PDF and PDF-to-source jumps that
   land on the exact word, and a detachable PDF window.
 - **Beamer presentations:** audience view on the external display plus a presenter view with next slide, timer and notes.
-- **Writing tools:** autocomplete for commands, environments, references, citations and packages; word and page
-  counts; Command Palette; editable shortcuts; optional Vim mode.
+- **Writing tools:** autocomplete for commands, environments, references, citations and packages; a categorized
+  **Math Symbols** sidebar table (`Σ`, 14 categories / 436 symbols) with search, click-to-insert, drag-and-drop onto
+  exact editor positions, and automatic `$...$` / `\[...\]` delimiter wrapping outside math mode; word and page counts;
+  Command Palette; editable shortcuts; optional Vim mode.
 - **Project labels, Touch Bar support and a bilingual interface** (English and Brazilian Portuguese).
 
 ## Online editor
 
-The website's editor (`docs/`) uses the same Liquid Glass layout as the desktop application (left file/outline sidebar,
-unified 52px glass toolbar, pill tabs, split source & PDF preview with floating zoom/page capsule, collapsible output
-drawer, and Beamer presentation mode) and compiles directly in the browser: a Web Worker runs the SHA-256-verified
+The website's editor (`docs/`) uses the same Liquid Glass layout as the desktop application (left sidebar with Files,
+Outline, and the categorized **Math Symbols** table triggered by the top-left `Σ` button — 14 categories / 436 symbols,
+search, click-to-insert, drag-and-drop onto any code coordinate, and automatic `$...$` / `\[...\]` wrapping outside
+math mode — unified 52px glass toolbar, pill tabs, split source & PDF preview with floating zoom/page capsule,
+collapsible output drawer, and Beamer presentation mode) and compiles directly in the browser: a Web Worker runs the
+SHA-256-verified
 pinned [Tectonic WebAssembly build](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
 and [PDF.js](https://github.com/mozilla/pdf.js) renders the result. Project source is never sent to a compilation
 server. Multi-file projects automatically resolve `main.tex` (or `% !TEX root`) when compiling from an included section

@@ -77,15 +77,20 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 - **PDF com sincronização nos dois sentidos:** visualizador integrado com SyncTeX, saltos precisos do código para o
   PDF e do PDF para o código que caem na palavra exata, e janela de PDF destacável.
 - **Apresentações Beamer:** visão da plateia no monitor externo e visão do apresentador com próximo slide, cronômetro e notas.
-- **Ferramentas de escrita:** autocompletar de comandos, ambientes, referências, citações e pacotes; contagem de
-  palavras e páginas; Paleta de Comandos; atalhos editáveis; modo Vim opcional.
+- **Ferramentas de escrita:** autocompletar de comandos, ambientes, referências, citações e pacotes; **tabela de
+  Símbolos Matemáticos** categorizada na barra lateral (`Σ`, 14 categorias / 436 símbolos) com busca, inserção por
+  clique ou arrastar e soltar (drag-and-drop) em qualquer posição do código e delimitação automática com `$...$` / `\[...\]`
+  fora do modo matemático; contagem de palavras e páginas; Paleta de Comandos; atalhos editáveis; modo Vim opcional.
 - **Rótulos de projeto, suporte à Touch Bar e interface bilíngue** (português do Brasil e inglês).
 
 ## Editor online
 
-O editor do site (`docs/`) utiliza o mesmo layout Liquid Glass da aplicação desktop (barra lateral esquerda de arquivos
-e estrutura, barra superior unificada de 52px, abas em pílula, visão dividida de código e PDF com cápsula flutuante de
-zoom/páginas, gaveta inferior de saída recolhível e Modo Apresentação Beamer) e compila diretamente no navegador: um
+O editor do site (`docs/`) utiliza o mesmo layout Liquid Glass da aplicação desktop (barra lateral esquerda com
+Arquivos, Estrutura e a tabela categorizada de **Símbolos Matemáticos** no botão `Σ` superior esquerdo — 14 categorias /
+436 símbolos, busca, inserção por clique ou drag-and-drop na posição exata do código e inserção automática de
+delimitadores `$...$` / `\[...\]` fora do modo matemático — barra superior unificada de 52px, abas em pílula, visão
+dividida de código e PDF com cápsula flutuante de zoom/páginas, gaveta inferior de saída recolhível e Modo Apresentação
+Beamer) e compila diretamente no navegador: um
 Web Worker executa a versão fixada e verificada via SHA-256 do
 [Tectonic WebAssembly](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727), e o
 [PDF.js](https://github.com/mozilla/pdf.js) renderiza o PDF. O código do projeto nunca é enviado a um servidor. Projetos
