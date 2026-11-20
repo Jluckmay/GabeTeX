@@ -1086,9 +1086,21 @@
     var fallback = typeof source.selectionStart === 'number' ? source.selectionStart : val.length;
     var s = Math.max(0, Math.min(typeof start === 'number' ? start : fallback, val.length));
     var e = Math.max(s, Math.min(typeof end === 'number' ? end : (typeof source.selectionEnd === 'number' ? source.selectionEnd : s), val.length));
+    var plan = (window.GabeTeXMathSymbols && window.GabeTeXMathSymbols.prepareInsertion)
+      ? window.GabeTeXMathSymbols.prepareInsertion(val, s, e, code)
+      : { from: s, to: e, text: code, moveAfterClosingDollar: false };
     commitHistorySnapshot();
-    source.value = val.slice(0, s) + code + val.slice(e);
-    var caret = s + caretOffsetInsideInserted(code);
+    source.value = val.slice(0, plan.from) + plan.text + val.slice(plan.to);
+    var innerOffset = caretOffsetInsideInserted(code);
+    var caret;
+    if (innerOffset < code.length) {
+      var codeIdx = plan.text.indexOf(code);
+      caret = plan.from + (codeIdx !== -1 ? codeIdx : 0) + innerOffset;
+    } else if (plan.moveAfterClosingDollar) {
+      caret = Math.min(source.value.length, plan.from + plan.text.length + 1);
+    } else {
+      caret = plan.from + plan.text.length;
+    }
     source.focus();
     source.setSelectionRange(caret, caret);
     source.dispatchEvent(new Event('input', { bubbles: true }));

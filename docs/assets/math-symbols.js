@@ -579,8 +579,250 @@
     return result;
   }
 
+  var VERBATIM_ENVS = {
+    verbatim: 1, 'verbatim*': 1, Verbatim: 1, 'Verbatim*': 1,
+    BVerbatim: 1, 'BVerbatim*': 1, LVerbatim: 1, 'LVerbatim*': 1,
+    lstlisting: 1, minted: 1, comment: 1, filecontents: 1, 'filecontents*': 1,
+    spverbatim: 1, verbatimtab: 1
+  };
+
+  var MATH_ENVS = {
+    equation: 1, 'equation*': 1, align: 1, 'align*': 1, alignat: 1, 'alignat*': 1,
+    flalign: 1, 'flalign*': 1, gather: 1, 'gather*': 1, multline: 1, 'multline*': 1,
+    eqnarray: 1, 'eqnarray*': 1, math: 1, displaymath: 1, dmath: 1, 'dmath*': 1
+  };
+
+  var TEXT_MODE_COMMANDS = {
+    text: 1, textrm: 1, textbf: 1, textit: 1, textsf: 1, texttt: 1,
+    mbox: 1, hbox: 1, intertext: 1, shortintertext: 1
+  };
+
+  function isAlphaCode(c) {
+    return (c >= 65 && c <= 90) || (c >= 97 && c <= 122);
+  }
+
+  function isEscapedAt(text, idx) {
+    var backslashes = 0;
+    for (var i = idx - 1; i >= 0 && text.charCodeAt(i) === 92; i--) {
+      backslashes++;
+    }
+    return (backslashes & 1) === 1;
+  }
+
+  function isInMathMode(text, pos) {
+    var limit = Math.max(0, Math.min(Math.floor(pos || 0), text.length));
+    var mode = 'none';
+    var envName = '';
+    var verbatimEnv = null;
+    var braceDepth = 0;
+    var atLineStart = true;
+    var frames = [];
+    var i = 0;
+
+    while (i < limit) {
+      var ch = text.charCodeAt(i);
+
+      if (verbatimEnv !== null) {
+        if (ch === 92 && text.slice(i, i + 4) === '\\end') {
+          var j = i + 4;
+          while (j < limit && (text.charCodeAt(j) === 32 || text.charCodeAt(j) === 9)) j++;
+          if (j < limit && text.charCodeAt(j) === 123) {
+            var closeVerb = text.indexOf('}', j + 1);
+            if (closeVerb !== -1 && closeVerb < limit) {
+              var endName = text.slice(j + 1, closeVerb).replace(/^\s+|\s+$/g, '');
+              if (endName === verbatimEnv) {
+                verbatimEnv = null;
+                atLineStart = false;
+                i = closeVerb + 1;
+                continue;
+              }
+            }
+          }
+        }
+        if (ch === 10) atLineStart = true;
+        else if (ch !== 13 && ch !== 32 && ch !== 9) atLineStart = false;
+        i++;
+        continue;
+      }
+
+      if (ch === 10) {
+        if (atLineStart && mode === 'dollar') mode = 'none';
+        atLineStart = true;
+        i++;
+        continue;
+      }
+
+      if (ch === 13 || ch === 32 || ch === 9) {
+        i++;
+        continue;
+      }
+
+      if (ch === 37) {
+        atLineStart = false;
+        while (i < limit && text.charCodeAt(i) !== 10) i++;
+        continue;
+      }
+
+      atLineStart = false;
+
+      if (ch === 92) {
+        if (i + 1 >= limit) {
+          i++;
+          continue;
+        }
+        var next = text.charCodeAt(i + 1);
+        if (!isAlphaCode(next)) {
+          if (next === 40 && mode === 'none') mode = 'paren';
+          else if (next === 41 && mode === 'paren') mode = 'none';
+          else if (next === 91 && mode === 'none') mode = 'bracket';
+          else if (next === 93 && mode === 'bracket') mode = 'none';
+          i += 2;
+          continue;
+        }
+
+        var endCmd = i + 1;
+        while (endCmd < limit && isAlphaCode(text.charCodeAt(endCmd))) endCmd++;
+        var cmd = text.slice(i + 1, endCmd);
+        i = endCmd;
+
+        if (cmd === 'verb' || cmd === 'lstinline') {
+          if (i < limit && text.charCodeAt(i) === 42) i++;
+          if (i < limit && text.charCodeAt(i) !== 10) {
+            var delim = text.charCodeAt(i);
+            i++;
+            while (i < limit && text.charCodeAt(i) !== delim && text.charCodeAt(i) !== 10) i++;
+            if (i < limit && text.charCodeAt(i) === delim) i++;
+          }
+          continue;
+        }
+
+        if (cmd === 'begin' || cmd === 'end') {
+          var k = i;
+          while (k < limit && (text.charCodeAt(k) === 32 || text.charCodeAt(k) === 9)) k++;
+          if (k < limit && text.charCodeAt(k) === 123) {
+            var closeBrace = text.indexOf('}', k + 1);
+            if (closeBrace !== -1 && closeBrace < limit) {
+              var name = text.slice(k + 1, closeBrace).replace(/^\s+|\s+$/g, '');
+              if (cmd === 'begin') {
+                if (Object.prototype.hasOwnProperty.call(VERBATIM_ENVS, name)) verbatimEnv = name;
+                else if (mode === 'none' && Object.prototype.hasOwnProperty.call(MATH_ENVS, name)) {
+                  mode = 'env';
+                  envName = name;
+                }
+              } else if (mode === 'env' && name === envName) {
+                mode = 'none';
+                envName = '';
+              }
+              i = closeBrace + 1;
+            }
+          }
+          continue;
+        }
+
+        if (mode !== 'none' && Object.prototype.hasOwnProperty.call(TEXT_MODE_COMMANDS, cmd)) {
+          var kText = i;
+          while (kText < limit && (text.charCodeAt(kText) === 32 || text.charCodeAt(kText) === 9)) kText++;
+          if (kText < limit && text.charCodeAt(kText) === 123) {
+            frames.push({ mode: mode, envName: envName, returnBraceDepth: braceDepth });
+            mode = 'none';
+            envName = '';
+            braceDepth++;
+            i = kText + 1;
+          }
+        }
+        continue;
+      }
+
+      if (ch === 123) {
+        braceDepth++;
+        i++;
+        continue;
+      }
+
+      if (ch === 125) {
+        if (braceDepth > 0) braceDepth--;
+        if (frames.length > 0 && frames[frames.length - 1].returnBraceDepth === braceDepth) {
+          var restored = frames.pop();
+          mode = restored.mode;
+          envName = restored.envName;
+        }
+        i++;
+        continue;
+      }
+
+      if (ch === 36) {
+        if (mode === 'dollar') {
+          mode = 'none';
+          i++;
+        } else if (mode === 'double') {
+          if (i + 1 < limit && text.charCodeAt(i + 1) === 36) i += 2;
+          else i++;
+          mode = 'none';
+        } else if (mode === 'none') {
+          if (i + 1 < limit && text.charCodeAt(i + 1) === 36) {
+            mode = 'double';
+            i += 2;
+          } else if (i + 1 === limit && i + 1 < text.length && text.charCodeAt(i + 1) === 36) {
+            mode = 'dollar';
+            i++;
+          } else {
+            mode = 'dollar';
+            i++;
+          }
+        } else {
+          i++;
+        }
+        continue;
+      }
+
+      i++;
+    }
+
+    return verbatimEnv === null && mode !== 'none';
+  }
+
+  function prepareInsertion(text, from, to, code) {
+    var s = Math.max(0, Math.min(Math.floor(from || 0), text.length));
+    var e = Math.max(s, Math.min(Math.floor(typeof to === 'number' ? to : s), text.length));
+
+    if (isInMathMode(text, s)) {
+      return { from: s, to: e, text: code, moveAfterClosingDollar: false };
+    }
+
+    var isMultiline = code.indexOf('\n') !== -1;
+    if (s === e && !isMultiline) {
+      if (
+        s > 0
+        && text.charCodeAt(s - 1) === 36
+        && (s < 2 || text.charCodeAt(s - 2) !== 36)
+        && !isEscapedAt(text, s - 1)
+        && isInMathMode(text, s - 1)
+      ) {
+        return { from: s - 1, to: s - 1, text: code, moveAfterClosingDollar: true };
+      }
+      if (
+        s < text.length
+        && text.charCodeAt(s) === 36
+        && text.charCodeAt(s + 1) !== 36
+        && !isEscapedAt(text, s)
+        && isInMathMode(text, s + 1)
+      ) {
+        return { from: s + 1, to: s + 1, text: code, moveAfterClosingDollar: false };
+      }
+    }
+
+    return {
+      from: s,
+      to: e,
+      text: isMultiline ? ('\\[\n' + code + '\n\\]') : ('$' + code + '$'),
+      moveAfterClosingDollar: false
+    };
+  }
+
   root.GabeTeXMathSymbols = {
     categories: CATEGORIES,
-    filter: filter
+    filter: filter,
+    isInMathMode: isInMathMode,
+    prepareInsertion: prepareInsertion
   };
 })(window);
