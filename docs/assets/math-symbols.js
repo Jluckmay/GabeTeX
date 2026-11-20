@@ -485,7 +485,7 @@
         { display: 'tanh', code: '\\tanh', name: 'hyperbolic tangent' },
         { display: 'coth', code: '\\coth', name: 'hyperbolic cotangent' },
         { display: 'ln', code: '\\ln', name: 'natural logarithm', keywords: ['logaritmo'] },
-        { display: 'log', code: '\\log', name: 'logarithm', keywords: ['logaritmo'] },
+        { display: 'logₐ', code: '\\log_{}', name: 'logarithm with base', keywords: ['logaritmo', 'base', 'log'] },
         { display: 'lg', code: '\\lg', name: 'base-2 / common log' },
         { display: 'exp', code: '\\exp', name: 'exponential', keywords: ['exponencial'] },
         { display: 'det', code: '\\det', name: 'determinant', keywords: ['determinante'] },
@@ -535,6 +535,47 @@
         { display: '𝖲', code: '\\mathsf{}', name: 'sans-serif math' },
         { display: '𝚃', code: '\\mathtt{}', name: 'monospace math' },
         { display: '𝜶', code: '\\boldsymbol{}', name: 'bold math symbol', pkg: 'amsmath' }
+      ]
+    },
+    {
+      id: 'linguistic',
+      labelKey: 'editor.symCat.linguistic',
+      icon: '—',
+      symbols: [
+        { display: '—', code: '---', name: 'em dash', textMode: true, keywords: ['travessão', 'dash', 'em-dash'] },
+        { display: '–', code: '--', name: 'en dash', textMode: true, keywords: ['meia-risca', 'intervalo', 'en-dash'] },
+        { display: '—m', code: '\\textemdash', name: 'text em dash', textMode: true, keywords: ['travessão'] },
+        { display: '“”', code: "``''", name: 'double quotation marks', textMode: true, keywords: ['aspas duplas', 'quotes'] },
+        { display: '‘’', code: "`'", name: 'single quotation marks', textMode: true, keywords: ['aspas simples', 'quotes'] },
+        { display: '“', code: '``', name: 'left double quote', textMode: true, keywords: ['aspas abertura'] },
+        { display: '”', code: "''", name: 'right double quote', textMode: true, keywords: ['aspas fechamento'] },
+        { display: '«»', code: '\\guillemotleft{}\\guillemotright{}', name: 'guillemets', textMode: true, keywords: ['aspas angulares'] },
+        { display: '…', code: '\\ldots', name: 'ellipsis / three dots', textMode: true, keywords: ['três pontos', 'reticências'] },
+        { display: ':', code: ':', name: 'colon', textMode: true, keywords: ['dois pontos'] },
+        { display: ';', code: ';', name: 'semicolon', textMode: true, keywords: ['ponto e vírgula'] },
+        { display: '¡', code: '!`', name: 'inverted exclamation mark', textMode: true, keywords: ['exclamação'] },
+        { display: '¿', code: '?`', name: 'inverted question mark', textMode: true, keywords: ['interrogação'] },
+        { display: '␣', code: '~', name: 'non-breaking space', textMode: true, keywords: ['espaço inseparável'] },
+        { display: '§', code: '\\S', name: 'section mark', textMode: true, keywords: ['seção'] },
+        { display: '¶', code: '\\P', name: 'pilcrow / paragraph sign', textMode: true, keywords: ['parágrafo'] },
+        { display: 'º', code: '\\textordmasculine', name: 'masculine ordinal', textMode: true, keywords: ['ordinal', 'grau'] },
+        { display: 'ª', code: '\\textordfeminine', name: 'feminine ordinal', textMode: true, keywords: ['ordinal'] },
+        { display: '•', code: '\\textbullet', name: 'bullet point', textMode: true, keywords: ['marcador', 'tópico'] },
+        { display: '©', code: '\\copyright', name: 'copyright sign', textMode: true, keywords: ['direitos autorais'] },
+        { display: '®', code: '\\textregistered', name: 'registered trademark', textMode: true, keywords: ['marca registrada'] },
+        { display: '™', code: '\\texttrademark', name: 'trademark sign', textMode: true, keywords: ['marca comercial'] },
+        { display: '†', code: '\\dag', name: 'dagger note', textMode: true, keywords: ['nota', 'adaga'] },
+        { display: '‡', code: '\\ddag', name: 'double dagger note', textMode: true, keywords: ['nota', 'dupla adaga'] },
+        { display: '$', code: '\\$', name: 'escaped dollar sign', textMode: true, keywords: ['cifrão', 'moeda'] },
+        { display: '%', code: '\\%', name: 'escaped percent sign', textMode: true, keywords: ['porcentagem'] },
+        { display: '&', code: '\\&', name: 'escaped ampersand', textMode: true, keywords: ['e comercial'] },
+        { display: '#', code: '\\#', name: 'escaped hash / number sign', textMode: true, keywords: ['cerquilha', 'sustenido'] },
+        { display: '_', code: '\\_', name: 'escaped underscore', textMode: true, keywords: ['sublinhado'] },
+        { display: '£', code: '\\pounds', name: 'pound sterling sign', textMode: true, keywords: ['libra', 'moeda'] },
+        { display: '€', code: '\\euro', name: 'euro sign', pkg: 'eurosym', textMode: true, keywords: ['euro', 'moeda'] },
+        { display: '\\', code: '\\textbackslash', name: 'text backslash', textMode: true, keywords: ['barra invertida'] },
+        { display: '~', code: '\\textasciitilde', name: 'text tilde', textMode: true, keywords: ['til'] },
+        { display: '^', code: '\\textasciicircum', name: 'text circumflex', textMode: true, keywords: ['circunflexo'] }
       ]
     }
   ];
@@ -819,10 +860,489 @@
     };
   }
 
+  var PACKAGE_CMD_RE = /\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}/g;
+  var DOCCLASS_CMD_RE = /\\documentclass(?:\s*\[[^\]]*\])?\s*\{[^}]+\}/;
+  var BEGIN_DOC_RE = /\\begin\s*\{document\}/;
+  var ENV_TAG_RE = /\\(begin|end)\s*\{([A-Za-z][A-Za-z0-9*]*)\}/g;
+  var BRACKET_PAIRS = { '{': '}', '(': ')', '[': ']' };
+  var REVERSE_BRACKETS = { '}': '{', ')': '(', ']': '[' };
+
+  function detectEol(text, fallback) {
+    if (fallback) return fallback;
+    return text.indexOf('\r\n') !== -1 ? '\r\n' : '\n';
+  }
+
+  function commentStartIdx(text, from, to) {
+    for (var i = from; i < to; i++) {
+      if (text.charCodeAt(i) === 37 && !isEscapedAt(text, i)) return i;
+    }
+    return -1;
+  }
+
+  function isInsideLineComment(text, idx) {
+    var lineStart = text.lastIndexOf('\n', Math.max(0, idx - 1)) + 1;
+    var cStart = commentStartIdx(text, lineStart, idx);
+    return cStart >= 0 && cStart <= idx;
+  }
+
+  function stripTexLineComment(line) {
+    var cStart = commentStartIdx(line, 0, line.length);
+    return cStart >= 0 ? line.slice(0, cStart) : line;
+  }
+
+  function preambleScanInfo(text) {
+    var imported = {};
+    var hasPreamble = false;
+    var lastPkgLineEnd = null;
+    var docClassLineEnd = null;
+    var beginDocLineStart = null;
+    var offset = 0;
+    var lines = text.split('\n');
+
+    for (var li = 0; li < lines.length; li++) {
+      var rawLine = lines[li];
+      var lineLenWithNl = li < lines.length - 1 ? rawLine.length + 1 : rawLine.length;
+      var uncommented = stripTexLineComment(rawLine);
+
+      if (BEGIN_DOC_RE.test(uncommented)) {
+        hasPreamble = true;
+        beginDocLineStart = offset;
+        break;
+      }
+
+      if (DOCCLASS_CMD_RE.test(uncommented)) {
+        hasPreamble = true;
+        docClassLineEnd = offset + lineLenWithNl;
+      }
+
+      PACKAGE_CMD_RE.lastIndex = 0;
+      var m;
+      var sawPkgOnLine = false;
+      while ((m = PACKAGE_CMD_RE.exec(uncommented)) !== null) {
+        hasPreamble = true;
+        sawPkgOnLine = true;
+        var parts = m[1].split(',');
+        for (var pi = 0; pi < parts.length; pi++) {
+          var name = parts[pi].replace(/^\s+|\s+$/g, '');
+          if (name) imported[name] = true;
+        }
+      }
+      if (sawPkgOnLine) lastPkgLineEnd = offset + lineLenWithNl;
+      offset += lineLenWithNl;
+    }
+
+    return {
+      hasPreamble: hasPreamble,
+      imported: imported,
+      lastPkgLineEnd: lastPkgLineEnd,
+      docClassLineEnd: docClassLineEnd,
+      beginDocLineStart: beginDocLineStart
+    };
+  }
+
+  function isPackageSatisfied(imported, target) {
+    if (Object.prototype.hasOwnProperty.call(imported, target)) return true;
+    if (target === 'amsmath' && Object.prototype.hasOwnProperty.call(imported, 'mathtools')) return true;
+    if (target === 'amsfonts' && Object.prototype.hasOwnProperty.call(imported, 'amssymb')) return true;
+    return false;
+  }
+
+  function hasPackageImport(text, pkg) {
+    var target = String(pkg || '').replace(/^\s+|\s+$/g, '');
+    if (!target) return true;
+    return isPackageSatisfied(preambleScanInfo(text).imported, target);
+  }
+
+  function planPackageImport(text, pkg, eol) {
+    var target = String(pkg || '').replace(/^\s+|\s+$/g, '');
+    if (!target) return null;
+    var info = preambleScanInfo(text);
+    if (!info.hasPreamble || isPackageSatisfied(info.imported, target)) return null;
+
+    var insertAt = info.lastPkgLineEnd !== null
+      ? info.lastPkgLineEnd
+      : (info.docClassLineEnd !== null ? info.docClassLineEnd : info.beginDocLineStart);
+    if (insertAt === null) return null;
+
+    var resolvedEol = detectEol(text, eol);
+    var needsLeadingEol = insertAt > 0 && text.charCodeAt(insertAt - 1) !== 10;
+    var directive = '\\usepackage{' + target + '}';
+    return {
+      offset: insertAt,
+      text: needsLeadingEol ? (resolvedEol + directive) : (directive + resolvedEol)
+    };
+  }
+
+  function mergeTextRanges(a, b) {
+    var first = a.from <= b.from ? a : b;
+    var second = a.from <= b.from ? b : a;
+    if (first.to >= second.from) {
+      return [{ from: first.from, to: Math.max(first.to, second.to) }];
+    }
+    return [first, second];
+  }
+
+  function collectEnvTags(text) {
+    ENV_TAG_RE.lastIndex = 0;
+    var matches = [];
+    var m;
+    while ((m = ENV_TAG_RE.exec(text)) !== null) {
+      var idx = m.index;
+      if (isEscapedAt(text, idx) || isInsideLineComment(text, idx)) continue;
+      matches.push({ kind: m[1], env: m[2], from: idx, to: idx + m[0].length });
+    }
+    return matches;
+  }
+
+  function findBeginAutoClose(docAfterBrace, caretAfterBrace, indentUnit, eol) {
+    var pos = Math.max(0, Math.min(Math.floor(caretAfterBrace || 0), docAfterBrace.length));
+    var lineStart = docAfterBrace.lastIndexOf('\n', pos - 1) + 1;
+    var lineHead = docAfterBrace.slice(lineStart, pos);
+    if (commentStartIdx(lineHead, 0, lineHead.length) >= 0) return null;
+
+    var match = /\\begin\{([A-Za-z][A-Za-z0-9*]*)\}$/.exec(lineHead);
+    if (!match) return null;
+    if (isEscapedAt(docAfterBrace, lineStart + match.index)) return null;
+
+    var env = match[1];
+    var tags = collectEnvTags(docAfterBrace);
+    var begins = 0;
+    var ends = 0;
+    for (var i = 0; i < tags.length; i++) {
+      if (tags[i].env !== env) continue;
+      if (tags[i].kind === 'begin') begins++;
+      else ends++;
+    }
+    if (begins <= ends) return null;
+
+    var indentMatch = /^[ \t]*/.exec(docAfterBrace.slice(lineStart));
+    var indent = indentMatch ? indentMatch[0] : '';
+    var resolvedEol = detectEol(docAfterBrace, eol);
+    var bodyPrefix = resolvedEol + indent + (typeof indentUnit === 'string' ? indentUnit : '  ');
+    return {
+      insert: bodyPrefix + resolvedEol + indent + '\\end{' + env + '}',
+      caretOffset: bodyPrefix.length
+    };
+  }
+
+  function findEnvDeletion(text, pos, direction) {
+    var matches = collectEnvTags(text);
+    var hitIdx = -1;
+    for (var i = 0; i < matches.length; i++) {
+      if (direction === 'backward' ? matches[i].to === pos : matches[i].from === pos) {
+        hitIdx = i;
+        break;
+      }
+    }
+    if (hitIdx === -1) return null;
+    var hit = matches[hitIdx];
+
+    var partnerIdx = -1;
+    var depth = 1;
+    if (hit.kind === 'begin') {
+      for (var fi = hitIdx + 1; fi < matches.length; fi++) {
+        if (matches[fi].env !== hit.env) continue;
+        depth += matches[fi].kind === 'begin' ? 1 : -1;
+        if (depth === 0) { partnerIdx = fi; break; }
+      }
+    } else {
+      for (var bi = hitIdx - 1; bi >= 0; bi--) {
+        if (matches[bi].env !== hit.env) continue;
+        depth += matches[bi].kind === 'end' ? 1 : -1;
+        if (depth === 0) { partnerIdx = bi; break; }
+      }
+    }
+    if (partnerIdx === -1) return null;
+
+    var beginTag = hit.kind === 'begin' ? hit : matches[partnerIdx];
+    var endTag = hit.kind === 'end' ? hit : matches[partnerIdx];
+    var inner = text.slice(beginTag.to, endTag.from);
+    if (/^[ \t\r\n]*$/.test(inner)) {
+      return { ranges: [{ from: beginTag.from, to: endTag.to }], caret: beginTag.from };
+    }
+
+    var bTo = beginTag.to;
+    var beginLineEnd = /^[ \t]*\r?\n/.exec(text.slice(bTo));
+    if (beginLineEnd) bTo += beginLineEnd[0].length;
+
+    var eFrom = endTag.from;
+    var lineStartBeforeEnd = text.lastIndexOf('\n', eFrom - 1);
+    if (lineStartBeforeEnd !== -1 && /^[ \t]*$/.test(text.slice(lineStartBeforeEnd + 1, eFrom))) {
+      eFrom = text.charAt(lineStartBeforeEnd - 1) === '\r' ? lineStartBeforeEnd - 1 : lineStartBeforeEnd;
+    }
+
+    if (bTo >= eFrom) {
+      return { ranges: [{ from: beginTag.from, to: endTag.to }], caret: beginTag.from };
+    }
+    return {
+      ranges: [
+        { from: beginTag.from, to: bTo },
+        { from: eFrom, to: endTag.to }
+      ],
+      caret: hit.kind === 'begin' ? beginTag.from : Math.max(beginTag.from, eFrom - (bTo - beginTag.from))
+    };
+  }
+
+  function findEscapedParenBracketDeletion(text, pos, direction) {
+    var start = direction === 'backward' ? pos - 2 : pos;
+    if (start < 0 || start + 2 > text.length || text.charCodeAt(start) !== 92) return null;
+    if (isEscapedAt(text, start) || isInsideLineComment(text, start)) return null;
+    var ch = text.charAt(start + 1);
+    var openChar = (ch === '(' || ch === ')') ? '(' : ((ch === '[' || ch === ']') ? '[' : null);
+    if (!openChar) return null;
+    var closeChar = openChar === '(' ? ')' : ']';
+
+    if (ch === openChar) {
+      var depth = 1;
+      for (var i = start + 2; i + 1 < text.length; i++) {
+        if (text.charCodeAt(i) !== 92 || isEscapedAt(text, i) || isInsideLineComment(text, i)) continue;
+        var next = text.charAt(i + 1);
+        if (next === openChar) { depth++; i++; }
+        else if (next === closeChar) {
+          depth--;
+          if (depth === 0) {
+            return {
+              ranges: mergeTextRanges({ from: start, to: start + 2 }, { from: i, to: i + 2 }),
+              caret: start
+            };
+          }
+          i++;
+        }
+      }
+    } else {
+      var backDepth = 1;
+      for (var j = start - 2; j >= 0; j--) {
+        if (text.charCodeAt(j) !== 92 || isEscapedAt(text, j) || isInsideLineComment(text, j)) continue;
+        var chJ = text.charAt(j + 1);
+        if (chJ === closeChar) backDepth++;
+        else if (chJ === openChar) {
+          backDepth--;
+          if (backDepth === 0) {
+            return {
+              ranges: mergeTextRanges({ from: j, to: j + 2 }, { from: start, to: start + 2 }),
+              caret: j + 2 === start ? j : start - 2
+            };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function findForwardUnescapedSingleDollar(text, from) {
+    for (var i = from; i < text.length; i++) {
+      var c = text.charCodeAt(i);
+      if (c === 10 && i + 1 < text.length) {
+        var j = i + 1;
+        while (j < text.length && (text.charCodeAt(j) === 32 || text.charCodeAt(j) === 9 || text.charCodeAt(j) === 13)) j++;
+        if (j < text.length && text.charCodeAt(j) === 10) return -1;
+      }
+      if (c === 37 && !isEscapedAt(text, i)) {
+        while (i < text.length && text.charCodeAt(i) !== 10) i++;
+        continue;
+      }
+      if (c === 36 && !isEscapedAt(text, i) && text.charCodeAt(i + 1) !== 36) return i;
+    }
+    return -1;
+  }
+
+  function findBackwardUnescapedSingleDollar(text, before) {
+    for (var i = before - 1; i >= 0; i--) {
+      if (text.charCodeAt(i) === 10) {
+        var prevNl = text.lastIndexOf('\n', i - 1);
+        if (prevNl !== -1 && /^[ \t\r]*$/.test(text.slice(prevNl + 1, i))) return -1;
+      }
+      if (text.charCodeAt(i) === 36 && !isEscapedAt(text, i) && !isInsideLineComment(text, i)) {
+        if (i > 0 && text.charCodeAt(i - 1) === 36 && !isEscapedAt(text, i - 1)) {
+          i--;
+          continue;
+        }
+        if (!isInMathMode(text, i)) return i;
+      }
+    }
+    return -1;
+  }
+
+  function findForwardUnescapedDoubleDollar(text, from) {
+    for (var i = from; i + 1 < text.length; i++) {
+      if (text.charCodeAt(i) === 37 && !isEscapedAt(text, i)) {
+        while (i < text.length && text.charCodeAt(i) !== 10) i++;
+        continue;
+      }
+      if (text.charCodeAt(i) === 36 && text.charCodeAt(i + 1) === 36 && !isEscapedAt(text, i)) return i;
+    }
+    return -1;
+  }
+
+  function findBackwardUnescapedDoubleDollar(text, before) {
+    for (var i = before - 2; i >= 0; i--) {
+      if (text.charCodeAt(i) === 36 && text.charCodeAt(i + 1) === 36 && !isEscapedAt(text, i) && !isInsideLineComment(text, i)) {
+        if (!isInMathMode(text, i)) return i;
+      }
+    }
+    return -1;
+  }
+
+  function findDollarDeletion(text, pos, direction) {
+    if (
+      pos > 0
+      && pos < text.length
+      && text.charCodeAt(pos - 1) === 36
+      && text.charCodeAt(pos) === 36
+      && !isEscapedAt(text, pos - 1)
+      && !isInsideLineComment(text, pos - 1)
+      && !isInMathMode(text, pos - 1)
+    ) {
+      if (findForwardUnescapedDoubleDollar(text, pos + 1) === -1) {
+        return { ranges: [{ from: pos - 1, to: pos + 1 }], caret: pos - 1 };
+      }
+    }
+
+    var dblStart = direction === 'backward' ? pos - 2 : pos;
+    if (
+      dblStart >= 0
+      && dblStart + 2 <= text.length
+      && text.charCodeAt(dblStart) === 36
+      && text.charCodeAt(dblStart + 1) === 36
+      && !isEscapedAt(text, dblStart)
+      && !isInsideLineComment(text, dblStart)
+    ) {
+      if (!isInMathMode(text, dblStart)) {
+        var closeDbl = findForwardUnescapedDoubleDollar(text, dblStart + 2);
+        if (closeDbl !== -1) {
+          return {
+            ranges: mergeTextRanges({ from: dblStart, to: dblStart + 2 }, { from: closeDbl, to: closeDbl + 2 }),
+            caret: dblStart
+          };
+        }
+        if (direction === 'forward') {
+          return { ranges: [{ from: dblStart, to: dblStart + 2 }], caret: dblStart };
+        }
+      } else {
+        var openDbl = findBackwardUnescapedDoubleDollar(text, dblStart);
+        if (openDbl !== -1) {
+          return {
+            ranges: mergeTextRanges({ from: openDbl, to: openDbl + 2 }, { from: dblStart, to: dblStart + 2 }),
+            caret: openDbl + 2 === dblStart ? openDbl : dblStart - 2
+          };
+        }
+      }
+    }
+
+    var idx = direction === 'backward' ? pos - 1 : pos;
+    if (idx < 0 || idx >= text.length || text.charCodeAt(idx) !== 36) return null;
+    if (isEscapedAt(text, idx) || isInsideLineComment(text, idx)) return null;
+    var isPartOfDouble = (idx > 0 && text.charCodeAt(idx - 1) === 36 && !isEscapedAt(text, idx - 1))
+      || (idx + 1 < text.length && text.charCodeAt(idx + 1) === 36);
+    if (isPartOfDouble) return null;
+
+    if (!isInMathMode(text, idx)) {
+      var closeS = findForwardUnescapedSingleDollar(text, idx + 1);
+      if (closeS === -1) return null;
+      return {
+        ranges: mergeTextRanges({ from: idx, to: idx + 1 }, { from: closeS, to: closeS + 1 }),
+        caret: idx
+      };
+    }
+    var openS = findBackwardUnescapedSingleDollar(text, idx);
+    if (openS === -1) return null;
+    return {
+      ranges: mergeTextRanges({ from: openS, to: openS + 1 }, { from: idx, to: idx + 1 }),
+      caret: openS + 1 === idx ? openS : idx - 1
+    };
+  }
+
+  function findMatchingCloser(text, openIdx, openChar, closeChar) {
+    var depth = 1;
+    for (var i = openIdx + 1; i < text.length; i++) {
+      var c = text.charAt(i);
+      if (c === '%') {
+        while (i < text.length && text.charAt(i) !== '\n') i++;
+        continue;
+      }
+      if (c === '\\') { i++; continue; }
+      if (c === openChar) depth++;
+      else if (c === closeChar) {
+        depth--;
+        if (depth === 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  function findMatchingOpener(text, closeIdx, openChar, closeChar) {
+    var depth = 1;
+    for (var i = closeIdx - 1; i >= 0; i--) {
+      if (isInsideLineComment(text, i) || isEscapedAt(text, i)) continue;
+      var c = text.charAt(i);
+      if (c === closeChar) depth++;
+      else if (c === openChar) {
+        depth--;
+        if (depth === 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  function isCommandArgumentBrace(text, openIdx) {
+    if (openIdx <= 0) return false;
+    return /(?:^|[^\\])\\[A-Za-z@]+\*?$/.test(text.slice(0, openIdx));
+  }
+
+  function findBracketDeletion(text, pos, direction) {
+    if (pos > 0 && pos < text.length) {
+      var left = text.charAt(pos - 1);
+      var right = text.charAt(pos);
+      if (BRACKET_PAIRS[left] === right && !isEscapedAt(text, pos - 1) && !isInsideLineComment(text, pos - 1)) {
+        return { ranges: [{ from: pos - 1, to: pos + 1 }], caret: pos - 1 };
+      }
+    }
+
+    var idx = direction === 'backward' ? pos - 1 : pos;
+    if (idx < 0 || idx >= text.length) return null;
+    if (isEscapedAt(text, idx) || isInsideLineComment(text, idx)) return null;
+
+    var ch = text.charAt(idx);
+    if (BRACKET_PAIRS[ch]) {
+      var partner = findMatchingCloser(text, idx, ch, BRACKET_PAIRS[ch]);
+      if (partner === -1) return null;
+      if (ch === '{' && partner > idx + 1 && isCommandArgumentBrace(text, idx)) return null;
+      return {
+        ranges: mergeTextRanges({ from: idx, to: idx + 1 }, { from: partner, to: partner + 1 }),
+        caret: idx
+      };
+    }
+
+    if (REVERSE_BRACKETS[ch]) {
+      var openChar = REVERSE_BRACKETS[ch];
+      var opener = findMatchingOpener(text, idx, openChar, ch);
+      if (opener === -1) return null;
+      if (openChar === '{' && opener + 1 < idx && isCommandArgumentBrace(text, opener)) return null;
+      return {
+        ranges: mergeTextRanges({ from: opener, to: opener + 1 }, { from: idx, to: idx + 1 }),
+        caret: opener + 1 === idx ? opener : idx - 1
+      };
+    }
+    return null;
+  }
+
+  function findPairedDeletion(text, pos, direction) {
+    var safePos = Math.max(0, Math.min(Math.floor(pos || 0), text.length));
+    return findEnvDeletion(text, safePos, direction)
+      || findEscapedParenBracketDeletion(text, safePos, direction)
+      || findDollarDeletion(text, safePos, direction)
+      || findBracketDeletion(text, safePos, direction);
+  }
+
   root.GabeTeXMathSymbols = {
     categories: CATEGORIES,
     filter: filter,
     isInMathMode: isInMathMode,
-    prepareInsertion: prepareInsertion
+    isEscapedAt: isEscapedAt,
+    prepareInsertion: prepareInsertion,
+    hasPackageImport: hasPackageImport,
+    planPackageImport: planPackageImport,
+    findBeginAutoClose: findBeginAutoClose,
+    findPairedDeletion: findPairedDeletion
   };
 })(window);

@@ -336,6 +336,8 @@
     state.historyIndex[state.activeFile] = index;
     source.value = state.history[state.activeFile][index];
     state.files[state.activeFile] = source.value;
+    autoCloserOffsets = [];
+    lastTrackedValue = source.value;
     renderGutter();
     updateOutline();
     updateCursor();
@@ -1065,7 +1067,15 @@
     if (symPreviewName) symPreviewName.textContent = sym.name;
   }
 
+  var autoCloserOffsets = [];
+  var lastTrackedValue = source ? source.value : '';
+  var PAIR_CLOSER = { '{': '}', '(': ')', '[': ']', '$': '$' };
+  var PAIR_REVERSE = { '}': '{', ')': '(', ']': '[', '$': '$' };
+
   function caretOffsetInsideInserted(code) {
+    if (code === "``''") return 2;
+    if (code === "`'") return 1;
+    if (code === '\\guillemotleft{}\\guillemotright{}') return 16;
     var blockBody = code.indexOf('\n  \n');
     if (blockBody !== -1) return blockBody + 3;
     var emptyBrace = code.indexOf('{}');
@@ -1079,18 +1089,54 @@
     return code.length;
   }
 
+  function pushFileHistorySnapshot(fileName, content) {
+    if (!Array.isArray(state.history[fileName])) return;
+    var hIdx = state.historyIndex[fileName] || 0;
+    var hist = state.history[fileName].slice(0, hIdx + 1);
+    if (hist[hist.length - 1] === content) return;
+    hist.push(content);
+    if (hist.length > 50) hist.shift();
+    state.history[fileName] = hist;
+    state.historyIndex[fileName] = hist.length - 1;
+  }
+
   function insertMathSymbolAt(sym, start, end) {
     if (!sym || !source) return;
+    var GMS = window.GabeTeXMathSymbols;
     var code = sym.code;
     var val = source.value;
     var fallback = typeof source.selectionStart === 'number' ? source.selectionStart : val.length;
     var s = Math.max(0, Math.min(typeof start === 'number' ? start : fallback, val.length));
     var e = Math.max(s, Math.min(typeof end === 'number' ? end : (typeof source.selectionEnd === 'number' ? source.selectionEnd : s), val.length));
-    var plan = (window.GabeTeXMathSymbols && window.GabeTeXMathSymbols.prepareInsertion)
-      ? window.GabeTeXMathSymbols.prepareInsertion(val, s, e, code)
+
+    var baseVal = val;
+    if (sym.pkg && GMS && GMS.planPackageImport && GMS.hasPackageImport) {
+      var pkgPlan = GMS.planPackageImport(val, sym.pkg);
+      if (pkgPlan) {
+        baseVal = val.slice(0, pkgPlan.offset) + pkgPlan.text + val.slice(pkgPlan.offset);
+        if (pkgPlan.offset <= s) s += pkgPlan.text.length;
+        if (pkgPlan.offset <= e) e += pkgPlan.text.length;
+      } else if (!GMS.hasPackageImport(val, sym.pkg)) {
+        var mainName = resolveMainFile();
+        if (mainName && mainName !== state.activeFile && Object.prototype.hasOwnProperty.call(state.files, mainName)) {
+          var mainVal = state.files[mainName] || '';
+          var mainPlan = GMS.planPackageImport(mainVal, sym.pkg);
+          if (mainPlan) {
+            var updatedMain = mainVal.slice(0, mainPlan.offset) + mainPlan.text + mainVal.slice(mainPlan.offset);
+            state.files[mainName] = updatedMain;
+            pushFileHistorySnapshot(mainName, updatedMain);
+          }
+        }
+      }
+    }
+
+    var plan = (!sym.textMode && GMS && GMS.prepareInsertion)
+      ? GMS.prepareInsertion(baseVal, s, e, code)
       : { from: s, to: e, text: code, moveAfterClosingDollar: false };
     commitHistorySnapshot();
-    source.value = val.slice(0, plan.from) + plan.text + val.slice(plan.to);
+    source.value = baseVal.slice(0, plan.from) + plan.text + baseVal.slice(plan.to);
+    autoCloserOffsets = [];
+    lastTrackedValue = source.value;
     var innerOffset = caretOffsetInsideInserted(code);
     var caret;
     if (innerOffset < code.length) {
@@ -1478,13 +1524,204 @@
     var newWidth = Math.max(200, Math.min(600, startPreview - dx));
     document.documentElement.style.setProperty('--preview-width', newWidth + 'px');
   });
+  function syncAutoClosersAfterInput() {
+    if (!source) return;
+    var next = source.value;
+    if (typeof lastTrackedValue === 'string' && lastTrackedValue !== next && autoCloserOffsets.length) {
+      var delta = next.length - lastTrackedValue.length;
+      var caret = typeof source.selectionStart === 'number' ? source.selectionStart : next.length;
+      var prevCaret = Math.max(0, caret - delta);
+      var kept = [];
+      for (var i = 0; i < autoCloserOffsets.length; i++) {
+        var shifted = prevCaret <= autoCloserOffsets[i] ? autoCloserOffsets[i] + delta : autoCloserOffsets[i];
+        var ch = next.charAt(shifted);
+        if (shifted >= 0 && shifted < next.length && PAIR_REVERSE[ch] && caret <= shifted) {
+          kept.push(shifted);
+        }
+      }
+      autoCloserOffsets = kept;
+    }
+    lastTrackedValue = next;
+  }
+
+  function hasAutoCloserAt(offset, ch) {
+    for (var i = 0; i < autoCloserOffsets.length; i++) {
+      if (autoCloserOffsets[i] === offset && source.value.charAt(offset) === ch) return i;
+    }
+    return -1;
+  }
+
+  function isOffsetInTexComment(text, pos) {
+    var lineStart = text.lastIndexOf('\n', Math.max(0, pos - 1)) + 1;
+    var GMS = window.GabeTeXMathSymbols;
+    for (var i = lineStart; i < pos; i++) {
+      if (text.charCodeAt(i) === 37 && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(text, i))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function applyPairEdit(nextVal, nextSelStart, nextSelEnd, nextClosers) {
+    commitHistorySnapshot();
+    source.value = nextVal;
+    source.setSelectionRange(nextSelStart, nextSelEnd);
+    autoCloserOffsets = nextClosers || [];
+    lastTrackedValue = nextVal;
+    source.dispatchEvent(new Event('input', { bubbles: true }));
+    updateCursor();
+  }
+
+  function handleSmartPairKeydown(event) {
+    if (!source || event.isComposing) return false;
+    var GMS = window.GabeTeXMathSymbols;
+    var val = source.value;
+    var start = source.selectionStart;
+    var end = source.selectionEnd;
+    var key = event.key;
+    var unmodified = !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey;
+
+    if (unmodified && (key === 'Backspace' || key === 'Delete') && start === end) {
+      var delPlan = GMS && GMS.findPairedDeletion
+        && GMS.findPairedDeletion(val, start, key === 'Backspace' ? 'backward' : 'forward');
+      if (delPlan) {
+        event.preventDefault();
+        var nextVal = val;
+        for (var ri = delPlan.ranges.length - 1; ri >= 0; ri--) {
+          nextVal = nextVal.slice(0, delPlan.ranges[ri].from) + nextVal.slice(delPlan.ranges[ri].to);
+        }
+        applyPairEdit(nextVal, delPlan.caret, delPlan.caret, []);
+        return true;
+      }
+      return false;
+    }
+
+    if (unmodified && key === 'Enter' && start === end && !isOffsetInTexComment(val, start)) {
+      var betweenBraces = val.charAt(start - 1) === '{' && val.charAt(start) === '}';
+      var betweenDisp = start >= 2 && val.slice(start - 2, start) === '\\[' && val.slice(start, start + 2) === '\\]';
+      if (betweenBraces || betweenDisp) {
+        var ls = val.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+        var indentMatch = /^[ \t]*/.exec(val.slice(ls, start));
+        var baseIndent = indentMatch ? indentMatch[0] : '';
+        var eol = val.indexOf('\r\n') !== -1 ? '\r\n' : '\n';
+        var inner = eol + baseIndent + '  ';
+        var block = inner + eol + baseIndent;
+        event.preventDefault();
+        applyPairEdit(val.slice(0, start) + block + val.slice(start), start + inner.length, start + inner.length, []);
+        return true;
+      }
+      return false;
+    }
+
+    if (event.metaKey || (event.ctrlKey && !event.altKey)) return false;
+
+    if (start === end && PAIR_REVERSE[key]) {
+      var closerIdx = hasAutoCloserAt(start, key);
+      if (closerIdx !== -1) {
+        event.preventDefault();
+        var remaining = [];
+        for (var ci = 0; ci < autoCloserOffsets.length; ci++) {
+          if (ci !== closerIdx && autoCloserOffsets[ci] > start) remaining.push(autoCloserOffsets[ci]);
+        }
+        if (key === '}' && GMS && GMS.findBeginAutoClose) {
+          var stepBegin = GMS.findBeginAutoClose(val, start + 1, '  ');
+          if (stepBegin) {
+            applyPairEdit(
+              val.slice(0, start + 1) + stepBegin.insert + val.slice(start + 1),
+              start + 1 + stepBegin.caretOffset,
+              start + 1 + stepBegin.caretOffset,
+              []
+            );
+            return true;
+          }
+        }
+        autoCloserOffsets = remaining;
+        source.setSelectionRange(start + 1, start + 1);
+        updateCursor();
+        return true;
+      }
+
+      if (key === '}' && GMS && GMS.findBeginAutoClose && !isOffsetInTexComment(val, start) && (!GMS.isEscapedAt || !GMS.isEscapedAt(val, start))) {
+        var withBrace = val.slice(0, start) + '}' + val.slice(start);
+        var beginPlan = GMS.findBeginAutoClose(withBrace, start + 1, '  ');
+        if (beginPlan) {
+          event.preventDefault();
+          applyPairEdit(
+            withBrace.slice(0, start + 1) + beginPlan.insert + withBrace.slice(start + 1),
+            start + 1 + beginPlan.caretOffset,
+            start + 1 + beginPlan.caretOffset,
+            []
+          );
+          return true;
+        }
+      }
+      if (key !== '$') return false;
+    }
+
+    if (!PAIR_CLOSER[key] || isOffsetInTexComment(val, start)) return false;
+
+    var escapedPrev = start > 0 && val.charAt(start - 1) === '\\' && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(val, start - 1));
+    if (escapedPrev) {
+      if (key !== '(' && key !== '[') return false;
+      var escClose = '\\' + (key === '(' ? ')' : ']');
+      if (start === end) {
+        event.preventDefault();
+        applyPairEdit(val.slice(0, start) + key + escClose + val.slice(end), start + 1, start + 1, []);
+        return true;
+      }
+      if (val.slice(start, end).indexOf('\n') === -1) {
+        event.preventDefault();
+        applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + escClose + val.slice(end), start + 1, end + 1, []);
+        return true;
+      }
+      return false;
+    }
+
+    if (key === '$') {
+      if (GMS && GMS.isInMathMode && GMS.isInMathMode(val, start)) return false;
+      if (start > 0 && /[A-Za-z0-9$]/.test(val.charAt(start - 1))) return false;
+    }
+
+    if (start < end) {
+      if (val.slice(start, end).indexOf('\n') !== -1) return false;
+      event.preventDefault();
+      applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + PAIR_CLOSER[key] + val.slice(end), start + 1, end + 1, []);
+      return true;
+    }
+
+    var nextCh = start < val.length ? val.charAt(start) : '';
+    if (nextCh && !/[\s)}\]$,.;:!?'"\\]/.test(nextCh)) return false;
+
+    var nextClosers = [start + 1];
+    for (var ai = 0; ai < autoCloserOffsets.length; ai++) {
+      if (autoCloserOffsets[ai] >= start) nextClosers.push(autoCloserOffsets[ai] + 2);
+    }
+    event.preventDefault();
+    applyPairEdit(val.slice(0, start) + key + PAIR_CLOSER[key] + val.slice(start), start + 1, start + 1, nextClosers);
+    return true;
+  }
+
+  source.addEventListener('input', syncAutoClosersAfterInput);
+  source.addEventListener('mousedown', function () { autoCloserOffsets = []; });
+  source.addEventListener('blur', function () { autoCloserOffsets = []; });
+  source.addEventListener('keyup', function (ev) {
+    if (!autoCloserOffsets.length) return;
+    if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'Home' || ev.key === 'End') {
+      var caret = source.selectionStart;
+      autoCloserOffsets = autoCloserOffsets.filter(function (off) { return off >= caret; });
+    }
+  });
+
   source.addEventListener('keydown', function (event) {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
       if ((state.historyIndex[state.activeFile] || 0) > 0) {
         event.preventDefault();
         undoEdit();
       }
+      return;
     }
+
+    if (handleSmartPairKeydown(event)) return;
 
     if (event.key !== 'Tab') return;
     event.preventDefault();
