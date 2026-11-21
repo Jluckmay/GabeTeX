@@ -65,9 +65,9 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 
 *Descritos para o app de macOS, que já está disponível. Os apps de Linux e Windows estão sendo construídos com os mesmos objetivos.*
 
-- **Projetos e navegação:** abra qualquer pasta ou comece por um template (Artigo, Tese, Beamer, Notas de Matemática,
-  Lista de Exercícios); árvore de arquivos, abas, Quick Open (⌘P) e estrutura entre arquivos; escrita com um arquivo
-  por seção usando os comentários mágicos `% !TEX root` e `% !TEX program`.
+- **Projetos e navegação:** abra qualquer pasta ou comece por um de nove templates (Artigo, Artigo com Seções, Tese,
+  Beamer, Notas de Matemática, Lista de Exercícios, Livro, Relatório e Pôster); árvore de arquivos, abas, Quick Open
+  (⌘P) e estrutura entre arquivos; escrita com um arquivo por seção usando os comentários mágicos `% !TEX root` e `% !TEX program`.
 - **Compilação ao vivo:** detecta MacTeX, TeX Live, BasicTeX e TinyTeX, executa o `latexmk` (pdfLaTeX, XeLaTeX,
   LuaLaTeX) em segundo plano numa cópia privada, então seus arquivos não são tocados até você salvar; o texto não
   salvo entra na compilação.
@@ -79,19 +79,21 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 - **Apresentações Beamer:** visão da plateia no monitor externo e visão do apresentador com próximo slide, cronômetro e notas.
 - **Ferramentas de escrita:** autocompletar de comandos, ambientes, referências, citações e pacotes; **tabela de
   Símbolos Matemáticos** categorizada na barra lateral (`Σ`, 15 categorias / 470 símbolos, incluindo **Símbolos
-  Linguísticos** em modo texto e `\log_{}` com subscrito de base) com busca, inserção por clique ou arrastar e soltar
-  (drag-and-drop) em qualquer posição do código, importação automática de `\usepackage{...}` no preâmbulo e
-  delimitação automática com `$...$` / `\[...\]` fora do modo matemático; fechamento automático e remoção pareada em
-  `Backspace`/`Delete` para `{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]` e `\begin{env}...\end{env}`; contagem de
-  palavras e páginas; Paleta de Comandos; atalhos editáveis; modo Vim opcional.
+  Linguísticos** em modo texto com aspas em serifa estilo PDF e `\log_{}` com subscrito de base) com busca, inserção por
+  clique ou arrastar e soltar (drag-and-drop) em qualquer posição do código, importação automática de `\usepackage{...}` no
+  preâmbulo e delimitação automática com `$...$` / `\[...\]` fora do modo matemático; fechamento automático e remoção
+  pareada em `Backspace`/`Delete` para `{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]` e `\begin{env}...\end{env}`;
+  contagem de palavras e páginas; Paleta de Comandos; atalhos editáveis; modo Vim opcional.
 - **Rótulos de projeto, suporte à Touch Bar e interface bilíngue** (português do Brasil e inglês).
 
 ## Editor online
 
-O editor do site (`docs/`) utiliza o mesmo layout Liquid Glass da aplicação desktop (barra lateral esquerda com
-Arquivos, Estrutura e a tabela categorizada de **Símbolos Matemáticos** no botão `Σ` superior esquerdo — 15 categorias /
-470 símbolos incluindo **Símbolos Linguísticos**, `\log_{}` com subscrito de base, busca, inserção por clique ou
-drag-and-drop na posição exata do código, importação automática de `\usepackage{...}` no preâmbulo ou em `main.tex`,
+A página (`docs/index.html`) exibe capturas dos novos recursos (o botão `Σ` recolhido na barra lateral, a tabela de
+**Símbolos Matemáticos** aberta e a janela Novo Projeto com nove modelos) junto do editor online, que utiliza o mesmo
+layout Liquid Glass da aplicação desktop (barra lateral esquerda com Arquivos, Estrutura e a tabela categorizada de
+**Símbolos Matemáticos** no botão `Σ` superior esquerdo — 15 categorias / 470 símbolos incluindo **Símbolos
+Linguísticos** com aspas tipográficas em serifa estilo PDF, `\log_{}` com subscrito de base, busca, inserção por clique
+ou drag-and-drop na posição exata do código, importação automática de `\usepackage{...}` no preâmbulo ou em `main.tex`,
 inserção automática de delimitadores `$...$` / `\[...\]` fora do modo matemático e fechamento automático com remoção
 pareada em `Backspace`/`Delete` para `{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]` e `\begin{env}...\end{env}` — barra
 superior unificada de 52px, abas em pílula, visão dividida de código e PDF com cápsula flutuante de zoom/páginas,

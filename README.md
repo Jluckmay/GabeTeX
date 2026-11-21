@@ -65,9 +65,9 @@ editor that treats that as the normal case. It has three goals:
 
 *Described for the macOS app, which is available today. The Linux and Windows apps are being built towards the same goals.*
 
-- **Projects and navigation:** open any folder or start from a template (Article, Thesis, Beamer, Math Notes, Problem
-  Set); file tree, tabs, Quick Open (⌘P) and a cross-file outline; one-file-per-section writing with `% !TEX root`
-  and `% !TEX program` magic comments.
+- **Projects and navigation:** open any folder or start from one of nine templates (Article, Article with Sections,
+  Thesis, Beamer, Math Notes, Problem Set, Book, Report, Poster); file tree, tabs, Quick Open (⌘P) and a cross-file
+  outline; one-file-per-section writing with `% !TEX root` and `% !TEX program` magic comments.
 - **Live compilation:** detects MacTeX, TeX Live, BasicTeX and TinyTeX, runs `latexmk` (pdfLaTeX, XeLaTeX, LuaLaTeX)
   in the background in a private shadow copy, so your files are never touched until you save; unsaved text is included.
 - **Errors where they belong:** TeX log and ChkTeX diagnostics underlined at the right line of the right file, an
@@ -78,22 +78,24 @@ editor that treats that as the normal case. It has three goals:
 - **Beamer presentations:** audience view on the external display plus a presenter view with next slide, timer and notes.
 - **Writing tools:** autocomplete for commands, environments, references, citations and packages; a categorized
   **Math Symbols** sidebar table (`Σ`, 15 categories / 470 symbols, including a text-mode **Linguistic Symbols** section
-  and `\log_{}` with base subscript) with search, click-to-insert, drag-and-drop onto exact editor positions,
-  automatic `\usepackage{...}` preamble imports, and automatic `$...$` / `\[...\]` delimiter wrapping outside math mode;
-  auto-pairing and paired `Backspace`/`Delete` deletion across `{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`, and
-  `\begin{env}...\end{env}`; word and page counts; Command Palette; editable shortcuts; optional Vim mode.
+  with PDF-style curly serif quotes and `\log_{}` with base subscript) with search, click-to-insert, drag-and-drop
+  onto exact editor positions, automatic `\usepackage{...}` preamble imports, and automatic `$...$` / `\[...\]` delimiter
+  wrapping outside math mode; auto-pairing and paired `Backspace`/`Delete` deletion across `{ }`, `( )`, `[ ]`, `$ $`,
+  `\( \)`, `\[ \]`, and `\begin{env}...\end{env}`; word and page counts; Command Palette; editable shortcuts; optional Vim
+  mode.
 - **Project labels, Touch Bar support and a bilingual interface** (English and Brazilian Portuguese).
 
 ## Online editor
 
-The website's editor (`docs/`) uses the same Liquid Glass layout as the desktop application (left sidebar with Files,
-Outline, and the categorized **Math Symbols** table triggered by the top-left `Σ` button — 15 categories / 470 symbols
-including **Linguistic Symbols**, `\log_{}` base subscript, search, click-to-insert, drag-and-drop onto any code
-coordinate, automatic `\usepackage{...}` imports into the preamble or `main.tex`, automatic `$...$` / `\[...\]` wrapping
-outside math mode, plus smart auto-pairing and paired `Backspace`/`Delete` deletion for `{ }`, `( )`, `[ ]`, `$ $`,
-`\( \)`, `\[ \]`, and `\begin{env}...\end{env}` — unified 52px glass toolbar, pill tabs, split source & PDF preview with
-floating zoom/page capsule, collapsible output drawer, and Beamer presentation mode) and compiles directly in the
-browser: a Web Worker runs the
+The website (`docs/`) showcases the app screenshots (including the collapsed `Σ` sidebar button, open **Math Symbols**
+panel, and 9-template New Project dialog) alongside the interactive browser editor, which uses the same Liquid Glass
+layout (left sidebar with Files, Outline, and the categorized **Math Symbols** table triggered by the top-left `Σ`
+button — 15 categories / 470 symbols including **Linguistic Symbols** with PDF-style curly serif quotes, `\log_{}` base
+subscript, search, click-to-insert, drag-and-drop onto any code coordinate, automatic `\usepackage{...}` imports into
+the preamble or `main.tex`, automatic `$...$` / `\[...\]` wrapping outside math mode, plus smart auto-pairing and paired
+`Backspace`/`Delete` deletion for `{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`, and `\begin{env}...\end{env}` —
+unified 52px glass toolbar, pill tabs, split source & PDF preview with floating zoom/page capsule, collapsible output
+drawer, and Beamer presentation mode) and compiles directly in the browser: a Web Worker runs the
 SHA-256-verified
 pinned [Tectonic WebAssembly build](https://github.com/nl5887/tectonic-wasm/tree/eaf26222821d7254df1d28c78a1f7897b309b727),
 and [PDF.js](https://github.com/mozilla/pdf.js) renders the result. Project source is never sent to a compilation
