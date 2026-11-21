@@ -87,7 +87,7 @@ editor that treats that as the normal case. It has three goals:
 
 ## Online editor
 
-The website (`docs/`) showcases the app screenshots (including the collapsed `Σ` sidebar button, open **Math Symbols**
+The website (`docs/`) showcases the updated crimson-accented app screenshots (including the top-left `Σ` sidebar button, open **Math Symbols**
 panel, and 9-template New Project dialog) alongside the interactive browser editor, which uses the same Liquid Glass
 layout (left sidebar with Files, Outline, and the categorized **Math Symbols** table triggered by the top-left `Σ`
 button — 15 categories / 470 symbols including **Linguistic Symbols** with PDF-style curly serif quotes, `\log_{}` base

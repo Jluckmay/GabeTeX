@@ -88,8 +88,7 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 
 ## Editor online
 
-A página (`docs/index.html`) exibe capturas dos novos recursos (o botão `Σ` recolhido na barra lateral, a tabela de
-**Símbolos Matemáticos** aberta e a janela Novo Projeto com nove modelos) junto do editor online, que utiliza o mesmo
+A página (`docs/index.html`) exibe capturas na paleta carmesim consistente dos novos recursos (incluindo o botão `Σ` no topo da barra lateral nas telas de projeto e sincronização, a tabela de **Símbolos Matemáticos** aberta e a janela Novo Projeto com nove modelos) junto do editor online, que utiliza o mesmo
 layout Liquid Glass da aplicação desktop (barra lateral esquerda com Arquivos, Estrutura e a tabela categorizada de
 **Símbolos Matemáticos** no botão `Σ` superior esquerdo — 15 categorias / 470 símbolos incluindo **Símbolos
 Linguísticos** com aspas tipográficas em serifa estilo PDF, `\log_{}` com subscrito de base, busca, inserção por clique
