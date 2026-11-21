@@ -1056,9 +1056,16 @@
   var activeSymbolDragCleanup = null;
   var dropMirror = null;
 
+  function isQuoteDisplay(d) {
+    return /[“”‘’]/.test(d || '');
+  }
+
   function showSymbolPreview(sym) {
     if (!sym) return;
-    if (symPreviewGlyph) symPreviewGlyph.textContent = sym.display;
+    if (symPreviewGlyph) {
+      symPreviewGlyph.textContent = sym.display;
+      symPreviewGlyph.classList.toggle('quote', isQuoteDisplay(sym.display));
+    }
     if (symPreviewCode) symPreviewCode.textContent = sym.code;
     if (symPreviewPkg) {
       symPreviewPkg.textContent = sym.pkg ? ('\\usepackage{' + sym.pkg + '}') : '';
@@ -1329,7 +1336,7 @@
         ghost = document.createElement('div');
         ghost.className = 'ed-sym-drag-ghost';
         var glyphSpan = document.createElement('span');
-        glyphSpan.className = 'glyph';
+        glyphSpan.className = 'glyph' + (isQuoteDisplay(sym.display) ? ' quote' : '');
         glyphSpan.textContent = sym.display;
         var codeEl = document.createElement('code');
         codeEl.textContent = sym.code;
@@ -1419,7 +1426,7 @@
           (function (sym) {
             var tile = document.createElement('button');
             tile.type = 'button';
-            tile.className = 'ed-sym-tile' + (sym.display.length >= 3 ? ' wide' : '');
+            tile.className = 'ed-sym-tile' + (isQuoteDisplay(sym.display) ? ' quote' : (sym.display.length >= 3 ? ' wide' : ''));
             tile.textContent = sym.display;
             tile.setAttribute('draggable', 'false');
             tile.setAttribute('data-code', sym.code);

@@ -779,6 +779,17 @@ html.dark #editor-view {
   font-weight: 500;
   font-family: var(--ed-font-mono);
 }
+#editor-view .ed-sym-tile.quote,
+#editor-view .ed-sym-prev-glyph.quote,
+.ed-sym-drag-ghost .glyph.quote {
+  font-family: "Latin Modern Roman", "CMU Serif", "STIX Two Text", Georgia, "Times New Roman", "Liberation Serif", "DejaVu Serif", serif;
+  font-weight: 400;
+  line-height: 1;
+}
+#editor-view .ed-sym-tile.quote {
+  font-size: 22px;
+  padding-top: 6px;
+}
 #editor-view .ed-sym-tile:hover,
 #editor-view .ed-sym-tile:focus-visible {
   outline: none;
@@ -810,6 +821,10 @@ html.dark #editor-view {
   color: var(--ed-text);
   background: var(--ed-glass-bg-strong);
   border: 0.5px solid var(--ed-glass-border);
+}
+#editor-view .ed-sym-prev-glyph.quote {
+  font-size: 22px;
+  padding-top: 5px;
 }
 #editor-view .ed-sym-prev-meta {
   flex: 1;
@@ -868,6 +883,7 @@ html.dark #editor-view {
   font: 13px/1 var(--ed-font-ui, system-ui, sans-serif);
 }
 .ed-sym-drag-ghost .glyph { font-size: 15px; line-height: 1; }
+.ed-sym-drag-ghost .glyph.quote { font-size: 20px; padding-top: 4px; }
 .ed-sym-drag-ghost code {
   font: 600 11.5px/1.2 var(--ed-font-mono, monospace);
   color: var(--ed-accent, #0a84ff);
