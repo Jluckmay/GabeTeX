@@ -632,6 +632,9 @@ html.dark #sync .paper {
 .split .block p { margin-top: 12px; color: var(--ink-2); max-width: 30rem; text-wrap: pretty; }
 .split figure { margin: 0; }
 .split figure img { width: 100%; height: auto; }
+.shot-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 2.5vw, 32px); margin-top: 56px; align-items: start; }
+.shot-pair figure { margin: 0; }
+.shot-pair img { width: 100%; height: auto; }
 
 /* ===== everything else ===== */
 .more-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 40px; margin: 64px 0 0; padding: 0; list-style: none; }
@@ -787,6 +790,7 @@ html.dark #sync .paper {
 }
 @media (max-width: 834px) {
   .ideas, .facts, .steps { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .shot-pair { grid-template-columns: minmax(0, 1fr); gap: 36px; margin-top: 40px; }
   .panes { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .devices { flex-direction: column; align-items: stretch; gap: 40px; }
   .dev-laptop { flex: none; width: 88%; margin: 0 auto; order: 2; }
@@ -1429,6 +1433,79 @@ html.dark #sync .paper {
     </div>
   </section>
 
+  <!-- ===== math & linguistic symbols ===== -->
+  <section class="tile tile-alt" id="symbols" aria-labelledby="symbols-title">
+    <div class="wrap wrap-wide">
+      <header class="head">
+        <h2 id="symbols-title" data-i18n="symbols.title">Math &amp; linguistic symbols, always at hand.</h2>
+        <p class="lead" data-i18n="symbols.lead">Open the Σ panel in the sidebar to browse 15 categories and 470 symbols—click to insert or drag straight into your code. Missing math delimiters and <code>\usepackage</code> imports are added automatically.</p>
+      </header>
+      <div class="shot-pair">
+        <figure class="reveal">
+          <img class="themed-shot shot-dark-pt" src="assets/screenshots/symbols-icon-dark-pt.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="Barra lateral do GabeTeX exibindo o botão Σ no canto superior esquerdo antes de abrir a tabela de símbolos."
+               data-i18n-attr="alt:shots.symbolsIconAlt">
+          <img class="themed-shot shot-light-pt" src="assets/screenshots/symbols-icon-light-pt.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="Barra lateral do GabeTeX exibindo o botão Σ no canto superior esquerdo antes de abrir a tabela de símbolos."
+               data-i18n-attr="alt:shots.symbolsIconAlt">
+          <img class="themed-shot shot-dark-en" src="assets/screenshots/symbols-icon-dark-en.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="The GabeTeX sidebar showing the Σ button in the top-left corner before opening the symbols panel."
+               data-i18n-attr="alt:shots.symbolsIconAlt">
+          <img class="themed-shot shot-light-en" src="assets/screenshots/symbols-icon-light-en.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="The GabeTeX sidebar showing the Σ button in the top-left corner before opening the symbols panel."
+               data-i18n-attr="alt:shots.symbolsIconAlt">
+          <figcaption data-i18n="shots.symbolsIcon">The Σ button sits in the top-left of the sidebar, keeping your file tree uncluttered until you need it.</figcaption>
+        </figure>
+        <figure class="reveal" style="--stagger:1">
+          <img class="themed-shot shot-dark-pt" src="assets/screenshots/symbols-open-dark-pt.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="A tabela de símbolos matemáticos e linguísticos aberta na barra lateral esquerda com busca e prévia do comando."
+               data-i18n-attr="alt:shots.symbolsOpenAlt">
+          <img class="themed-shot shot-light-pt" src="assets/screenshots/symbols-open-light-pt.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="A tabela de símbolos matemáticos e linguísticos aberta na barra lateral esquerda com busca e prévia do comando."
+               data-i18n-attr="alt:shots.symbolsOpenAlt">
+          <img class="themed-shot shot-dark-en" src="assets/screenshots/symbols-open-dark-en.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="The categorized math and linguistic symbols panel open in the left sidebar with search and live command preview."
+               data-i18n-attr="alt:shots.symbolsOpenAlt">
+          <img class="themed-shot shot-light-en" src="assets/screenshots/symbols-open-light-en.png" width="1560" height="1526" loading="lazy" decoding="async"
+               alt="The categorized math and linguistic symbols panel open in the left sidebar with search and live command preview."
+               data-i18n-attr="alt:shots.symbolsOpenAlt">
+          <figcaption data-i18n="shots.symbolsOpen">Click Σ to open all 15 categories: search by name, command or package, preview required imports, and click or drag onto any line.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== project templates ===== -->
+  <section class="tile" id="templates" aria-labelledby="templates-title">
+    <div class="wrap wrap-wide split">
+      <div>
+        <div class="block reveal">
+          <h2 id="templates-title" data-i18n="templates.title">Start from a ready-made template.</h2>
+          <p data-i18n="templates.text">Create a new project from nine built-in templates—Article, Article with Sections, Thesis, Beamer Presentation, Math Notes, Problem Set, Book, Report, and Poster—with preamble, bibliography, chapters, and structure ready to compile.</p>
+        </div>
+        <div class="block reveal" style="--stagger:1">
+          <h2 data-i18n="templates.metaTitle">See every file before creating.</h2>
+          <p data-i18n="templates.metaText">Fill in the title, author, and destination folder, inspect the exact files each template creates, and start writing immediately.</p>
+        </div>
+      </div>
+      <figure class="reveal" style="--stagger:1">
+        <img class="themed-shot shot-dark-pt" src="assets/screenshots/templates-dark-pt.png" width="2000" height="1272" loading="lazy" decoding="async"
+             alt="Janela de Novo Projeto exibindo os nove modelos — incluindo Livro, Relatório e Pôster — e a lista de arquivos gerados."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <img class="themed-shot shot-light-pt" src="assets/screenshots/templates-light-pt.png" width="2000" height="1272" loading="lazy" decoding="async"
+             alt="Janela de Novo Projeto exibindo os nove modelos — incluindo Livro, Relatório e Pôster — e a lista de arquivos gerados."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <img class="themed-shot shot-dark-en" src="assets/screenshots/templates-dark-en.png" width="2000" height="1272" loading="lazy" decoding="async"
+             alt="The New Project dialog showing all nine templates—including Book, Report, and Poster—and the list of files each generates."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <img class="themed-shot shot-light-en" src="assets/screenshots/templates-light-en.png" width="2000" height="1272" loading="lazy" decoding="async"
+             alt="The New Project dialog showing all nine templates—including Book, Report, and Poster—and the list of files each generates."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <figcaption data-i18n="shots.templates">The New Project dialog with all nine templates—including Book, Report, and Poster—and a preview of the generated files.</figcaption>
+      </figure>
+    </div>
+  </section>
+
   <!-- ===== labels + detachable PDF ===== -->
   <section class="tile tile-alt" aria-labelledby="labels-title">
     <div class="wrap wrap-wide split">
@@ -1526,6 +1603,21 @@ html.dark #sync .paper {
           <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><circle cx="12" cy="12" r="8.75"/><path d="M3.25 12h17.5M12 3.25c2.4 2.5 3.6 5.4 3.6 8.75s-1.2 6.25-3.6 8.75c-2.4-2.5-3.6-5.4-3.6-8.75S9.6 5.75 12 3.25Z"/></svg>
           <h3 data-i18n="more.9">English and Portuguese</h3>
           <p data-i18n="more.9t">The interface follows your system language: English or Brazilian Portuguese.</p>
+        </li>
+        <li class="more reveal">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M18 5.5V4H6.5l6.5 8-6.5 8H18v-1.5"/></svg>
+          <h3 data-i18n="more.13">Math &amp; linguistic symbols</h3>
+          <p data-i18n="more.13t">15 categories (470 symbols, including linguistic quotes and <code>\log_{}</code> base subscript), click or drag-and-drop, automatic <code>$…$</code> / <code>\[…\]</code> delimiters, and automatic <code>\usepackage</code> imports.</p>
+        </li>
+        <li class="more reveal" style="--stagger:1">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M5.5 4.8A1.8 1.8 0 0 1 7.3 3H19v15H7.3a1.8 1.8 0 0 0-1.8 1.8ZM5.5 19.8A1.8 1.8 0 0 0 7.3 21.5H19V18"/><path d="M9 3v8l2.2-1.5L13.4 11V3"/></svg>
+          <h3 data-i18n="more.14">Project templates</h3>
+          <p data-i18n="more.14t">Nine ready-to-compile templates in New Project: Article, Article with Sections, Thesis, Beamer, Math Notes, Problem Set, Book, Report, and Poster.</p>
+        </li>
+        <li class="more reveal" style="--stagger:2">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M8.5 4H8a2 2 0 0 0-2 2v3.5c0 1.2-.8 2.5-2 2.5 1.2 0 2 1.3 2 2.5V18a2 2 0 0 0 2 2h.5M15.5 4h.5a2 2 0 0 1 2 2v3.5c0 1.2.8 2.5 2 2.5-1.2 0-2 1.3-2 2.5V18a2 2 0 0 1-2 2h-.5"/></svg>
+          <h3 data-i18n="more.15">Smart pairs &amp; environments</h3>
+          <p data-i18n="more.15t">Auto-closes <code>{ }</code>, <code>( )</code>, <code>[ ]</code>, <code>$ $</code>, <code>\( \)</code>, <code>\[ \]</code>, and <code>\begin{env}</code> on <code>}</code>, and deletes matching delimiters together on Backspace or Delete.</p>
         </li>
       </ul>
     </div>
@@ -2064,6 +2156,12 @@ Hello, world!
     'shots.project': 'O projeto inteiro numa janela só: os arquivos, o código e o PDF compilando ao vivo ao lado.',
     'shots.welcomeAlt': 'A janela de boas-vindas do GabeTeX com os projetos recentes, rótulos coloridos e filtros.',
     'shots.welcome': 'A janela de boas-vindas, com rótulos coloridos e filtros.',
+    'shots.symbolsIconAlt': 'Barra lateral do GabeTeX exibindo o botão Σ no canto superior esquerdo antes de abrir a tabela de símbolos.',
+    'shots.symbolsIcon': 'O botão Σ fica no canto superior esquerdo da barra lateral, mantendo a árvore de arquivos limpa até você precisar dele.',
+    'shots.symbolsOpenAlt': 'A tabela de símbolos matemáticos e linguísticos aberta na barra lateral esquerda com busca e prévia do comando.',
+    'shots.symbolsOpen': 'Clique em Σ para abrir as 15 categorias: busque por nome, comando ou pacote, veja os pacotes exigidos e clique ou arraste para qualquer linha.',
+    'shots.templatesAlt': 'Janela de Novo Projeto exibindo os nove modelos — incluindo Livro, Relatório e Pôster — e a lista de arquivos gerados.',
+    'shots.templates': 'A janela Novo Projeto com todos os nove modelos — incluindo Livro, Relatório e Pôster — e a prévia dos arquivos criados.',
     'shots.syncAlt': 'O GabeTeX indo de uma palavra no PDF para a mesma palavra no código LaTeX, que recebe um breve destaque.',
     'shots.sync': 'No GabeTeX: um clique duplo no PDF abriu o arquivo da seção exatamente naquela palavra. Com Seguir o cursor no PDF, a pré-visualização também acompanha você.',
     'ideas.title': 'Feito para o jeito como matemáticos escrevem.',
@@ -2107,6 +2205,12 @@ Hello, world!
     'compile.2t': 'Erros e avisos do log do TeX e do ChkTeX aparecem sublinhados onde acontecem, mesmo dentro de um arquivo de seção, e ficam reunidos na lista de Problemas.',
     'compile.3': 'Pacotes que faltam, instalados',
     'compile.3t': 'Quando falta um pacote, o GabeTeX oferece instalá-lo com o tlmgr e só pede a senha de administrador quando é realmente preciso.',
+    'symbols.title': 'Símbolos matemáticos e linguísticos sempre à mão.',
+    'symbols.lead': 'Abra o painel Σ na barra lateral para explorar 15 categorias e 470 símbolos — clique para inserir ou arraste direto para o código. Delimitadores matemáticos e <code>\\usepackage</code> faltantes são inseridos sozinhos.',
+    'templates.title': 'Comece com um modelo pronto.',
+    'templates.text': 'Crie um novo projeto a partir de nove modelos embutidos — Artigo, Artigo com Seções, Tese, Apresentação Beamer, Notas de Matemática, Lista de Exercícios, Livro, Relatório e Pôster — com preâmbulo, bibliografia e estrutura prontos para compilar.',
+    'templates.metaTitle': 'Veja cada arquivo antes de criar.',
+    'templates.metaText': 'Preencha título, autor e pasta de destino, confira exatamente quais arquivos o modelo cria e comece a escrever na hora.',
     'labels.title': 'Rótulos para seus projetos.',
     'labels.text': 'Dê rótulos coloridos aos projetos na janela de boas-vindas, filtre a lista com um clique e faça buscas quando ela crescer. Projetos com rótulo nunca saem da lista de recentes.',
     'detach.title': 'O PDF na sua própria tela.',
@@ -2136,6 +2240,12 @@ Hello, world!
     'more.11t': 'Palavras e páginas do documento inteiro e de cada seção, na barra de status e no sumário.',
     'more.12': 'Paleta de comandos',
     'more.12t': '<kbd>⇧⌘P</kbd> encontra qualquer comando pelo nome. Defina seus próprios atalhos nos Ajustes e complete com <kbd>Tab</kbd>.',
+    'more.13': 'Símbolos matemáticos e linguísticos',
+    'more.13t': '15 categorias (470 símbolos, incluindo aspas linguísticas e <code>\\log_{}</code> com subscrito de base), clique ou arrastar e soltar, delimitação <code>$…$</code> / <code>\\[…\\]</code> e importação automática de <code>\\usepackage</code>.',
+    'more.14': 'Modelos de projeto',
+    'more.14t': 'Nove modelos prontos para compilar em Novo Projeto: Artigo, Artigo com Seções, Tese, Beamer, Notas de Matemática, Lista de Exercícios, Livro, Relatório e Pôster.',
+    'more.15': 'Pares e ambientes inteligentes',
+    'more.15t': 'Fecha automaticamente <code>{ }</code>, <code>( )</code>, <code>[ ]</code>, <code>$ $</code>, <code>\\( \\)</code>, <code>\\[ \\]</code> e <code>\\begin{env}</code> ao digitar <code>}</code>, e apaga o par completo com Backspace ou Delete.',
     'inst.title': 'Instale em três passos.',
     'inst.lead': 'Para Macs com Apple Silicon e macOS 26 ou posterior. No Linux ou no Windows, <a href="#install-other">vá direto para essa edição</a>.',
     'inst.1': 'Abra o GabeTeX.dmg',
