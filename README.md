@@ -117,7 +117,9 @@ file.
   built-in Tectonic WASM compiler). Installation notes, the first-launch "Open Anyway" step, shortcuts and build
   instructions are in the [GabeTeX-macOS README](https://github.com/Jluckmay/GabeTeX-macOS#readme).
 - **Linux and Windows:** download the latest `.AppImage`, `.deb`, Windows NSIS `.exe` installer (with optional
-  integrated TinyTeX setup), or `.msi` from [Releases](https://github.com/Jluckmay/GabeTeX/releases/latest); see
+  integrated TinyTeX setup), or `.msi` from [Releases](https://github.com/Jluckmay/GabeTeX/releases/latest). On Windows,
+  if Microsoft Defender SmartScreen appears, click **More info → Run anyway** (or unblock the file in PowerShell with
+  `Unblock-File .\GabeTeX-windows-x64-setup.exe`). See
   [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) for build and packaging instructions.
 
 The [website](https://jluckmay.github.io/GabeTeX/) lists every release with its release notes and includes the online editor.

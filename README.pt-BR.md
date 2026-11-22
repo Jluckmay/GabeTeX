@@ -118,7 +118,9 @@ seção incluído.
   compilador Tectonic WASM embutido). Instruções de instalação, o passo "Abrir Mesmo Assim" do primeiro uso, atalhos e
   como compilar estão no [README do GabeTeX-macOS](https://github.com/Jluckmay/GabeTeX-macOS#readme).
 - **Linux e Windows:** baixe a versão mais recente em `.AppImage`, `.deb`, instalador Windows NSIS `.exe` (com opção
-  integrada de instalação do TinyTeX) ou `.msi` em [Releases](https://github.com/Jluckmay/GabeTeX/releases/latest); veja
+  integrada de instalação do TinyTeX) ou `.msi` em [Releases](https://github.com/Jluckmay/GabeTeX/releases/latest). No
+  Windows, caso o Microsoft Defender SmartScreen apareça, clique em **Mais informações → Executar assim mesmo** (ou
+  desbloqueie o arquivo no PowerShell com `Unblock-File .\GabeTeX-windows-x64-setup.exe`). Veja
   [GabeTeX-Linux-Windows](https://github.com/Jluckmay/GabeTeX-Linux-Windows) para instruções de compilação e pacotes.
 
 O [site](https://jluckmay.github.io/GabeTeX/) lista todas as versões do macOS, com as notas de cada uma.
