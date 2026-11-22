@@ -848,7 +848,14 @@
         && !isEscapedAt(text, s)
         && isInMathMode(text, s + 1)
       ) {
-        return { from: s + 1, to: s + 1, text: code, moveAfterClosingDollar: false };
+        var nextCh = s + 1 < text.length ? text.charCodeAt(s + 1) : 0;
+        var needsSpace = /\\[A-Za-z]+$/.test(code) && isAlphaCode(nextCh);
+        return {
+          from: s + 1,
+          to: s + 1,
+          text: needsSpace ? (code + ' ') : code,
+          moveAfterClosingDollar: false
+        };
       }
     }
 
@@ -860,6 +867,7 @@
     };
   }
 
+  var VALID_PACKAGE_NAME_RE = /^[A-Za-z0-9._-]+$/;
   var PACKAGE_CMD_RE = /\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}/g;
   var DOCCLASS_CMD_RE = /\\documentclass(?:\s*\[[^\]]*\])?\s*\{[^}]+\}/;
   var BEGIN_DOC_RE = /\\begin\s*\{document\}/;
@@ -885,58 +893,65 @@
     return cStart >= 0 && cStart <= idx;
   }
 
-  function stripTexLineComment(line) {
-    var cStart = commentStartIdx(line, 0, line.length);
-    return cStart >= 0 ? line.slice(0, cStart) : line;
+  function maskTexComments(text) {
+    var chars = text.split('');
+    for (var i = 0; i < text.length; i++) {
+      if (text.charCodeAt(i) === 37 && !isEscapedAt(text, i)) {
+        while (i < text.length && text.charCodeAt(i) !== 10 && text.charCodeAt(i) !== 13) {
+          chars[i] = ' ';
+          i++;
+        }
+      }
+    }
+    return chars.join('');
+  }
+
+  function insertOffsetAfter(text, cmdEnd, maxLimit) {
+    var nl = text.indexOf('\n', cmdEnd);
+    if (nl !== -1 && nl + 1 <= maxLimit) return nl + 1;
+    if (maxLimit < text.length) return maxLimit;
+    return cmdEnd;
   }
 
   function preambleScanInfo(text) {
     var imported = {};
-    var hasPreamble = false;
-    var lastPkgLineEnd = null;
-    var docClassLineEnd = null;
-    var beginDocLineStart = null;
-    var offset = 0;
-    var lines = text.split('\n');
+    var uncommented = maskTexComments(text);
+    var beginMatch = BEGIN_DOC_RE.exec(uncommented);
+    var preambleLimit = beginMatch ? beginMatch.index : uncommented.length;
+    var preamble = uncommented.slice(0, preambleLimit);
 
-    for (var li = 0; li < lines.length; li++) {
-      var rawLine = lines[li];
-      var lineLenWithNl = li < lines.length - 1 ? rawLine.length + 1 : rawLine.length;
-      var uncommented = stripTexLineComment(rawLine);
+    var hasPreamble = !!beginMatch;
+    var beginDocOffset = beginMatch
+      ? text.lastIndexOf('\n', Math.max(0, beginMatch.index - 1)) + 1
+      : null;
 
-      if (BEGIN_DOC_RE.test(uncommented)) {
-        hasPreamble = true;
-        beginDocLineStart = offset;
-        break;
-      }
-
-      if (DOCCLASS_CMD_RE.test(uncommented)) {
-        hasPreamble = true;
-        docClassLineEnd = offset + lineLenWithNl;
-      }
-
-      PACKAGE_CMD_RE.lastIndex = 0;
-      var m;
-      var sawPkgOnLine = false;
-      while ((m = PACKAGE_CMD_RE.exec(uncommented)) !== null) {
-        hasPreamble = true;
-        sawPkgOnLine = true;
-        var parts = m[1].split(',');
-        for (var pi = 0; pi < parts.length; pi++) {
-          var name = parts[pi].replace(/^\s+|\s+$/g, '');
-          if (name) imported[name] = true;
-        }
-      }
-      if (sawPkgOnLine) lastPkgLineEnd = offset + lineLenWithNl;
-      offset += lineLenWithNl;
+    var docMatch = DOCCLASS_CMD_RE.exec(preamble);
+    var docClassOffset = null;
+    if (docMatch) {
+      hasPreamble = true;
+      docClassOffset = insertOffsetAfter(text, docMatch.index + docMatch[0].length, preambleLimit);
     }
+
+    PACKAGE_CMD_RE.lastIndex = 0;
+    var m;
+    var lastPkgEnd = -1;
+    while ((m = PACKAGE_CMD_RE.exec(preamble)) !== null) {
+      hasPreamble = true;
+      lastPkgEnd = m.index + m[0].length;
+      var parts = m[1].split(',');
+      for (var pi = 0; pi < parts.length; pi++) {
+        var name = parts[pi].replace(/^\s+|\s+$/g, '');
+        if (name) imported[name] = true;
+      }
+    }
+    var lastPkgOffset = lastPkgEnd >= 0 ? insertOffsetAfter(text, lastPkgEnd, preambleLimit) : null;
 
     return {
       hasPreamble: hasPreamble,
       imported: imported,
-      lastPkgLineEnd: lastPkgLineEnd,
-      docClassLineEnd: docClassLineEnd,
-      beginDocLineStart: beginDocLineStart
+      lastPkgOffset: lastPkgOffset,
+      docClassOffset: docClassOffset,
+      beginDocOffset: beginDocOffset
     };
   }
 
@@ -949,27 +964,32 @@
 
   function hasPackageImport(text, pkg) {
     var target = String(pkg || '').replace(/^\s+|\s+$/g, '');
-    if (!target) return true;
+    if (!VALID_PACKAGE_NAME_RE.test(target)) return false;
     return isPackageSatisfied(preambleScanInfo(text).imported, target);
   }
 
   function planPackageImport(text, pkg, eol) {
     var target = String(pkg || '').replace(/^\s+|\s+$/g, '');
-    if (!target) return null;
+    if (!VALID_PACKAGE_NAME_RE.test(target)) return null;
     var info = preambleScanInfo(text);
     if (!info.hasPreamble || isPackageSatisfied(info.imported, target)) return null;
 
-    var insertAt = info.lastPkgLineEnd !== null
-      ? info.lastPkgLineEnd
-      : (info.docClassLineEnd !== null ? info.docClassLineEnd : info.beginDocLineStart);
+    var insertAt = info.lastPkgOffset !== null
+      ? info.lastPkgOffset
+      : (info.docClassOffset !== null ? info.docClassOffset : info.beginDocOffset);
     if (insertAt === null) return null;
 
     var resolvedEol = detectEol(text, eol);
-    var needsLeadingEol = insertAt > 0 && text.charCodeAt(insertAt - 1) !== 10;
+    var prevCh = insertAt > 0 ? text.charCodeAt(insertAt - 1) : 10;
+    var nextCh = insertAt < text.length ? text.charCodeAt(insertAt) : 10;
+    var needsLeadingEol = insertAt > 0 && prevCh !== 10 && prevCh !== 13;
+    var needsTrailingEol = insertAt < text.length && nextCh !== 10 && nextCh !== 13;
     var directive = '\\usepackage{' + target + '}';
+    var leading = needsLeadingEol ? resolvedEol : '';
+    var trailing = (needsLeadingEol && !needsTrailingEol) ? '' : resolvedEol;
     return {
       offset: insertAt,
-      text: needsLeadingEol ? (resolvedEol + directive) : (directive + resolvedEol)
+      text: leading + directive + trailing
     };
   }
 
@@ -1111,8 +1131,14 @@
       }
     } else {
       var backDepth = 1;
+      var lineStartEsc = text.length + 1;
+      var cStartEsc = -1;
       for (var j = start - 2; j >= 0; j--) {
-        if (text.charCodeAt(j) !== 92 || isEscapedAt(text, j) || isInsideLineComment(text, j)) continue;
+        if (j < lineStartEsc) {
+          lineStartEsc = text.lastIndexOf('\n', j) + 1;
+          cStartEsc = commentStartIdx(text, lineStartEsc, j + 1);
+        }
+        if ((cStartEsc >= 0 && j >= cStartEsc) || text.charCodeAt(j) !== 92 || isEscapedAt(text, j)) continue;
         var chJ = text.charAt(j + 1);
         if (chJ === closeChar) backDepth++;
         else if (chJ === openChar) {
@@ -1141,18 +1167,32 @@
         while (i < text.length && text.charCodeAt(i) !== 10) i++;
         continue;
       }
-      if (c === 36 && !isEscapedAt(text, i) && text.charCodeAt(i + 1) !== 36) return i;
+      if (c === 36 && !isEscapedAt(text, i)) {
+        if (text.charCodeAt(i + 1) === 36) {
+          i++;
+          continue;
+        }
+        return i;
+      }
     }
     return -1;
   }
 
   function findBackwardUnescapedSingleDollar(text, before) {
+    var lineStart = text.length + 1;
+    var cStart = -1;
     for (var i = before - 1; i >= 0; i--) {
+      if (i < lineStart) {
+        lineStart = text.lastIndexOf('\n', i) + 1;
+        cStart = commentStartIdx(text, lineStart, i + 1);
+      }
       if (text.charCodeAt(i) === 10) {
         var prevNl = text.lastIndexOf('\n', i - 1);
         if (prevNl !== -1 && /^[ \t\r]*$/.test(text.slice(prevNl + 1, i))) return -1;
+        continue;
       }
-      if (text.charCodeAt(i) === 36 && !isEscapedAt(text, i) && !isInsideLineComment(text, i)) {
+      if (cStart >= 0 && i >= cStart) continue;
+      if (text.charCodeAt(i) === 36 && !isEscapedAt(text, i)) {
         if (i > 0 && text.charCodeAt(i - 1) === 36 && !isEscapedAt(text, i - 1)) {
           i--;
           continue;
@@ -1174,9 +1214,31 @@
     return -1;
   }
 
+  function countForwardUnescapedDoubleDollars(text, from) {
+    var count = 0;
+    for (var i = from; i + 1 < text.length; i++) {
+      if (text.charCodeAt(i) === 37 && !isEscapedAt(text, i)) {
+        while (i < text.length && text.charCodeAt(i) !== 10) i++;
+        continue;
+      }
+      if (text.charCodeAt(i) === 36 && text.charCodeAt(i + 1) === 36 && !isEscapedAt(text, i)) {
+        count++;
+        i++;
+      }
+    }
+    return count;
+  }
+
   function findBackwardUnescapedDoubleDollar(text, before) {
+    var lineStart = text.length + 1;
+    var cStart = -1;
     for (var i = before - 2; i >= 0; i--) {
-      if (text.charCodeAt(i) === 36 && text.charCodeAt(i + 1) === 36 && !isEscapedAt(text, i) && !isInsideLineComment(text, i)) {
+      if (i < lineStart) {
+        lineStart = text.lastIndexOf('\n', i) + 1;
+        cStart = commentStartIdx(text, lineStart, i + 1);
+      }
+      if (cStart >= 0 && i >= cStart) continue;
+      if (text.charCodeAt(i) === 36 && text.charCodeAt(i + 1) === 36 && !isEscapedAt(text, i)) {
         if (!isInMathMode(text, i)) return i;
       }
     }
@@ -1193,7 +1255,7 @@
       && !isInsideLineComment(text, pos - 1)
       && !isInMathMode(text, pos - 1)
     ) {
-      if (findForwardUnescapedDoubleDollar(text, pos + 1) === -1) {
+      if (countForwardUnescapedDoubleDollars(text, pos + 1) % 2 === 0) {
         return { ranges: [{ from: pos - 1, to: pos + 1 }], caret: pos - 1 };
       }
     }
@@ -1208,12 +1270,14 @@
       && !isInsideLineComment(text, dblStart)
     ) {
       if (!isInMathMode(text, dblStart)) {
-        var closeDbl = findForwardUnescapedDoubleDollar(text, dblStart + 2);
-        if (closeDbl !== -1) {
-          return {
-            ranges: mergeTextRanges({ from: dblStart, to: dblStart + 2 }, { from: closeDbl, to: closeDbl + 2 }),
-            caret: dblStart
-          };
+        if (countForwardUnescapedDoubleDollars(text, dblStart + 2) % 2 === 1) {
+          var closeDbl = findForwardUnescapedDoubleDollar(text, dblStart + 2);
+          if (closeDbl !== -1) {
+            return {
+              ranges: mergeTextRanges({ from: dblStart, to: dblStart + 2 }, { from: closeDbl, to: closeDbl + 2 }),
+              caret: dblStart
+            };
+          }
         }
         if (direction === 'forward') {
           return { ranges: [{ from: dblStart, to: dblStart + 2 }], caret: dblStart };
@@ -1272,8 +1336,14 @@
 
   function findMatchingOpener(text, closeIdx, openChar, closeChar) {
     var depth = 1;
+    var lineStart = text.length + 1;
+    var cStart = -1;
     for (var i = closeIdx - 1; i >= 0; i--) {
-      if (isInsideLineComment(text, i) || isEscapedAt(text, i)) continue;
+      if (i < lineStart) {
+        lineStart = text.lastIndexOf('\n', i) + 1;
+        cStart = commentStartIdx(text, lineStart, i + 1);
+      }
+      if ((cStart >= 0 && i >= cStart) || isEscapedAt(text, i)) continue;
       var c = text.charAt(i);
       if (c === closeChar) depth++;
       else if (c === openChar) {
@@ -1284,16 +1354,80 @@
     return -1;
   }
 
+  var SIZED_DELIM_COMMANDS = {
+    left: 1, right: 1, middle: 1,
+    big: 1, bigl: 1, bigr: 1, bigm: 1,
+    Big: 1, Bigl: 1, Bigr: 1, Bigm: 1,
+    bigg: 1, biggl: 1, biggr: 1, biggm: 1,
+    Bigg: 1, Biggl: 1, Biggr: 1, Biggm: 1
+  };
+
+  function commandEndingAt(text, endInclusive) {
+    var j = endInclusive;
+    while (j >= 0 && /[A-Za-z@]/.test(text.charAt(j))) j--;
+    if (j < 0 || text.charAt(j) !== '\\' || j === endInclusive || isEscapedAt(text, j)) return null;
+    return text.slice(j + 1, endInclusive + 1);
+  }
+
+  function skipBalancedGroupBackward(text, closeIdx, openChar, closeChar) {
+    var depth = 1;
+    var lineStart = text.length + 1;
+    var cStart = -1;
+    for (var i = closeIdx - 1; i >= 0; i--) {
+      if (i < lineStart) {
+        lineStart = text.lastIndexOf('\n', i) + 1;
+        cStart = commentStartIdx(text, lineStart, i + 1);
+      }
+      if ((cStart >= 0 && i >= cStart) || isEscapedAt(text, i)) continue;
+      var c = text.charAt(i);
+      if (c === closeChar) depth++;
+      else if (c === openChar) {
+        depth--;
+        if (depth === 0) return i - 1;
+      }
+    }
+    return -2;
+  }
+
   function isCommandArgumentBrace(text, openIdx) {
-    if (openIdx <= 0) return false;
-    return /(?:^|[^\\])\\[A-Za-z@]+\*?$/.test(text.slice(0, openIdx));
+    var i = openIdx - 1;
+    while (i >= 0 && (text.charAt(i) === ' ' || text.charAt(i) === '\t')) i--;
+    while (i >= 0) {
+      var ch = text.charAt(i);
+      if ((ch === '}' || ch === ']') && !isEscapedAt(text, i)) {
+        var next = skipBalancedGroupBackward(text, i, ch === '}' ? '{' : '[', ch);
+        if (next < -1) return false;
+        i = next;
+        while (i >= 0 && (text.charAt(i) === ' ' || text.charAt(i) === '\t')) i--;
+        continue;
+      }
+      break;
+    }
+    if (i >= 0 && text.charAt(i) === '*') {
+      i--;
+      while (i >= 0 && (text.charAt(i) === ' ' || text.charAt(i) === '\t')) i--;
+    }
+    return i >= 0 && commandEndingAt(text, i) !== null;
+  }
+
+  function isSizedDelimiter(text, idx) {
+    var i = idx - 1;
+    while (i >= 0 && (text.charAt(i) === ' ' || text.charAt(i) === '\t')) i--;
+    if (i < 0) return false;
+    var name = commandEndingAt(text, i);
+    return !!(name && Object.prototype.hasOwnProperty.call(SIZED_DELIM_COMMANDS, name));
   }
 
   function findBracketDeletion(text, pos, direction) {
     if (pos > 0 && pos < text.length) {
       var left = text.charAt(pos - 1);
       var right = text.charAt(pos);
-      if (BRACKET_PAIRS[left] === right && !isEscapedAt(text, pos - 1) && !isInsideLineComment(text, pos - 1)) {
+      if (
+        BRACKET_PAIRS[left] === right
+        && !isEscapedAt(text, pos - 1)
+        && !isInsideLineComment(text, pos - 1)
+        && (left === '{' || (!isSizedDelimiter(text, pos - 1) && !isSizedDelimiter(text, pos)))
+      ) {
         return { ranges: [{ from: pos - 1, to: pos + 1 }], caret: pos - 1 };
       }
     }
@@ -1304,9 +1438,11 @@
 
     var ch = text.charAt(idx);
     if (BRACKET_PAIRS[ch]) {
+      if (ch !== '{' && isSizedDelimiter(text, idx)) return null;
       var partner = findMatchingCloser(text, idx, ch, BRACKET_PAIRS[ch]);
       if (partner === -1) return null;
       if (ch === '{' && partner > idx + 1 && isCommandArgumentBrace(text, idx)) return null;
+      if (ch !== '{' && isSizedDelimiter(text, partner)) return null;
       return {
         ranges: mergeTextRanges({ from: idx, to: idx + 1 }, { from: partner, to: partner + 1 }),
         caret: idx
@@ -1314,10 +1450,12 @@
     }
 
     if (REVERSE_BRACKETS[ch]) {
+      if (ch !== '}' && isSizedDelimiter(text, idx)) return null;
       var openChar = REVERSE_BRACKETS[ch];
       var opener = findMatchingOpener(text, idx, openChar, ch);
       if (opener === -1) return null;
       if (openChar === '{' && opener + 1 < idx && isCommandArgumentBrace(text, opener)) return null;
+      if (openChar !== '{' && isSizedDelimiter(text, opener)) return null;
       return {
         ranges: mergeTextRanges({ from: opener, to: opener + 1 }, { from: idx, to: idx + 1 }),
         caret: opener + 1 === idx ? opener : idx - 1

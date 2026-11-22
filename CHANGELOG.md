@@ -12,13 +12,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
-
-- Categorized **Math Symbols** sidebar panel across macOS (`Σ` / `⌥⌘3`), Linux/Windows (`Σ` / `Ctrl+Alt+3`), and the Online Editor (`docs/`, `#btn-symbols`) with 15 categories (470 symbols covering core LaTeX, `amsmath`, `amssymb`, `mathrsfs`, `gensymb`, `mathdots`, `eurosym`, plus a text-mode **Linguistic Symbols** section with PDF-style curly serif quotation marks), search, live package preview, `\log_{}` base-subscript snippet, click-to-insert, drag-and-drop onto exact editor positions, automatic `\usepackage{...}` preamble injection (updating the main document when editing preamble-less included files), and context-aware automatic `$...$` / `\[...\]` math-delimiter wrapping outside math mode (merging adjacent single `$` delimiters on consecutive insertions and skipping text-mode linguistic symbols).
-- Extended LaTeX delimiter auto-pairing (`{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`, and `\begin{env}...\end{env}` auto-close on `}`) and paired `Backspace`/`Delete` deletion across balanced delimiters and empty environments in all three editions.
-- Added **Book**, **Report**, and **Poster** project templates across macOS (`TeXCore.ProjectTemplates`) and Linux/Windows (`src-tauri/src/core/data/templates.json`), expanding New Project creation to 9 templates with EN/PT-BR localization.
-- Updated the website landing page (`docs/index.html`) and crimson-palette screenshots across light/dark and PT-BR/EN locales: added the top-left `Σ` toggle icon to all existing `project` and `sync` screenshots, and added focused showcases for the open **Math Symbols** sidebar panel, the **New Project** 9-template dialog, and feature list cards.
-
 ### Changed
 
 - The repository is now an umbrella with two Git submodules, one per edition: `GabeTeX-macOS` (native Swift app) and
@@ -28,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Overview of releases
 
+- **v1.1.2** (2026-11-21): cross-platform release introducing the categorized **Math Symbols** sidebar panel (`Σ`, 15 categories / 470 symbols including **Linguistic Symbols** with PDF-style curly serif quotes and `\log_{}` base subscript) with click-to-insert, drag-and-drop, automatic `\usepackage{...}` preamble imports (including `main.tex` fallback), and context-aware `$...$` / `\[...\]` wrapping across macOS, Linux/Windows, and the Online Editor (`docs/`); extended delimiter auto-pairing and paired deletion (`{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`, `\begin{env}...\end{env}`); **Book**, **Report**, and **Poster** project templates (9 templates total); updated website showcases and crimson-palette screenshots; plus security and stability hardening (strict package-name validation, template symlink checks, atomic undo for preamble imports, balanced `$$`/command-argument/`\left...\right)` deletion guards, and Swift 6.2 fixes). See [GabeTeX-macOS/CHANGELOG.md](https://github.com/gabe-rbo/GabeTeX-macOS/blob/main/CHANGELOG.md) and [GabeTeX-Linux-Windows/CHANGELOG.md](https://github.com/gabe-rbo/GabeTeX-Linux-Windows/blob/main/CHANGELOG.md).
 - **v1.1.1** (2026-11-19): cross-platform release featuring the redesigned Liquid Glass Online Editor (`docs/`),
   Tectonic WASM fallback compiler with SHA-256 verification across all editions, Zotero 7 local API (`127.0.0.1:23119`)
   BibTeX integration, appearance/theme/accent & Brazilian Portuguese (`pt-BR`) localization, configurable auto-save and

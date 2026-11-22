@@ -352,7 +352,7 @@ html.dark #editor-view {
 #editor-view .tb-symbols.active {
   color: #fff;
   background: var(--ed-accent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 6px rgba(10, 132, 255, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 6px var(--ed-accent-glow);
 }
 #editor-view .tb-symbols.active:hover:not(:disabled) {
   background: var(--ed-accent-hover, var(--ed-accent));

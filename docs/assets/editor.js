@@ -447,6 +447,8 @@
     state.activeFile = name;
     state.initialized = true;
     source.value = state.files[name];
+    autoCloserOffsets = [];
+    lastTrackedValue = source.value;
     updatePresentationButtonVisibility();
     if (!state.history[name]) state.history[name] = [source.value];
     if (typeof state.historyIndex[name] !== 'number') state.historyIndex[name] = state.history[name].length - 1;
@@ -1085,14 +1087,16 @@
     if (code === '\\guillemotleft{}\\guillemotright{}') return 16;
     var blockBody = code.indexOf('\n  \n');
     if (blockBody !== -1) return blockBody + 3;
+    var emptyBracket = code.indexOf('[]');
+    if (emptyBracket !== -1) return emptyBracket + 1;
     var emptyBrace = code.indexOf('{}');
     if (emptyBrace !== -1) return emptyBrace + 1;
+    var toArrowBrace = code.indexOf('{ \\to }');
+    if (toArrowBrace !== -1) return toArrowBrace + 1;
     var spacedBrace = code.indexOf('{  }');
     if (spacedBrace !== -1) return spacedBrace + 2;
     var emptySpaceDelim = code.indexOf('  \\right');
     if (emptySpaceDelim !== -1) return emptySpaceDelim + 1;
-    var emptyBracket = code.indexOf('[]');
-    if (emptyBracket !== -1) return emptyBracket + 1;
     return code.length;
   }
 
@@ -1322,6 +1326,7 @@
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('blur', onCancel);
       if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
       ghost = null;
       document.body.classList.remove('dragging-math-symbol');
@@ -1368,6 +1373,7 @@
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
+    window.addEventListener('blur', onCancel);
   }
 
   function renderMathSymbols() {
@@ -1604,8 +1610,8 @@
     }
 
     if (unmodified && key === 'Enter' && start === end && !isOffsetInTexComment(val, start)) {
-      var betweenBraces = val.charAt(start - 1) === '{' && val.charAt(start) === '}';
-      var betweenDisp = start >= 2 && val.slice(start - 2, start) === '\\[' && val.slice(start, start + 2) === '\\]';
+      var betweenBraces = start > 0 && val.charAt(start - 1) === '{' && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(val, start - 1)) && val.charAt(start) === '}';
+      var betweenDisp = start >= 2 && val.slice(start - 2, start) === '\\[' && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(val, start - 2)) && val.slice(start, start + 2) === '\\]';
       if (betweenBraces || betweenDisp) {
         var ls = val.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
         var indentMatch = /^[ \t]*/.exec(val.slice(ls, start));
@@ -1671,22 +1677,19 @@
     if (escapedPrev) {
       if (key !== '(' && key !== '[') return false;
       var escClose = '\\' + (key === '(' ? ')' : ']');
-      if (start === end) {
-        event.preventDefault();
-        applyPairEdit(val.slice(0, start) + key + escClose + val.slice(end), start + 1, start + 1, []);
-        return true;
+      if (start < end) {
+        if (val.slice(start, end).indexOf('\n') === -1) {
+          event.preventDefault();
+          applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + escClose + val.slice(end), start + 1, end + 1, []);
+          return true;
+        }
+        return false;
       }
-      if (val.slice(start, end).indexOf('\n') === -1) {
-        event.preventDefault();
-        applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + escClose + val.slice(end), start + 1, end + 1, []);
-        return true;
-      }
-      return false;
-    }
-
-    if (key === '$') {
-      if (GMS && GMS.isInMathMode && GMS.isInMathMode(val, start)) return false;
-      if (start > 0 && /[A-Za-z0-9$]/.test(val.charAt(start - 1))) return false;
+      var nextEscCh = start < val.length ? val.charAt(start) : '';
+      if (nextEscCh && !/[\s)}\]$,.;:!?'"\\]/.test(nextEscCh)) return false;
+      event.preventDefault();
+      applyPairEdit(val.slice(0, start) + key + escClose + val.slice(end), start + 1, start + 1, []);
+      return true;
     }
 
     if (start < end) {
@@ -1694,6 +1697,11 @@
       event.preventDefault();
       applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + PAIR_CLOSER[key] + val.slice(end), start + 1, end + 1, []);
       return true;
+    }
+
+    if (key === '$') {
+      if (GMS && GMS.isInMathMode && GMS.isInMathMode(val, start)) return false;
+      if (start > 0 && /[A-Za-z0-9$]/.test(val.charAt(start - 1))) return false;
     }
 
     var nextCh = start < val.length ? val.charAt(start) : '';
