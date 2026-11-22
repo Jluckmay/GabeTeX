@@ -61,9 +61,13 @@ editor that treats that as the normal case. It has three goals:
 
 *Described for the macOS app, which is available today. The Linux and Windows apps are being built towards the same goals.*
 
-- **Projects and navigation:** open any folder or start from a template (Article, Thesis, Beamer, Math Notes, Problem
-  Set); file tree, tabs, Quick Open (⌘P) and a cross-file outline; one-file-per-section writing with `% !TEX root`
-  and `% !TEX program` magic comments.
+- **Projects and navigation:** open any folder or start from nine built-in templates (Article, Article with Sections,
+  Thesis, Beamer Presentation, Math Notes, Problem Set, Book, Report, Poster); file tree, tabs, Quick Open (⌘P) and a
+  cross-file outline; one-file-per-section writing with `% !TEX root` and `% !TEX program` magic comments.
+- **Math & linguistic symbols and smart pairs:** 15-category `Σ` sidebar (470 symbols, including Linguistic Symbols with
+  PDF-style curly quotes and `\log_{}` with its base subscript) with search, click-to-insert, drag-and-drop, automatic
+  `$…$` / `\[…\]` wrapping, and automatic `\usepackage` preamble import; automatic delimiter/environment pairing (`{ }`,
+  `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`, `\begin{env}...\end{env}`) and paired deletion.
 - **Live compilation:** detects MacTeX, TeX Live, BasicTeX and TinyTeX, runs `latexmk` (pdfLaTeX, XeLaTeX, LuaLaTeX)
   in the background in a private shadow copy, so your files are never touched until you save; unsaved text is included.
 - **Errors where they belong:** TeX log and ChkTeX diagnostics underlined at the right line of the right file, an

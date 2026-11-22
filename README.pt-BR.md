@@ -61,9 +61,15 @@ um editor que trate isso como o caso normal. Ele tem três objetivos:
 
 *Descritos para o app de macOS, que já está disponível. Os apps de Linux e Windows estão sendo construídos com os mesmos objetivos.*
 
-- **Projetos e navegação:** abra qualquer pasta ou comece por um template (Artigo, Tese, Beamer, Notas de Matemática,
-  Lista de Exercícios); árvore de arquivos, abas, Quick Open (⌘P) e estrutura entre arquivos; escrita com um arquivo
-  por seção usando os comentários mágicos `% !TEX root` e `% !TEX program`.
+- **Projetos e navegação:** abra qualquer pasta ou comece por um dos nove modelos integrados (Artigo, Artigo com Seções,
+  Tese, Apresentação Beamer, Notas de Matemática, Lista de Exercícios, Livro, Relatório e Pôster); árvore de arquivos,
+  abas, Quick Open (⌘P) e estrutura entre arquivos; escrita com um arquivo por seção usando os comentários mágicos
+  `% !TEX root` e `% !TEX program`.
+- **Símbolos matemáticos/linguísticos e pares inteligentes:** barra lateral `Σ` com 15 categorias (470 símbolos,
+  incluindo Símbolos Linguísticos com aspas curvas estilo PDF e `\log_{}` com subscrito de base) com busca, clique para
+  inserir, arrastar e soltar, delimitação automática `$…$` / `\[…\]` e importação automática de `\usepackage` no
+  preâmbulo; fechamento e exclusão automática de pares (`{ }`, `( )`, `[ ]`, `$ $`, `\( \)`, `\[ \]`,
+  `\begin{env}...\end{env}`).
 - **Compilação ao vivo:** detecta MacTeX, TeX Live, BasicTeX e TinyTeX, executa o `latexmk` (pdfLaTeX, XeLaTeX,
   LuaLaTeX) em segundo plano numa cópia privada, então seus arquivos não são tocados até você salvar; o texto não
   salvo entra na compilação.

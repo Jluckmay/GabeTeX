@@ -35,12 +35,52 @@
   var btnToolbarDownload = document.getElementById('btn-toolbar-download');
   var btnAutoCompile = document.getElementById('btn-autocompile');
   var btnToolbarPresent = document.getElementById('btn-toolbar-present');
+  var btnToolbarIssues = document.getElementById('btn-toolbar-issues');
+  var btnCloseCompile = document.getElementById('btn-close-compile');
+  var btnSidebar = document.getElementById('btn-sidebar');
+  var btnSymbols = document.getElementById('btn-symbols');
+  var tbSidebarSlot = document.getElementById('tb-sidebar-slot');
+  var sidebarHead = document.querySelector('.sidebar-head');
+  var editorDocTitle = document.getElementById('editor-doc-title');
+  var statusCompileCapsule = document.querySelector('.status-compile-capsule');
   var fileList = document.getElementById('file-list');
+
+  function fileIconSvg(name) {
+    var dot = name.lastIndexOf('.');
+    var ext = dot !== -1 ? name.slice(dot + 1).toLowerCase() : '';
+    if (ext === 'bib') {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h3v15H4zM8.5 4.5h3v15h-3zM13.3 5.6l2.9-.8 3.9 14.6-2.9.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    if (ext === 'sty' || ext === 'cls') {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h3.2a1.8 1.8 0 1 1 3.6 0H15v3.2a1.8 1.8 0 1 1 0 3.6V18H11.8a1.8 1.8 0 1 0-3.6 0H5v-3.2a1.8 1.8 0 1 0 0-3.6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    }
+    if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'pdf' || ext === 'eps' || ext === 'svg') {
+      return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5h15a1.5 1.5 0 0 1 1.5 1.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5v-11A1.5 1.5 0 0 1 4.5 5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.5 16l4.6-4.6 3.4 3.4 2.6-2.6 6.4 6.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15.5" cy="9" r="1.5" fill="currentColor"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 2.8h7.8l4.2 4.2v12.5a1.7 1.7 0 0 1-1.7 1.7H6.5a1.7 1.7 0 0 1-1.7-1.7V4.5a1.7 1.7 0 0 1 1.7-1.7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v4.3h4.3M8.3 11.5h7.4M8.3 14.5h7.4M8.3 17.5h4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  function mainStarSvg() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6c.3 0 .6.2.7.5l2.4 5 5.4.8c.7.1 1 .9.5 1.4l-3.9 3.8.9 5.4c.1.7-.6 1.2-1.2.9L12 17.8l-4.8 2.6c-.6.3-1.3-.2-1.2-.9l.9-5.4-3.9-3.8c-.5-.5-.2-1.3.5-1.4l5.4-.8 2.4-5c.1-.3.4-.5.7-.5Z" fill="currentColor"/></svg>';
+  }
+  function setDownloadDisabled(disabled) {
+    btnDownload.disabled = disabled;
+    if (btnToolbarDownload) btnToolbarDownload.disabled = disabled;
+  }
   var tabList = document.querySelector('.tab-list');
   var tabFiles = document.getElementById('tab-files');
   var tabOutline = document.getElementById('tab-outline');
   var sidebarFiles = document.getElementById('sidebar-files');
   var sidebarOutline = document.getElementById('sidebar-outline');
+  var sidebarSymbols = document.getElementById('sidebar-symbols');
+  var symSearch = document.getElementById('sym-search');
+  var symSearchClear = document.getElementById('sym-search-clear');
+  var symList = document.getElementById('sym-list');
+  var symPreviewGlyph = document.getElementById('sym-preview-glyph');
+  var symPreviewCode = document.getElementById('sym-preview-code');
+  var symPreviewPkg = document.getElementById('sym-preview-pkg');
+  var symPreviewName = document.getElementById('sym-preview-name');
+  var editorCodeWrap = document.getElementById('editor-code-wrap');
+  var editorDropCaret = document.getElementById('editor-drop-caret');
   var editorApp = document.getElementById('editor-app');
   var editorWindow = document.querySelector('.editor-window');
   var statusCompile = document.getElementById('status-compile');
@@ -51,10 +91,11 @@
 
   function translate(key, values) {
     var value = window.gabetexTranslate ? window.gabetexTranslate(key) : key;
-    (values || []).forEach(function (replacement, index) {
-      value = value.replace(new RegExp('%' + (index + 1), 'g'), replacement);
+    var list = values || [];
+    return String(value).replace(/%(\d+)/g, function (match, digits) {
+      var idx = parseInt(digits, 10) - 1;
+      return idx >= 0 && idx < list.length ? String(list[idx]) : match;
     });
-    return value;
   }
   function updateOutline() {
     var expression = /\\(part|chapter|section|subsection|subsubsection|paragraph|frame|frametitle)\*?\s*\{([^}]*)\}|\\begin\s*\{frame\}\s*\{([^}]*)\}|\\begin\s*\{frame\}/g;
@@ -104,20 +145,55 @@
     sidebarOutline.appendChild(list);
   }
 
-  /* ---------- beamer detection ---------- */
+  /* ---------- beamer & root detection ---------- */
+  function hasDocumentClass(sourceText) {
+    return typeof sourceText === 'string' && /^((?:[^%\r\n]|\\.)*?)\\documentclass\b/m.test(sourceText);
+  }
+
   function isBeamerSource(sourceText) {
-    return /\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/.test(sourceText);
+    return typeof sourceText === 'string' && /^((?:[^%\r\n]|\\.)*?)\\documentclass\s*(\[[^\]]*\])?\s*\{beamer\}/m.test(sourceText);
+  }
+
+  function resolveMainFile() {
+    var keys = Object.keys(state.files);
+    if (!keys.length) return 'main.tex';
+    var active = state.activeFile;
+    var activeText = state.files[active] || '';
+    var magic = activeText.match(/^\s*%\s*!\s*TEX\s+root\s*=\s*([^\r\n]+)/im);
+    if (magic && magic[1]) {
+      var target = magic[1].trim().replace(/^(\.\/|\.\.\/)+/, '');
+      if (Object.prototype.hasOwnProperty.call(state.files, target)) return target;
+    }
+    var activeStem = active ? active.replace(/\.tex$/i, '') : '';
+    if (activeStem && active !== 'main.tex') {
+      for (var i = 0; i < keys.length; i++) {
+        var candidate = keys[i];
+        if (candidate === active) continue;
+        var text = state.files[candidate] || '';
+        if (!hasDocumentClass(text)) continue;
+        var escapedFull = active.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var escapedStem = activeStem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var incRe = new RegExp('\\\\(?:input|include|subfile)\\s*\\{\\s*(?:\\.\\/)?(?:' + escapedFull + '|' + escapedStem + ')\\s*\\}');
+        if (incRe.test(text)) return candidate;
+      }
+    }
+    if (active && hasDocumentClass(activeText)) return active;
+    if (Object.prototype.hasOwnProperty.call(state.files, 'main.tex') && hasDocumentClass(state.files['main.tex'])) {
+      return 'main.tex';
+    }
+    for (var j = 0; j < keys.length; j++) {
+      if (hasDocumentClass(state.files[keys[j]])) return keys[j];
+    }
+    return Object.prototype.hasOwnProperty.call(state.files, 'main.tex') ? 'main.tex' : (active || keys[0]);
   }
 
   function updatePresentationButtonVisibility() {
-    var beamer = isBeamerSource(source.value);
+    var rootName = resolveMainFile();
+    var rootSource = (rootName && state.files[rootName]) || source.value;
+    var beamer = isBeamerSource(rootSource);
     btnToolbarPresent.hidden = !beamer;
     if (!beamer && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
-      btnToolbarPresent.setAttribute('aria-pressed', 'false');
-      btnToolbarPresent.classList.remove('tb-active');
-      editorWindow.classList.remove('presentation-mode');
-      teardownSlideKeyboard();
-      exitFullscreen();
+      exitPresentationMode();
     }
   }
 
@@ -127,6 +203,7 @@
     openFiles: ['main.tex'],
     activeFile: 'main.tex',
     compiling: false,
+    pendingCompile: false,
     lastCompile: 0,
     pdfBlobUrl: null,
     pdfLoadingTask: null,
@@ -175,18 +252,29 @@
   function updateErrorStatus() {
     var key = state.errors === 1 ? 'editor.errorsOne' : 'editor.errorsMany';
     statusErrors.textContent = translate(key, [state.errors]);
+    statusErrors.classList.toggle('has-errors', state.errors > 0);
+    if (statusErrors.parentElement) statusErrors.parentElement.classList.toggle('has-errors', state.errors > 0);
   }
   function updateWarningStatus() {
     var key = state.warnings === 1 ? 'editor.warningsOne' : 'editor.warningsMany';
     statusWarnings.textContent = translate(key, [state.warnings]);
+    statusWarnings.classList.toggle('has-warnings', state.warnings > 0);
+    if (statusWarnings.parentElement) statusWarnings.parentElement.classList.toggle('has-warnings', state.warnings > 0);
+  }
+  function setCompilePanelVisible(visible) {
+    compilePanel.hidden = !visible;
+    var exp = visible ? 'true' : 'false';
+    statusErrors.setAttribute('aria-expanded', exp);
+    statusWarnings.setAttribute('aria-expanded', exp);
+    if (btnToolbarIssues) {
+      btnToolbarIssues.setAttribute('aria-expanded', exp);
+      btnToolbarIssues.classList.toggle('tb-active', visible);
+    }
   }
   function showCompileOutput() {
     var isHidden = compilePanel.hidden;
-    compilePanel.hidden = !isHidden;
-    statusErrors.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-    statusWarnings.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    setCompilePanelVisible(isHidden);
     if (isHidden) {
-      compilePanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       compileOutput.focus({ preventScroll: true });
     }
   }
@@ -194,14 +282,20 @@
     var label = translate(state.compiling ? 'editor.compiling' : 'editor.compile');
     btnCompile.setAttribute('aria-label', label);
     btnCompile.title = label;
-    if (state.compiling) btnCompile.setAttribute('aria-busy', 'true');
-    else btnCompile.removeAttribute('aria-busy');
+    btnCompile.classList.toggle('busy', !!state.compiling);
+    if (state.compiling) {
+      btnCompile.setAttribute('aria-busy', 'true');
+      if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', 'compiling');
+    } else {
+      btnCompile.removeAttribute('aria-busy');
+    }
   }
   function updateHistoryButton() {
     btnHistory.disabled = (state.historyIndex[state.activeFile] || 0) <= 0;
   }
   function updateTranslatedUI() {
     source.setAttribute('aria-label', translate('editor.sourceLabel', [state.activeFile]));
+    if (editorDocTitle) editorDocTitle.textContent = state.activeFile;
     updateCompileButton();
     updateCompileStatus();
     updateErrorStatus();
@@ -211,12 +305,12 @@
     setUploadStatus(state.uploadMessages);
     renderTabs();
     renderFileList();
+    updateOutline();
     updateCursor();
     updateHistoryButton();
+    if (symbolsBuilt) renderMathSymbols();
   }
   document.addEventListener('gabetex:languagechange', updateTranslatedUI);
-  document.addEventListener('gabetex:languagechange', function () {
-  });
 
   function commitHistorySnapshot() {
     var history = state.history[state.activeFile] || [];
@@ -242,6 +336,8 @@
     state.historyIndex[state.activeFile] = index;
     source.value = state.history[state.activeFile][index];
     state.files[state.activeFile] = source.value;
+    autoCloserOffsets = [];
+    lastTrackedValue = source.value;
     renderGutter();
     updateOutline();
     updateCursor();
@@ -249,18 +345,36 @@
     setSourceStatus('editor.historyRestored');
     updateHistoryButton();
   }
+  var lastSidebarTab = 'files';
+  var symbolsBuilt = false;
+  var collapsedSymbolCats = {};
   function setSidebarTab(tab) {
     var showFiles = tab === 'files';
+    var showOutline = tab === 'outline';
+    var showSymbols = tab === 'symbols';
+    if (!showSymbols) lastSidebarTab = showOutline ? 'outline' : 'files';
     tabFiles.classList.toggle('active', showFiles);
-    tabOutline.classList.toggle('active', !showFiles);
+    tabOutline.classList.toggle('active', showOutline);
+    if (tabFiles.parentNode) {
+      tabFiles.parentNode.setAttribute('data-index', showOutline ? '1' : '0');
+      tabFiles.parentNode.setAttribute('data-inactive', showSymbols ? 'true' : 'false');
+    }
     tabFiles.setAttribute('aria-selected', showFiles ? 'true' : 'false');
-    tabOutline.setAttribute('aria-selected', showFiles ? 'false' : 'true');
+    tabOutline.setAttribute('aria-selected', showOutline ? 'true' : 'false');
     tabFiles.tabIndex = showFiles ? 0 : -1;
-    tabOutline.tabIndex = showFiles ? -1 : 0;
+    tabOutline.tabIndex = showOutline ? 0 : -1;
+    if (btnSymbols) {
+      btnSymbols.classList.toggle('active', showSymbols);
+      btnSymbols.setAttribute('aria-pressed', showSymbols ? 'true' : 'false');
+    }
     sidebarFiles.hidden = !showFiles;
-    sidebarOutline.hidden = showFiles;
+    sidebarOutline.hidden = !showOutline;
+    if (sidebarSymbols) sidebarSymbols.hidden = !showSymbols;
     sidebarFiles.classList.toggle('hidden', !showFiles);
-    sidebarOutline.classList.toggle('hidden', showFiles);
+    sidebarOutline.classList.toggle('hidden', !showOutline);
+    if (sidebarSymbols) sidebarSymbols.classList.toggle('hidden', !showSymbols);
+    if (showOutline) updateOutline();
+    if (showSymbols && !symbolsBuilt) renderMathSymbols();
   }
 
   /* ---------- file tabs ---------- */
@@ -268,7 +382,7 @@
     tabList.innerHTML = '';
     state.openFiles.forEach(function (name, index) {
       var group = document.createElement('div');
-      group.className = 'etab-group';
+      group.className = 'etab-group' + (name === state.activeFile ? ' active' : '');
       group.setAttribute('role', 'presentation');
       var tab = document.createElement('button');
       tab.type = 'button';
@@ -281,7 +395,7 @@
       tab.setAttribute('data-file', name);
         var fileIcon = document.createElement('span');
         fileIcon.className = 'etab-file-icon';
-        fileIcon.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-6l-2-2z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        fileIcon.innerHTML = fileIconSvg(name);
         var nameSpan = document.createElement('span');
         nameSpan.textContent = name;
         tab.appendChild(fileIcon);
@@ -333,13 +447,17 @@
     state.activeFile = name;
     state.initialized = true;
     source.value = state.files[name];
+    autoCloserOffsets = [];
+    lastTrackedValue = source.value;
     updatePresentationButtonVisibility();
     if (!state.history[name]) state.history[name] = [source.value];
     if (typeof state.historyIndex[name] !== 'number') state.historyIndex[name] = state.history[name].length - 1;
     source.setAttribute('aria-label', translate('editor.sourceLabel', [name]));
+    if (editorDocTitle) editorDocTitle.textContent = name;
     renderTabs();
     renderFileList();
     renderGutter();
+    updateOutline();
     setSourceStatus('editor.opened', [name]);
     updateCursor();
     updateHistoryButton();
@@ -381,6 +499,10 @@
     delete state.files[name];
     delete state.history[name];
     delete state.historyIndex[name];
+    if (compileWorker) {
+      compileWorker.terminate();
+      compileWorker = null;
+    }
     if (openIndex !== -1) state.openFiles.splice(openIndex, 1);
     renderTabs();
     renderFileList();
@@ -393,12 +515,14 @@
   /* ---------- file tree ---------- */
   function renderFileList() {
     fileList.innerHTML = '';
-    Object.keys(state.files).forEach(function (name) {
+    var keys = Object.keys(state.files);
+    var mainFile = resolveMainFile();
+    keys.forEach(function (name) {
       var li = document.createElement('li');
       li.className = 'ft-item ft-file' + (name === state.activeFile ? ' active' : '');
         var star = document.createElement('span');
         star.className = 'ft-star';
-        star.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3.5l-1.5 4.5-4.5.5-1.5-4.5L2 8l4.5 1.5L8 16l1.5-4.5L14 8z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        star.innerHTML = fileIconSvg(name);
         var open = document.createElement('button');
         open.type = 'button';
         open.className = 'ft-open';
@@ -414,6 +538,13 @@
         remove.addEventListener('click', function () { deleteFile(name); });
         li.appendChild(star);
         li.appendChild(open);
+        if (name === mainFile) {
+          var mainStar = document.createElement('span');
+          mainStar.className = 'ft-main-star';
+          mainStar.setAttribute('aria-hidden', 'true');
+          mainStar.innerHTML = mainStarSvg();
+          li.appendChild(mainStar);
+        }
         li.appendChild(remove);
         fileList.appendChild(li);
       });
@@ -430,17 +561,19 @@
     addFileError.hidden = true;
     btnAddFile.focus();
   });
+  var VALID_FILE_NAME = /^(?![.\s])[^\\/:*?"<>|\x00-\x1f\x7f\u202a-\u202e]{1,120}$/;
+
   addFileForm.addEventListener('submit', function (event) {
     event.preventDefault();
     var name = newFileName.value.trim();
-    if (!name || /[\\/:*?"<>|]/.test(name) || name === '.' || name === '..') {
+    if (!name || !VALID_FILE_NAME.test(name) || name === '.' || name === '..') {
       addFileError.textContent = translate('editor.invalidFileName');
       addFileError.hidden = false;
       newFileName.focus();
       return;
     }
-    if (/\.tex$/i.test(name) === false) name += '.tex';
-    if (state.files[name]) {
+    if (!/\.(tex|bib|sty|cls)$/i.test(name)) name += '.tex';
+    if (Object.prototype.hasOwnProperty.call(state.files, name)) {
       addFileError.textContent = translate('editor.fileExists');
       addFileError.hidden = false;
       newFileName.focus();
@@ -474,20 +607,22 @@
     });
   }
   function importTexFiles(fileList) {
-    var filesToRead = Array.prototype.slice.call(fileList);
+    var filesToRead = Array.prototype.slice.call(fileList, 0, 50);
     var imported = [];
     var errors = [];
     var pendingNames = Object.create(null);
+    var totalBytes = 0;
     var pending = filesToRead.map(function (file) {
-      if (!/\.tex$/i.test(file.name)) {
+      if (!/\.(tex|bib|sty|cls)$/i.test(file.name)) {
         errors.push({ key: 'editor.uploadInvalidType' });
         return Promise.resolve(null);
       }
-      if (/[\\/:*?"<>|]/.test(file.name) || file.name === '.' || file.name === '..') {
+      if (!VALID_FILE_NAME.test(file.name) || file.name === '.' || file.name === '..') {
         errors.push({ key: 'editor.invalidFileName' });
         return Promise.resolve(null);
       }
-      if (file.size > 100 * 1024) {
+      totalBytes += file.size || 0;
+      if (file.size > 100 * 1024 || totalBytes > 2 * 1024 * 1024) {
         errors.push({ key: 'editor.uploadTooLarge', values: [file.name] });
         return Promise.resolve(null);
       }
@@ -595,86 +730,6 @@
     setPreviewStatus(hasMath ? 'editor.mathDetected' : 'editor.ready');
   }
 
-  /* ---------- prose spell checking ---------- */
-  var skippedTexCommands = {
-    documentclass: 1, usepackage: 1, RequirePackage: 1, input: 1, include: 1,
-    subfile: 1, includeonly: 1, label: 1, ref: 1, pageref: 1, eqref: 1,
-    autoref: 1, cref: 1, Cref: 1, cite: 1, citep: 1, citet: 1,
-    citeauthor: 1, nocite: 1, bibliography: 1, bibliographystyle: 1,
-    bibitem: 1, includegraphics: 1, graphicspath: 1, url: 1, path: 1,
-    nolinkurl: 1, verbatiminput: 1, lstinputlisting: 1, tag: 1, tagform: 1,
-    ensuremath: 1, texttt: 1, lstinline: 1, mintinline: 1
-  };
-  var mathEnvironments = {
-    math: true, displaymath: true, equation: true, align: true, alignat: true,
-    flalign: true, gather: true, multline: true, eqnarray: true, split: true
-  };
-  var literalEnvironments = {
-    verbatim: true, 'verbatim*': true, Verbatim: true, 'Verbatim*': true,
-    lstlisting: true, minted: true, comment: true, alltt: true
-  };
-
-  function skipTexGroup(text, index, open, close) {
-    if (text[index] !== open) return index;
-    var depth = 1;
-    index++;
-    while (index < text.length && depth) {
-      if (text[index] === '\\') {
-        index += 2;
-      } else if (text[index] === open) {
-        depth++;
-        index++;
-      } else if (text[index] === close) {
-        depth--;
-        index++;
-      } else {
-        index++;
-      }
-    }
-    return index;
-  }
-
-  function skipTexWhitespace(text, index) {
-    while (index < text.length && /\s/.test(text[index])) index++;
-    return index;
-  }
-
-  function skipTexOptions(text, index) {
-    index = skipTexWhitespace(text, index);
-    while (text[index] === '[') {
-      index = skipTexGroup(text, index, '[', ']');
-      index = skipTexWhitespace(text, index);
-    }
-    return index;
-  }
-
-  function readTexGroup(text, index) {
-    if (text[index] !== '{') return null;
-    var end = skipTexGroup(text, index, '{', '}');
-    return { value: text.slice(index + 1, Math.max(index + 1, end - 1)), end: end };
-  }
-
-  function skipMathDelimiter(text, index, delimiter) {
-    var closing = delimiter === '\\(' ? '\\)' : delimiter === '\\[' ? '\\]' : delimiter;
-    var cursor = index + delimiter.length;
-    while (cursor < text.length) {
-      var found = text.indexOf(closing, cursor);
-      if (found === -1) return text.length;
-      var slashes = 0;
-      for (var back = found - 1; back >= 0 && text[back] === '\\'; back--) slashes++;
-      var isPartOfDisplayMath = delimiter === '$' && (text[found - 1] === '$' || text[found + 1] === '$');
-      if (slashes % 2 === 0 && !isPartOfDisplayMath) return found + closing.length;
-      cursor = found + closing.length;
-    }
-    return text.length;
-  }
-
-
-
-
-
-
-
   /* ---------- compile ---------- */
   function appendOutput(text, cls) {
     var line = document.createElement('div');
@@ -756,7 +811,7 @@
             resolve(message);
           } else if (message.type === 'error') {
             cleanup();
-            if (message.message === 'unreachable' || (message.log && message.log.indexOf('panicked') !== -1)) {
+            if (/unreachable|out of bounds|stack|panicked|aborted|memory/i.test((message.message || '') + ' ' + (message.log || ''))) {
               worker.terminate();
               if (compileWorker === worker) compileWorker = null;
             }
@@ -870,22 +925,22 @@
   }
 
   async function compile() {
-    if (state.compiling) return;
+    if (state.compiling) {
+      state.pendingCompile = true;
+      return;
+    }
     var start = Date.now();
     var pdfGenerated = false;
-
-    var source = state.files[state.activeFile] || '';
+    var targetMainFile = resolveMainFile();
 
     state.compiling = true;
+    state.pendingCompile = false;
     updateCompileButton();
     setPreviewStatus('editor.compiling');
     previewEmpty.hidden = true;
     previewFrame.style.display = 'none';
     previewControls.hidden = true;
     clearOutput();
-    compilePanel.hidden = false;
-    statusErrors.setAttribute('aria-expanded', 'true');
-    statusWarnings.setAttribute('aria-expanded', 'true');
     previewFrame.setAttribute('aria-busy', 'true');
     if (state.pageObserver) state.pageObserver.disconnect();
     state.pageObserver = null;
@@ -897,18 +952,20 @@
       }
       state.pdfLoadingTask = null;
     }
+    state.pdfDoc = null;
+    presentationCache = {};
     previewFrame.replaceChildren();
     if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
     state.pdfBlobUrl = null;
-    btnDownload.disabled = true;
+    setDownloadDisabled(true);
 
     try {
-      var result = await compileWithTectonic(state.files, state.activeFile);
+      var result = await compileWithTectonic(state.files, targetMainFile);
       var blob = new Blob([result.pdf], { type: 'application/pdf' });
       var url = URL.createObjectURL(blob);
       if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
       state.pdfBlobUrl = url;
-      btnDownload.disabled = false;
+      setDownloadDisabled(false);
       pdfGenerated = true;
       if (result.log) appendOutput(result.log, result.errors ? 'warn' : '');
       appendOutput(
@@ -917,6 +974,8 @@
       );
       state.errors = result.errors || 0;
       state.warnings = result.warnings || 0;
+      if (state.errors > 0) setCompilePanelVisible(true);
+      if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', state.errors ? 'failed' : 'succeeded');
       previewFrame.style.display = 'block';
       await renderPdf(result.pdf);
       previewEmpty.hidden = true;
@@ -925,6 +984,7 @@
       state.lastCompile = ((Date.now() - start) / 1000).toFixed(1);
       updateCompileStatus();
     } catch (error) {
+      setCompilePanelVisible(true);
       if (error.log) appendOutput(error.log, 'warn');
       var firstError = error.log ? error.log.match(/^!.*$/m) : null;
       if (firstError) appendOutput(firstError[0], 'err');
@@ -943,12 +1003,21 @@
         state.errors = 1;
         state.warnings = 0;
       }
+      if (statusCompileCapsule) statusCompileCapsule.setAttribute('data-state', 'failed');
     } finally {
       previewFrame.removeAttribute('aria-busy');
       state.compiling = false;
       updateCompileButton();
       updateErrorStatus();
       updateWarningStatus();
+      if (state.pendingCompile) {
+        state.pendingCompile = false;
+        window.setTimeout(function () {
+          compile().catch(function (err) {
+            console.error('Queued compile failed:', err);
+          });
+        }, 50);
+      }
     }
   }
 
@@ -959,6 +1028,16 @@
   });
   statusErrors.addEventListener('click', showCompileOutput);
   statusWarnings.addEventListener('click', showCompileOutput);
+  if (btnToolbarIssues) btnToolbarIssues.addEventListener('click', showCompileOutput);
+  if (btnCloseCompile) btnCloseCompile.addEventListener('click', function () { setCompilePanelVisible(false); });
+  if (btnSidebar) {
+    btnSidebar.addEventListener('click', function () {
+      var collapsed = editorWindow.classList.toggle('no-sidebar');
+      btnSidebar.setAttribute('aria-pressed', collapsed ? 'false' : 'true');
+      if (collapsed && tbSidebarSlot) tbSidebarSlot.appendChild(btnSidebar);
+      else if (!collapsed && sidebarHead) sidebarHead.appendChild(btnSidebar);
+    });
+  }
   btnHistory.addEventListener('click', undoEdit);
   tabFiles.addEventListener('click', function () { setSidebarTab('files'); });
   tabOutline.addEventListener('click', function () {
@@ -973,9 +1052,448 @@
     nextTab.focus();
     nextTab.click();
   });
+
+  /* ---------- math symbols panel & click / drag-and-drop insertion ---------- */
+  var suppressSymbolClick = false;
+  var activeSymbolDragCleanup = null;
+  var dropMirror = null;
+
+  function isQuoteDisplay(d) {
+    return /[“”‘’]/.test(d || '');
+  }
+
+  function showSymbolPreview(sym) {
+    if (!sym) return;
+    if (symPreviewGlyph) {
+      symPreviewGlyph.textContent = sym.display;
+      symPreviewGlyph.classList.toggle('quote', isQuoteDisplay(sym.display));
+    }
+    if (symPreviewCode) symPreviewCode.textContent = sym.code;
+    if (symPreviewPkg) {
+      symPreviewPkg.textContent = sym.pkg ? ('\\usepackage{' + sym.pkg + '}') : '';
+      symPreviewPkg.hidden = !sym.pkg;
+    }
+    if (symPreviewName) symPreviewName.textContent = sym.name;
+  }
+
+  var autoCloserOffsets = [];
+  var lastTrackedValue = source ? source.value : '';
+  var PAIR_CLOSER = { '{': '}', '(': ')', '[': ']', '$': '$' };
+  var PAIR_REVERSE = { '}': '{', ')': '(', ']': '[', '$': '$' };
+
+  function caretOffsetInsideInserted(code) {
+    if (code === "``''") return 2;
+    if (code === "`'") return 1;
+    if (code === '\\guillemotleft{}\\guillemotright{}') return 16;
+    var blockBody = code.indexOf('\n  \n');
+    if (blockBody !== -1) return blockBody + 3;
+    var emptyBracket = code.indexOf('[]');
+    if (emptyBracket !== -1) return emptyBracket + 1;
+    var emptyBrace = code.indexOf('{}');
+    if (emptyBrace !== -1) return emptyBrace + 1;
+    var toArrowBrace = code.indexOf('{ \\to }');
+    if (toArrowBrace !== -1) return toArrowBrace + 1;
+    var spacedBrace = code.indexOf('{  }');
+    if (spacedBrace !== -1) return spacedBrace + 2;
+    var emptySpaceDelim = code.indexOf('  \\right');
+    if (emptySpaceDelim !== -1) return emptySpaceDelim + 1;
+    return code.length;
+  }
+
+  function pushFileHistorySnapshot(fileName, content) {
+    if (!Array.isArray(state.history[fileName])) return;
+    var hIdx = state.historyIndex[fileName] || 0;
+    var hist = state.history[fileName].slice(0, hIdx + 1);
+    if (hist[hist.length - 1] === content) return;
+    hist.push(content);
+    if (hist.length > 50) hist.shift();
+    state.history[fileName] = hist;
+    state.historyIndex[fileName] = hist.length - 1;
+  }
+
+  function insertMathSymbolAt(sym, start, end) {
+    if (!sym || !source) return;
+    var GMS = window.GabeTeXMathSymbols;
+    var code = sym.code;
+    var val = source.value;
+    var fallback = typeof source.selectionStart === 'number' ? source.selectionStart : val.length;
+    var s = Math.max(0, Math.min(typeof start === 'number' ? start : fallback, val.length));
+    var e = Math.max(s, Math.min(typeof end === 'number' ? end : (typeof source.selectionEnd === 'number' ? source.selectionEnd : s), val.length));
+
+    var baseVal = val;
+    if (sym.pkg && GMS && GMS.planPackageImport && GMS.hasPackageImport) {
+      var pkgPlan = GMS.planPackageImport(val, sym.pkg);
+      if (pkgPlan) {
+        baseVal = val.slice(0, pkgPlan.offset) + pkgPlan.text + val.slice(pkgPlan.offset);
+        if (pkgPlan.offset <= s) s += pkgPlan.text.length;
+        if (pkgPlan.offset <= e) e += pkgPlan.text.length;
+      } else if (!GMS.hasPackageImport(val, sym.pkg)) {
+        var mainName = resolveMainFile();
+        if (mainName && mainName !== state.activeFile && Object.prototype.hasOwnProperty.call(state.files, mainName)) {
+          var mainVal = state.files[mainName] || '';
+          var mainPlan = GMS.planPackageImport(mainVal, sym.pkg);
+          if (mainPlan) {
+            var updatedMain = mainVal.slice(0, mainPlan.offset) + mainPlan.text + mainVal.slice(mainPlan.offset);
+            state.files[mainName] = updatedMain;
+            pushFileHistorySnapshot(mainName, updatedMain);
+          }
+        }
+      }
+    }
+
+    var plan = (!sym.textMode && GMS && GMS.prepareInsertion)
+      ? GMS.prepareInsertion(baseVal, s, e, code)
+      : { from: s, to: e, text: code, moveAfterClosingDollar: false };
+    commitHistorySnapshot();
+    source.value = baseVal.slice(0, plan.from) + plan.text + baseVal.slice(plan.to);
+    autoCloserOffsets = [];
+    lastTrackedValue = source.value;
+    var innerOffset = caretOffsetInsideInserted(code);
+    var caret;
+    if (innerOffset < code.length) {
+      var codeIdx = plan.text.indexOf(code);
+      caret = plan.from + (codeIdx !== -1 ? codeIdx : 0) + innerOffset;
+    } else if (plan.moveAfterClosingDollar) {
+      caret = Math.min(source.value.length, plan.from + plan.text.length + 1);
+    } else {
+      caret = plan.from + plan.text.length;
+    }
+    source.focus();
+    source.setSelectionRange(caret, caret);
+    source.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function ensureDropMirror() {
+    if (dropMirror) return dropMirror;
+    dropMirror = document.createElement('div');
+    dropMirror.setAttribute('aria-hidden', 'true');
+    dropMirror.style.position = 'fixed';
+    dropMirror.style.visibility = 'hidden';
+    dropMirror.style.pointerEvents = 'none';
+    dropMirror.style.zIndex = '-1';
+    dropMirror.style.margin = '0';
+    dropMirror.style.border = '0';
+    dropMirror.style.boxSizing = 'border-box';
+    dropMirror.style.whiteSpace = 'pre-wrap';
+    dropMirror.style.wordWrap = 'break-word';
+    dropMirror.style.overflowWrap = 'break-word';
+    var host = document.getElementById('editor-view') || document.body;
+    host.appendChild(dropMirror);
+    return dropMirror;
+  }
+
+  function hideDropCaret() {
+    if (editorDropCaret) editorDropCaret.hidden = true;
+  }
+
+  function resolveTextareaDrop(clientX, clientY) {
+    if (!source || !editorCodeWrap) return null;
+    var sr = source.getBoundingClientRect();
+    if (clientX < sr.left || clientX > sr.right || clientY < sr.top || clientY > sr.bottom) {
+      return null;
+    }
+    var mirror = ensureDropMirror();
+    var cs = getComputedStyle(source);
+    mirror.style.font = cs.font;
+    mirror.style.fontVariantLigatures = cs.fontVariantLigatures;
+    mirror.style.letterSpacing = cs.letterSpacing;
+    mirror.style.wordSpacing = cs.wordSpacing;
+    mirror.style.tabSize = cs.tabSize;
+    mirror.style.lineHeight = cs.lineHeight;
+    mirror.style.paddingTop = cs.paddingTop;
+    mirror.style.paddingRight = cs.paddingRight;
+    mirror.style.paddingBottom = cs.paddingBottom;
+    mirror.style.paddingLeft = cs.paddingLeft;
+    mirror.style.left = (sr.left + source.clientLeft - source.scrollLeft) + 'px';
+    mirror.style.top = (sr.top + source.clientTop - source.scrollTop) + 'px';
+    mirror.style.width = source.clientWidth + 'px';
+
+    var text = source.value;
+    var wrapRect = editorCodeWrap.getBoundingClientRect();
+    var lh = parseFloat(cs.lineHeight) || 21;
+    if (!text.length) {
+      var padLeft = parseFloat(cs.paddingLeft) || 16;
+      var padTop = parseFloat(cs.paddingTop) || 12;
+      return {
+        offset: 0,
+        x: sr.left + source.clientLeft + padLeft - source.scrollLeft - wrapRect.left,
+        y: sr.top + source.clientTop + padTop - source.scrollTop - wrapRect.top,
+        height: lh
+      };
+    }
+
+    mirror.textContent = text + '\u200b';
+    var textNode = mirror.firstChild;
+    var range = document.createRange();
+    function rectAt(idx) {
+      var safe = Math.max(0, Math.min(idx, text.length));
+      range.setStart(textNode, safe);
+      range.collapse(true);
+      var rects = range.getClientRects();
+      return rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+    }
+
+    var firstRect = rectAt(0);
+    var lastRect = rectAt(text.length);
+    var lineFirst = 0;
+    if (clientY <= firstRect.top) {
+      lineFirst = 0;
+    } else if (clientY >= lastRect.bottom) {
+      var loLast = 0;
+      var hiLast = text.length;
+      while (loLast < hiLast) {
+        var midLast = (loLast + hiLast) >> 1;
+        if (Math.abs(rectAt(midLast).top - lastRect.top) < 4) hiLast = midLast;
+        else loLast = midLast + 1;
+      }
+      lineFirst = loLast;
+    } else {
+      var lo = 0;
+      var hi = text.length;
+      while (lo < hi) {
+        var mid = (lo + hi) >> 1;
+        if (rectAt(mid).bottom > clientY) hi = mid;
+        else lo = mid + 1;
+      }
+      lineFirst = lo;
+    }
+
+    var lineTop = rectAt(lineFirst).top;
+    var loEnd = lineFirst;
+    var hiEnd = text.length;
+    while (loEnd < hiEnd) {
+      var midEnd = (loEnd + hiEnd + 1) >> 1;
+      if (rectAt(midEnd).top <= lineTop + 4) loEnd = midEnd;
+      else hiEnd = midEnd - 1;
+    }
+    var lineEnd = loEnd;
+
+    var best = lineFirst;
+    if (clientX <= rectAt(lineFirst).left) {
+      best = lineFirst;
+    } else if (clientX >= rectAt(lineEnd).left) {
+      best = lineEnd;
+    } else {
+      var loX = lineFirst;
+      var hiX = lineEnd;
+      while (loX < hiX) {
+        var midX = (loX + hiX) >> 1;
+        if (rectAt(midX).left >= clientX) hiX = midX;
+        else loX = midX + 1;
+      }
+      best = loX;
+      if (best > lineFirst) {
+        var curDist = Math.abs(rectAt(best).left - clientX);
+        var prevDist = Math.abs(rectAt(best - 1).left - clientX);
+        if (prevDist < curDist) best = best - 1;
+      }
+    }
+
+    var chosen = rectAt(best);
+    var clampedTop = Math.max(sr.top, Math.min(chosen.top, sr.bottom - 4));
+    var clampedLeft = Math.max(sr.left, Math.min(chosen.left, sr.right - 2));
+    return {
+      offset: best,
+      x: clampedLeft - wrapRect.left,
+      y: clampedTop - wrapRect.top,
+      height: Math.max(14, chosen.height || lh)
+    };
+  }
+
+  function showDropCaretAt(drop) {
+    if (!editorDropCaret) return;
+    if (!drop) {
+      editorDropCaret.hidden = true;
+      return;
+    }
+    editorDropCaret.style.transform = 'translate(' + drop.x + 'px, ' + drop.y + 'px)';
+    editorDropCaret.style.height = drop.height + 'px';
+    editorDropCaret.hidden = false;
+  }
+
+  function startSymbolDrag(event, sym) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    if (activeSymbolDragCleanup) activeSymbolDragCleanup();
+    showSymbolPreview(sym);
+    var startX = event.clientX;
+    var startY = event.clientY;
+    var dragging = false;
+    var lastDrop = null;
+    var ghost = null;
+
+    function cleanup() {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('blur', onCancel);
+      if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      ghost = null;
+      document.body.classList.remove('dragging-math-symbol');
+      hideDropCaret();
+      activeSymbolDragCleanup = null;
+    }
+
+    function onMove(ev) {
+      if (!dragging) {
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+        dragging = true;
+        ghost = document.createElement('div');
+        ghost.className = 'ed-sym-drag-ghost';
+        var glyphSpan = document.createElement('span');
+        glyphSpan.className = 'glyph' + (isQuoteDisplay(sym.display) ? ' quote' : '');
+        glyphSpan.textContent = sym.display;
+        var codeEl = document.createElement('code');
+        codeEl.textContent = sym.code;
+        ghost.appendChild(glyphSpan);
+        ghost.appendChild(codeEl);
+        (editorApp || document.body).appendChild(ghost);
+        document.body.classList.add('dragging-math-symbol');
+      }
+      ghost.style.left = (ev.clientX + 12) + 'px';
+      ghost.style.top = (ev.clientY - 14) + 'px';
+      lastDrop = resolveTextareaDrop(ev.clientX, ev.clientY);
+      showDropCaretAt(lastDrop);
+      ghost.classList.toggle('over-editor', !!lastDrop);
+    }
+
+    function onUp(ev) {
+      var wasDragging = dragging;
+      var drop = wasDragging ? resolveTextareaDrop(ev.clientX, ev.clientY) : null;
+      cleanup();
+      if (!wasDragging) return;
+      suppressSymbolClick = true;
+      setTimeout(function () { suppressSymbolClick = false; }, 0);
+      if (drop) insertMathSymbolAt(sym, drop.offset, drop.offset);
+    }
+
+    function onCancel() { cleanup(); }
+
+    activeSymbolDragCleanup = cleanup;
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
+    window.addEventListener('blur', onCancel);
+  }
+
+  function renderMathSymbols() {
+    if (!symList || !window.GabeTeXMathSymbols) return;
+    symbolsBuilt = true;
+    var query = symSearch ? symSearch.value : '';
+    var searching = String(query).replace(/^\s+|\s+$/g, '').length > 0;
+    var categories = window.GabeTeXMathSymbols.filter(query, translate);
+    symList.innerHTML = '';
+    if (!categories.length) {
+      var empty = document.createElement('p');
+      empty.className = 'ed-sym-empty';
+      empty.textContent = translate('editor.noMatchingSymbols');
+      symList.appendChild(empty);
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < categories.length; i++) {
+      (function (cat) {
+        var expanded = searching || !collapsedSymbolCats[cat.id];
+        var catWrap = document.createElement('div');
+        catWrap.className = 'ed-sym-cat';
+
+        var catBtn = document.createElement('button');
+        catBtn.type = 'button';
+        catBtn.className = 'ed-sym-cat-btn';
+        catBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+
+        var chev = document.createElement('span');
+        chev.className = 'ed-sym-cat-chev';
+        chev.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        var catIcon = document.createElement('span');
+        catIcon.className = 'ed-sym-cat-icon';
+        catIcon.textContent = cat.icon;
+
+        var catTitle = document.createElement('span');
+        catTitle.className = 'ed-sym-cat-title';
+        catTitle.textContent = translate(cat.labelKey);
+
+        var catCount = document.createElement('span');
+        catCount.className = 'ed-sym-cat-count';
+        catCount.textContent = String(cat.symbols.length);
+
+        catBtn.appendChild(chev);
+        catBtn.appendChild(catIcon);
+        catBtn.appendChild(catTitle);
+        catBtn.appendChild(catCount);
+
+        var grid = document.createElement('div');
+        grid.className = 'ed-sym-grid';
+        grid.hidden = !expanded;
+
+        for (var j = 0; j < cat.symbols.length; j++) {
+          (function (sym) {
+            var tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'ed-sym-tile' + (isQuoteDisplay(sym.display) ? ' quote' : (sym.display.length >= 3 ? ' wide' : ''));
+            tile.textContent = sym.display;
+            tile.setAttribute('draggable', 'false');
+            tile.setAttribute('data-code', sym.code);
+            tile.title = sym.pkg ? (sym.code + ' — ' + sym.name + ' (\\usepackage{' + sym.pkg + '})') : (sym.code + ' — ' + sym.name);
+            tile.setAttribute('aria-label', sym.name + ' (' + sym.code + ')');
+
+            tile.addEventListener('pointerenter', function () { showSymbolPreview(sym); });
+            tile.addEventListener('focus', function () { showSymbolPreview(sym); });
+            tile.addEventListener('pointerdown', function (e) { startSymbolDrag(e, sym); });
+            tile.addEventListener('click', function () {
+              if (suppressSymbolClick) return;
+              showSymbolPreview(sym);
+              insertMathSymbolAt(sym);
+            });
+            grid.appendChild(tile);
+          })(cat.symbols[j]);
+        }
+
+        catBtn.addEventListener('click', function () {
+          if (searching) return;
+          var next = catBtn.getAttribute('aria-expanded') !== 'true';
+          if (next) delete collapsedSymbolCats[cat.id];
+          else collapsedSymbolCats[cat.id] = true;
+          catBtn.setAttribute('aria-expanded', next ? 'true' : 'false');
+          grid.hidden = !next;
+        });
+
+        catWrap.appendChild(catBtn);
+        catWrap.appendChild(grid);
+        frag.appendChild(catWrap);
+      })(categories[i]);
+    }
+    symList.appendChild(frag);
+  }
+
+  if (btnSymbols) {
+    btnSymbols.addEventListener('click', function () {
+      var active = sidebarSymbols && !sidebarSymbols.hidden;
+      setSidebarTab(active ? lastSidebarTab : 'symbols');
+    });
+  }
+  if (symSearch) {
+    symSearch.addEventListener('input', function () {
+      if (symSearchClear) symSearchClear.hidden = symSearch.value.length === 0;
+      renderMathSymbols();
+    });
+  }
+  if (symSearchClear) {
+    symSearchClear.addEventListener('click', function () {
+      if (symSearch) {
+        symSearch.value = '';
+        symSearch.focus();
+      }
+      symSearchClear.hidden = true;
+      renderMathSymbols();
+    });
+  }
   btnSplit.addEventListener('click', function () {
     var split = editorWindow.classList.toggle('is-split-view');
     btnSplit.setAttribute('aria-pressed', split ? 'true' : 'false');
+    btnSplit.classList.toggle('tb-active', split);
   });
 
   /* ---------- draggable dividers ---------- */
@@ -988,6 +1506,7 @@
       var startX = event.clientX;
       var startSidebar = parseInt(getComputedStyle(editorSidebar).width, 10);
       var startPreview = parseInt(getComputedStyle(editorPreviewPane).width, 10);
+      editorWindow.classList.add('is-resizing');
 
       function onMouseMove(moveEvent) {
         var dx = moveEvent.clientX - startX;
@@ -997,6 +1516,7 @@
       function onMouseUp() {
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
+        editorWindow.classList.remove('is-resizing');
         if (onEnd) onEnd();
       }
 
@@ -1013,17 +1533,210 @@
     document.documentElement.style.setProperty('--sidebar-width', newWidth + 'px');
   });
 
-  startDrag(dividerPreview, function (dx, startPreview) {
+  startDrag(dividerPreview, function (dx, _startSidebar, startPreview) {
     var newWidth = Math.max(200, Math.min(600, startPreview - dx));
     document.documentElement.style.setProperty('--preview-width', newWidth + 'px');
   });
+  function syncAutoClosersAfterInput() {
+    if (!source) return;
+    var next = source.value;
+    if (typeof lastTrackedValue === 'string' && lastTrackedValue !== next && autoCloserOffsets.length) {
+      var delta = next.length - lastTrackedValue.length;
+      var caret = typeof source.selectionStart === 'number' ? source.selectionStart : next.length;
+      var prevCaret = Math.max(0, caret - delta);
+      var kept = [];
+      for (var i = 0; i < autoCloserOffsets.length; i++) {
+        var shifted = prevCaret <= autoCloserOffsets[i] ? autoCloserOffsets[i] + delta : autoCloserOffsets[i];
+        var ch = next.charAt(shifted);
+        if (shifted >= 0 && shifted < next.length && PAIR_REVERSE[ch] && caret <= shifted) {
+          kept.push(shifted);
+        }
+      }
+      autoCloserOffsets = kept;
+    }
+    lastTrackedValue = next;
+  }
+
+  function hasAutoCloserAt(offset, ch) {
+    for (var i = 0; i < autoCloserOffsets.length; i++) {
+      if (autoCloserOffsets[i] === offset && source.value.charAt(offset) === ch) return i;
+    }
+    return -1;
+  }
+
+  function isOffsetInTexComment(text, pos) {
+    var lineStart = text.lastIndexOf('\n', Math.max(0, pos - 1)) + 1;
+    var GMS = window.GabeTeXMathSymbols;
+    for (var i = lineStart; i < pos; i++) {
+      if (text.charCodeAt(i) === 37 && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(text, i))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function applyPairEdit(nextVal, nextSelStart, nextSelEnd, nextClosers) {
+    commitHistorySnapshot();
+    source.value = nextVal;
+    source.setSelectionRange(nextSelStart, nextSelEnd);
+    autoCloserOffsets = nextClosers || [];
+    lastTrackedValue = nextVal;
+    source.dispatchEvent(new Event('input', { bubbles: true }));
+    updateCursor();
+  }
+
+  function handleSmartPairKeydown(event) {
+    if (!source || event.isComposing) return false;
+    var GMS = window.GabeTeXMathSymbols;
+    var val = source.value;
+    var start = source.selectionStart;
+    var end = source.selectionEnd;
+    var key = event.key;
+    var unmodified = !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey;
+
+    if (unmodified && (key === 'Backspace' || key === 'Delete') && start === end) {
+      var delPlan = GMS && GMS.findPairedDeletion
+        && GMS.findPairedDeletion(val, start, key === 'Backspace' ? 'backward' : 'forward');
+      if (delPlan) {
+        event.preventDefault();
+        var nextVal = val;
+        for (var ri = delPlan.ranges.length - 1; ri >= 0; ri--) {
+          nextVal = nextVal.slice(0, delPlan.ranges[ri].from) + nextVal.slice(delPlan.ranges[ri].to);
+        }
+        applyPairEdit(nextVal, delPlan.caret, delPlan.caret, []);
+        return true;
+      }
+      return false;
+    }
+
+    if (unmodified && key === 'Enter' && start === end && !isOffsetInTexComment(val, start)) {
+      var betweenBraces = start > 0 && val.charAt(start - 1) === '{' && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(val, start - 1)) && val.charAt(start) === '}';
+      var betweenDisp = start >= 2 && val.slice(start - 2, start) === '\\[' && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(val, start - 2)) && val.slice(start, start + 2) === '\\]';
+      if (betweenBraces || betweenDisp) {
+        var ls = val.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+        var indentMatch = /^[ \t]*/.exec(val.slice(ls, start));
+        var baseIndent = indentMatch ? indentMatch[0] : '';
+        var eol = val.indexOf('\r\n') !== -1 ? '\r\n' : '\n';
+        var inner = eol + baseIndent + '  ';
+        var block = inner + eol + baseIndent;
+        event.preventDefault();
+        applyPairEdit(val.slice(0, start) + block + val.slice(start), start + inner.length, start + inner.length, []);
+        return true;
+      }
+      return false;
+    }
+
+    if (event.metaKey || (event.ctrlKey && !event.altKey)) return false;
+
+    if (start === end && PAIR_REVERSE[key]) {
+      var closerIdx = hasAutoCloserAt(start, key);
+      if (closerIdx !== -1) {
+        event.preventDefault();
+        var remaining = [];
+        for (var ci = 0; ci < autoCloserOffsets.length; ci++) {
+          if (ci !== closerIdx && autoCloserOffsets[ci] > start) remaining.push(autoCloserOffsets[ci]);
+        }
+        if (key === '}' && GMS && GMS.findBeginAutoClose) {
+          var stepBegin = GMS.findBeginAutoClose(val, start + 1, '  ');
+          if (stepBegin) {
+            applyPairEdit(
+              val.slice(0, start + 1) + stepBegin.insert + val.slice(start + 1),
+              start + 1 + stepBegin.caretOffset,
+              start + 1 + stepBegin.caretOffset,
+              []
+            );
+            return true;
+          }
+        }
+        autoCloserOffsets = remaining;
+        source.setSelectionRange(start + 1, start + 1);
+        updateCursor();
+        return true;
+      }
+
+      if (key === '}' && GMS && GMS.findBeginAutoClose && !isOffsetInTexComment(val, start) && (!GMS.isEscapedAt || !GMS.isEscapedAt(val, start))) {
+        var withBrace = val.slice(0, start) + '}' + val.slice(start);
+        var beginPlan = GMS.findBeginAutoClose(withBrace, start + 1, '  ');
+        if (beginPlan) {
+          event.preventDefault();
+          applyPairEdit(
+            withBrace.slice(0, start + 1) + beginPlan.insert + withBrace.slice(start + 1),
+            start + 1 + beginPlan.caretOffset,
+            start + 1 + beginPlan.caretOffset,
+            []
+          );
+          return true;
+        }
+      }
+      if (key !== '$') return false;
+    }
+
+    if (!PAIR_CLOSER[key] || isOffsetInTexComment(val, start)) return false;
+
+    var escapedPrev = start > 0 && val.charAt(start - 1) === '\\' && (!GMS || !GMS.isEscapedAt || !GMS.isEscapedAt(val, start - 1));
+    if (escapedPrev) {
+      if (key !== '(' && key !== '[') return false;
+      var escClose = '\\' + (key === '(' ? ')' : ']');
+      if (start < end) {
+        if (val.slice(start, end).indexOf('\n') === -1) {
+          event.preventDefault();
+          applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + escClose + val.slice(end), start + 1, end + 1, []);
+          return true;
+        }
+        return false;
+      }
+      var nextEscCh = start < val.length ? val.charAt(start) : '';
+      if (nextEscCh && !/[\s)}\]$,.;:!?'"\\]/.test(nextEscCh)) return false;
+      event.preventDefault();
+      applyPairEdit(val.slice(0, start) + key + escClose + val.slice(end), start + 1, start + 1, []);
+      return true;
+    }
+
+    if (start < end) {
+      if (val.slice(start, end).indexOf('\n') !== -1) return false;
+      event.preventDefault();
+      applyPairEdit(val.slice(0, start) + key + val.slice(start, end) + PAIR_CLOSER[key] + val.slice(end), start + 1, end + 1, []);
+      return true;
+    }
+
+    if (key === '$') {
+      if (GMS && GMS.isInMathMode && GMS.isInMathMode(val, start)) return false;
+      if (start > 0 && /[A-Za-z0-9$]/.test(val.charAt(start - 1))) return false;
+    }
+
+    var nextCh = start < val.length ? val.charAt(start) : '';
+    if (nextCh && !/[\s)}\]$,.;:!?'"\\]/.test(nextCh)) return false;
+
+    var nextClosers = [start + 1];
+    for (var ai = 0; ai < autoCloserOffsets.length; ai++) {
+      if (autoCloserOffsets[ai] >= start) nextClosers.push(autoCloserOffsets[ai] + 2);
+    }
+    event.preventDefault();
+    applyPairEdit(val.slice(0, start) + key + PAIR_CLOSER[key] + val.slice(start), start + 1, start + 1, nextClosers);
+    return true;
+  }
+
+  source.addEventListener('input', syncAutoClosersAfterInput);
+  source.addEventListener('mousedown', function () { autoCloserOffsets = []; });
+  source.addEventListener('blur', function () { autoCloserOffsets = []; });
+  source.addEventListener('keyup', function (ev) {
+    if (!autoCloserOffsets.length) return;
+    if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight' || ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'Home' || ev.key === 'End') {
+      var caret = source.selectionStart;
+      autoCloserOffsets = autoCloserOffsets.filter(function (off) { return off >= caret; });
+    }
+  });
+
   source.addEventListener('keydown', function (event) {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
       if ((state.historyIndex[state.activeFile] || 0) > 0) {
         event.preventDefault();
         undoEdit();
       }
+      return;
     }
+
+    if (handleSmartPairKeydown(event)) return;
 
     if (event.key !== 'Tab') return;
     event.preventDefault();
@@ -1080,12 +1793,13 @@
     if (!state.pdfBlobUrl) return;
     var a = document.createElement('a');
     a.href = state.pdfBlobUrl;
-    a.download = state.activeFile.replace(/\.tex$/i, '') + '.pdf';
+    var mainName = resolveMainFile() || state.activeFile;
+    a.download = mainName.replace(/\.tex$/i, '') + '.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   });
-  btnDownload.disabled = true;
+  setDownloadDisabled(true);
 
   /* ---------- preview zoom ---------- */
   btnZoomIn.addEventListener('click', function () {
@@ -1113,6 +1827,7 @@
   btnToolbarPresent.addEventListener('click', function () {
     var pressed = btnToolbarPresent.getAttribute('aria-pressed') === 'true';
     if (!pressed) {
+      if (!state.pdfDoc) return;
       btnToolbarPresent.setAttribute('aria-pressed', 'true');
       btnToolbarPresent.classList.add('tb-active');
       // Enter presentation mode
@@ -1318,11 +2033,11 @@
       if (!page) return;
 
       var rect = page.getBoundingClientRect();
-      var pageRatio = (e.clientY - rect.top) / rect.height;
+      var pageRatio = rect.height > 0 ? (e.clientY - rect.top) / rect.height : 0;
       if (pageRatio < 0) pageRatio = 0;
       if (pageRatio > 1) pageRatio = 1;
 
-      var pageNum = Number(page.getAttribute('data-page-number')) || 1;
+      var pageNum = Number(page.getAttribute('data-page')) || Number(page.getAttribute('data-page-number')) || 1;
       var totalPages = state.pdfDoc ? state.pdfDoc.numPages : 1;
 
       var text = source.value;
@@ -1431,6 +2146,10 @@ previewFrame.addEventListener('scroll', function () {
     if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
       exitPresentationMode();
     } else if (isFull) {
+      if (btnToolbarPresent.getAttribute('aria-pressed') !== 'true') {
+        exitFullscreen();
+        return;
+      }
       presentationCache = {};
       renderPresentationSlide(state.presentationSlide);
     }
@@ -1440,6 +2159,10 @@ previewFrame.addEventListener('scroll', function () {
     if (!isFull && btnToolbarPresent.getAttribute('aria-pressed') === 'true') {
       exitPresentationMode();
     } else if (isFull) {
+      if (btnToolbarPresent.getAttribute('aria-pressed') !== 'true') {
+        exitFullscreen();
+        return;
+      }
       presentationCache = {};
       renderPresentationSlide(state.presentationSlide);
     }
@@ -1459,7 +2182,7 @@ previewFrame.addEventListener('scroll', function () {
   updateWarningStatus();
 
   /* Expose for debugging */
-  window.gabetexEditor = { compile: compile, state: state };
+  window.gabetexEditor = { compile: compile, state: state, resolveMainFile: resolveMainFile };
 
   window.addEventListener('resize', function () {
     if (editorWindow.classList.contains('presentation-mode')) {

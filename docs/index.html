@@ -613,11 +613,15 @@ html.dark #sync .paper {
 
 /* ===== labels + detached PDF ===== */
 .split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; align-items: center; }
+.split.split-flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.split.split-flip > figure { order: -1; }
 .split h2 { margin: 0; font: 600 var(--t-title)/1.1 var(--font-display); letter-spacing: -.008em; text-wrap: balance; }
 .split .block + .block { margin-top: 44px; }
 .split .block p { margin-top: 12px; color: var(--ink-2); max-width: 30rem; text-wrap: pretty; }
 .split figure { margin: 0; }
 .split figure img { width: 100%; height: auto; }
+.split figure.shot-symbols { display: flex; flex-direction: column; align-items: center; }
+.split figure.shot-symbols img { width: min(100%, 340px); height: auto; }
 
 /* ===== everything else ===== */
 .more-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 40px; margin: 64px 0 0; padding: 0; list-style: none; }
@@ -768,7 +772,8 @@ html.dark #sync .paper {
 /* ===== responsive ===== */
 @media (max-width: 1068px) {
   .more-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .split { grid-template-columns: minmax(0, 1fr); gap: 44px; }
+  .split, .split.split-flip { grid-template-columns: minmax(0, 1fr); gap: 44px; }
+  .split.split-flip > figure { order: 0; }
   .build { grid-template-columns: minmax(0, 1fr); gap: 28px; }
 }
 @media (max-width: 834px) {
@@ -906,7 +911,7 @@ html.dark #sync .paper {
       </div>
       <p class="also h-3" id="hero-also"><span class="also-def" data-i18n="hero.also">Available for Linux (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-x86_64.AppImage">.AppImage</a> / <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a>), Windows (<a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64-setup.exe">.exe</a>) and MacOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/download/v1.0.0/GabeTeX.dmg">.dmg</a>).</span><span class="also-linux" data-i18n="hero.alsoLinux">GabeTeX is native to macOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg">Download for Mac</a>). This is the Linux edition, built with Tauri; on Debian or Ubuntu, get the <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-linux-amd64.deb">.deb</a> instead.<span class="also-win" data-i18n="hero.alsoWin">GabeTeX is native to macOS (<a href="https://github.com/gabe-rbo/GabeTeX-macOS/releases/latest/download/GabeTeX.dmg">Download for Mac</a>). This is the Windows edition, built with Tauri; an <a href="https://github.com/gabe-rbo/GabeTeX-Linux-Windows/releases/latest/download/GabeTeX-windows-x64.msi">.msi</a> is also available.</span></span></p>
       <div class="meta-slot h-4" id="meta-slot">
-        <p class="meta"><span class="num" id="ver">v1.1.0</span><span class="num" id="size" hidden></span><span data-i18n="hero.os">macOS 26 or later (Apple Silicon)</span><span data-i18n="hero.os2">Linux and Windows</span><span data-i18n="hero.free">free and open source</span></p>
+        <p class="meta"><span class="num" id="ver">v1.1.2</span><span class="num" id="size" hidden></span><span data-i18n="hero.os">macOS 26 or later (Apple Silicon)</span><span data-i18n="hero.os2">Linux and Windows</span><span data-i18n="hero.free">free and open source</span></p>
         <p class="next"><a href="#install" data-i18n="hero.next">Next: install and open GabeTeX</a></p>
       </div>
 
@@ -952,6 +957,37 @@ html.dark #sync .paper {
           <p data-i18n="ideas.3t">Finds MacTeX, TeX Live, BasicTeX or TinyTeX, compiles with pdfLaTeX, XeLaTeX or LuaLaTeX, and installs missing packages with tlmgr when you ask.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ===== math & linguistic symbols ===== -->
+  <section class="tile" id="symbols" aria-labelledby="symbols-title">
+    <div class="wrap wrap-wide split">
+      <div>
+        <div class="block reveal">
+          <h2 id="symbols-title" data-i18n="symbols.title">Math &amp; linguistic symbols, always at hand.</h2>
+          <p data-i18n="symbols.lead">Open the Σ panel in the sidebar to browse 15 categories and 470 symbols—click to insert or drag straight into your code. Missing math delimiters and <code>\usepackage</code> imports are added automatically.</p>
+        </div>
+        <div class="block reveal" style="--stagger:1">
+          <h2 data-i18n="symbols.smartTitle">Built for math and prose alike.</h2>
+          <p data-i18n="symbols.smartText">Search by name, command, or package, insert <code>\log_{}</code> with its base subscript ready, and use Linguistic Symbols for PDF-style curly quotes placed cleanly in text mode.</p>
+        </div>
+      </div>
+      <figure class="reveal shot-symbols" style="--stagger:1">
+        <img class="themed-shot shot-dark-pt" src="assets/screenshots/symbols-open-dark-pt.png" width="664" height="1184" loading="lazy" decoding="async"
+             alt="The math and linguistic symbols panel open in the left sidebar with search and command preview."
+             data-i18n-attr="alt:shots.symbolsOpenAlt">
+        <img class="themed-shot shot-light-pt" src="assets/screenshots/symbols-open-light-pt.png" width="664" height="1184" loading="lazy" decoding="async"
+             alt="The math and linguistic symbols panel open in the left sidebar with search and command preview."
+             data-i18n-attr="alt:shots.symbolsOpenAlt">
+        <img class="themed-shot shot-dark-en" src="assets/screenshots/symbols-open-dark-en.png" width="664" height="1184" loading="lazy" decoding="async"
+             alt="The categorized math and linguistic symbols panel open in the left sidebar with search and live command preview."
+             data-i18n-attr="alt:shots.symbolsOpenAlt">
+        <img class="themed-shot shot-light-en" src="assets/screenshots/symbols-open-light-en.png" width="664" height="1184" loading="lazy" decoding="async"
+             alt="The categorized math and linguistic symbols panel open in the left sidebar with search and live command preview."
+             data-i18n-attr="alt:shots.symbolsOpenAlt">
+        <figcaption data-i18n="shots.symbolsOpen">Click Σ to open all 15 categories: search by name, command or package, preview required imports, and click or drag onto any line.</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -1041,6 +1077,37 @@ html.dark #sync .paper {
              alt="GabeTeX jumping from a word in the PDF to the same word in the LaTeX source, which is briefly highlighted."
              data-i18n-attr="alt:shots.syncAlt">
         <figcaption data-i18n="shots.sync">In GabeTeX: a double-click in the PDF opened the section file at that word. With Follow cursor in PDF, the preview also keeps up as you move.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===== project templates ===== -->
+  <section class="tile" id="templates" aria-labelledby="templates-title">
+    <div class="wrap wrap-wide split split-flip">
+      <div>
+        <div class="block reveal">
+          <h2 id="templates-title" data-i18n="templates.title">Start from a ready-made template.</h2>
+          <p data-i18n="templates.text">Create a new project from nine built-in templates—Article, Article with Sections, Thesis, Beamer Presentation, Math Notes, Problem Set, Book, Report, and Poster—with preamble, bibliography, chapters, and structure ready to compile.</p>
+        </div>
+        <div class="block reveal" style="--stagger:1">
+          <h2 data-i18n="templates.metaTitle">See every file before creating.</h2>
+          <p data-i18n="templates.metaText">Fill in the title, author, and destination folder, inspect the exact files each template creates, and start writing immediately.</p>
+        </div>
+      </div>
+      <figure class="reveal" style="--stagger:1">
+        <img class="themed-shot shot-dark-pt" src="assets/screenshots/templates-dark-pt.png" width="1440" height="960" loading="lazy" decoding="async"
+             alt="The New Project dialog showing all nine built-in templates — including Book, Report, and Poster — and the generated file list."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <img class="themed-shot shot-light-pt" src="assets/screenshots/templates-light-pt.png" width="1440" height="960" loading="lazy" decoding="async"
+             alt="The New Project dialog showing all nine built-in templates — including Book, Report, and Poster — and the generated file list."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <img class="themed-shot shot-dark-en" src="assets/screenshots/templates-dark-en.png" width="1440" height="960" loading="lazy" decoding="async"
+             alt="The New Project dialog showing all nine templates—including Book, Report, and Poster—and the list of files each generates."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <img class="themed-shot shot-light-en" src="assets/screenshots/templates-light-en.png" width="1440" height="960" loading="lazy" decoding="async"
+             alt="The New Project dialog showing all nine templates—including Book, Report, and Poster—and the list of files each generates."
+             data-i18n-attr="alt:shots.templatesAlt">
+        <figcaption data-i18n="shots.templates">The New Project dialog with all nine templates—including Book, Report, and Poster—and a preview of the generated files.</figcaption>
       </figure>
     </div>
   </section>
@@ -1485,6 +1552,21 @@ html.dark #sync .paper {
           <h3 data-i18n="more.9">English and Portuguese</h3>
           <p data-i18n="more.9t">The interface follows your system language: English or Brazilian Portuguese.</p>
         </li>
+        <li class="more reveal">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M18 5.5V4H6.5l6.5 8-6.5 8H18v-1.5"/></svg>
+          <h3 data-i18n="more.13">Math &amp; linguistic symbols</h3>
+          <p data-i18n="more.13t">15 categories (470 symbols, including linguistic quotes and <code>\log_{}</code> base subscript), click or drag-and-drop, automatic <code>$…$</code> / <code>\[…\]</code> delimiters, and automatic <code>\usepackage</code> imports.</p>
+        </li>
+        <li class="more reveal" style="--stagger:1">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M5.5 4.8A1.8 1.8 0 0 1 7.3 3H19v15H7.3a1.8 1.8 0 0 0-1.8 1.8ZM5.5 19.8A1.8 1.8 0 0 0 7.3 21.5H19V18"/><path d="M9 3v8l2.2-1.5L13.4 11V3"/></svg>
+          <h3 data-i18n="more.14">Project templates</h3>
+          <p data-i18n="more.14t">Nine ready-to-compile templates in New Project: Article, Article with Sections, Thesis, Beamer, Math Notes, Problem Set, Book, Report, and Poster.</p>
+        </li>
+        <li class="more reveal" style="--stagger:2">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M8.5 4H8a2 2 0 0 0-2 2v3.5c0 1.2-.8 2.5-2 2.5 1.2 0 2 1.3 2 2.5V18a2 2 0 0 0 2 2h.5M15.5 4h.5a2 2 0 0 1 2 2v3.5c0 1.2.8 2.5 2 2.5-1.2 0-2 1.3-2 2.5V18a2 2 0 0 1-2 2h-.5"/></svg>
+          <h3 data-i18n="more.15">Smart pairs &amp; environments</h3>
+          <p data-i18n="more.15t">Auto-closes <code>{ }</code>, <code>( )</code>, <code>[ ]</code>, <code>$ $</code>, <code>\( \)</code>, <code>\[ \]</code>, and <code>\begin{env}</code> on <code>}</code>, and deletes matching delimiters together on Backspace or Delete.</p>
+        </li>
       </ul>
     </div>
   </section>
@@ -1611,139 +1693,226 @@ Scripts/build-app.sh</code></pre>
   <h1 class="sr-only" id="editor-title" tabindex="-1" data-i18n="editor.title">Online editor</h1>
   <div id="editor-app">
     <div class="editor-window is-split-view">
-        <div class="editor-body">
-        <aside class="editor-sidebar" aria-label="Project files" data-i18n-attr="aria-label:editor.projectFiles">
-          <div class="sidebar-tabs" role="tablist" aria-label="Project panels" data-i18n-attr="aria-label:editor.sidebarTabs">
-            <button type="button" class="tab active" id="tab-files" role="tab" aria-controls="sidebar-files" aria-selected="true" tabindex="0" data-i18n="editor.files">Files</button>
-            <button type="button" class="tab" id="tab-outline" role="tab" aria-controls="sidebar-outline" aria-selected="false" tabindex="-1" data-i18n="editor.outline">Outline</button>
-          </div>
-          <div class="sidebar-content" id="sidebar-files" role="tabpanel" aria-labelledby="tab-files">
-            <div class="file-tree">
-              <ul id="file-list"></ul>
+      <div class="editor-body">
+        <div class="editor-sidebar-wrap">
+          <aside class="editor-sidebar" aria-label="Project files" data-i18n-attr="aria-label:editor.projectFiles">
+            <div class="sidebar-head">
+              <button type="button" class="ed-glass-circle tb-symbols" id="btn-symbols" title="Math symbols" aria-label="Math symbols" aria-pressed="false" data-i18n-attr="title:editor.mathSymbols;aria-label:editor.mathSymbols">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6.5V5H6.5l6.5 7-6.5 7H18v-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="ed-glass-circle tb-sidebar" id="btn-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar" aria-pressed="true" data-i18n-attr="title:editor.toggleSidebar;aria-label:editor.toggleSidebar">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 17V7A1.5 1.5 0 0 1 4 5.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 5.5v13M5 9h1.5M5 11.5h1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
             </div>
-            <div class="file-actions" id="upload-drop-zone">
-              <p data-i18n="editor.dropTex">Drop .tex files here</p>
-              <div class="file-action-buttons">
-                <button type="button" class="pill pill-ghost pill-sm" id="btn-add-file" aria-label="Create file" data-i18n="editor.addFile" data-i18n-attr="aria-label:editor.addFileAria">Create file</button>
-                    <button type="button" class="pill pill-ghost pill-sm" id="btn-upload-files" aria-label="Upload .tex files" data-i18n="editor.upload" data-i18n-attr="aria-label:editor.uploadAria">Upload</button>
+            <div class="sidebar-top">
+              <div class="sidebar-tabs" role="tablist" data-index="0" aria-label="Project panels" data-i18n-attr="aria-label:editor.sidebarTabs">
+                <button type="button" class="tab active" id="tab-files" role="tab" aria-controls="sidebar-files" aria-selected="true" tabindex="0" data-i18n="editor.files">Files</button>
+                <button type="button" class="tab" id="tab-outline" role="tab" aria-controls="sidebar-outline" aria-selected="false" tabindex="-1" data-i18n="editor.outline">Outline</button>
               </div>
-              <input id="file-upload-input" type="file" accept=".tex,text/x-tex,text/plain" multiple hidden>
-              <form class="add-file-form" id="add-file-form" hidden>
-                <label for="new-file-name" data-i18n="editor.newFileName">File name</label>
-                <input id="new-file-name" name="file-name" type="text" autocomplete="off" placeholder="chapter.tex" data-i18n-attr="placeholder:editor.fileNamePlaceholder" required>
-                <p class="add-file-error" id="add-file-error" role="alert" hidden></p>
-                <div class="add-file-actions">
-                  <button type="submit" class="pill pill-ghost pill-sm" data-i18n="editor.createFile">Create</button>
-                  <button type="button" class="pill pill-ghost pill-sm" id="btn-cancel-add-file" data-i18n="editor.cancelAddFile">Cancel</button>
+            </div>
+            <div class="sidebar-body">
+              <div class="sidebar-content" id="sidebar-files" role="tabpanel" aria-labelledby="tab-files">
+                <div class="file-tree">
+                  <ul id="file-list"></ul>
                 </div>
-              </form>
+                <div class="file-actions" id="upload-drop-zone">
+                  <p data-i18n="editor.dropTex">Drop .tex files here</p>
+                  <div class="file-action-buttons">
+                    <button type="button" class="ed-btn ed-btn-glass" id="btn-add-file" aria-label="Create file" data-i18n-attr="aria-label:editor.addFileAria">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span data-i18n="editor.addFile">Create file</span>
+                    </button>
+                    <button type="button" class="ed-btn ed-btn-glass" id="btn-upload-files" aria-label="Upload .tex files" data-i18n-attr="aria-label:editor.uploadAria">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4.5M7.5 8.5 12 4l4.5 4.5M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      <span data-i18n="editor.upload">Upload</span>
+                    </button>
+                  </div>
+                  <input id="file-upload-input" type="file" accept=".tex,text/x-tex,text/plain" multiple hidden>
+                  <form class="add-file-form" id="add-file-form" hidden>
+                    <label for="new-file-name" data-i18n="editor.newFileName">File name</label>
+                    <input id="new-file-name" name="file-name" type="text" autocomplete="off" placeholder="chapter.tex" data-i18n-attr="placeholder:editor.fileNamePlaceholder" required>
+                    <p class="add-file-error" id="add-file-error" role="alert" hidden></p>
+                    <div class="add-file-actions">
+                      <button type="submit" class="ed-btn ed-btn-prominent" data-i18n="editor.createFile">Create</button>
+                      <button type="button" class="ed-btn ed-btn-glass" id="btn-cancel-add-file" data-i18n="editor.cancelAddFile">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+                <p class="upload-status" id="upload-status" role="status" aria-live="polite" hidden></p>
+              </div>
+              <div class="sidebar-content hidden" id="sidebar-outline" role="tabpanel" aria-labelledby="tab-outline" hidden>
+                <p class="outline-empty" data-i18n="editor.noOutline">No outline available.</p>
+              </div>
+              <div class="sidebar-content hidden" id="sidebar-symbols" role="region" aria-label="Math symbols" data-i18n-attr="aria-label:editor.mathSymbols" hidden>
+                <div class="ed-sym-search-wrap">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15 15l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <input type="search" id="sym-search" class="ed-sym-search" placeholder="Search math symbols…" aria-label="Search math symbols" spellcheck="false" autocomplete="off" data-i18n-attr="placeholder:editor.searchSymbols;aria-label:editor.searchSymbols">
+                  <button type="button" id="sym-search-clear" class="ed-sym-clear" title="Clear search" aria-label="Clear search" data-i18n-attr="title:editor.clearSearch;aria-label:editor.clearSearch" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+                <div id="sym-list" class="ed-sym-list"></div>
+                <div class="ed-sym-preview" id="sym-preview">
+                  <span class="ed-sym-prev-glyph" id="sym-preview-glyph">α</span>
+                  <div class="ed-sym-prev-meta">
+                    <div class="ed-sym-prev-top">
+                      <code class="ed-sym-prev-code" id="sym-preview-code">\alpha</code>
+                      <span class="ed-sym-prev-pkg" id="sym-preview-pkg" hidden></span>
+                    </div>
+                    <span class="ed-sym-prev-name" id="sym-preview-name" data-i18n="editor.symbolsHint">Click to insert at cursor or drag into the editor.</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <p class="upload-status" id="upload-status" role="status" aria-live="polite" hidden></p>
-          </div>
-          <div class="sidebar-content hidden" id="sidebar-outline" role="tabpanel" aria-labelledby="tab-outline" hidden>
-            <p class="outline-empty" data-i18n="editor.noOutline">No outline available.</p>
-          </div>
-        </aside>
-        <div class="divider" id="divider-sidebar" role="separator" aria-orientation="vertical" aria-label="Resize sidebar"></div>
-
-        <section class="editor-source-pane" aria-label="LaTeX source editor" data-i18n-attr="aria-label:editor.sourcePane">
-          <div class="editor-tabs">
-          <div class="tab-list" role="tablist" aria-label="Open files" data-i18n-attr="aria-label:editor.openFileTabs"></div>
-            <div class="tab-actions">
-                                                    <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
-                          </button>
-                        </div>
-          </div>
-          <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
-            <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
-            <textarea id="editor-source" spellcheck="true" autocorrect="off" autocapitalize="off" wrap="soft" class="editor-textarea" placeholder="\\documentclass{article}
-\\begin{document}
-Hello, world!
-\\end{document}" aria-label="LaTeX source — main.tex"></textarea>
-          </div>
-                    <div class="source-status" id="source-status" aria-live="polite" aria-atomic="true">Ready</div>
-        </section>
-        <div class="divider" id="divider-preview" role="separator" aria-orientation="vertical" aria-label="Resize preview"></div>
-
-        <section class="editor-preview-pane" aria-label="PDF preview" data-i18n-attr="aria-label:editor.previewPane">
-          <div class="preview-head">
-            <h3 data-i18n="editor.preview">Preview</h3>
-            <span class="preview-status" id="preview-status" role="status" aria-live="polite" data-i18n="editor.idle">Idle</span>
-            <div class="editor-toolbar">
-                          <button type="button" class="tb-btn tb-compile" id="btn-compile" title="Compile" aria-label="Compile" data-i18n-attr="title:editor.compile;aria-label:editor.compile">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v13m0-13L4.5 8M8 14.5l3.5-3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </button>
-                          <button type="button" class="tb-btn tb-autocompile" id="btn-autocompile" title="Auto-compile" aria-label="Auto-compile" aria-pressed="false">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M16 8l-8-8M16 8l-8 8M8 16l-8-8M8 16l8-8" class="ico" stroke="currentColor" stroke-width="1.75" fill="none" stroke-linecap="round"/></svg>
-                          </button>
-                          <button type="button" class="tb-btn tb-present" id="btn-toolbar-present" title="Presentation mode" aria-label="Presentation mode" aria-pressed="false">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.5" class="ico" stroke="currentColor" stroke-width="1.75" fill="none"/><path d="M8 5l3 3-3 3" class="ico" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </button>
-                          <button type="button" class="tb-btn tb-history" id="btn-history" title="Undo last edit" aria-label="Undo last edit" aria-keyshortcuts="Control+Z Meta+Z" disabled data-i18n-attr="title:editor.undo;aria-label:editor.undo">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="4" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="8" cy="12" r="1" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 8h6M8 11l2-2 2 2" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </button>
-                          <button type="button" class="tb-btn tb-download" id="btn-toolbar-download" title="Download PDF" aria-label="Download PDF">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.75v9m0 0L4.5 7.25M8 10.75l3.5-3.5M2.75 14.25h10.5" class="ico" stroke="currentColor" stroke-width="1.75"/></svg>
-                          </button>
-                          <button type="button" class="tb-btn tb-split" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
-                            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/><rect x="8" y="3" width="5" height="10" class="ico" stroke="currentColor" stroke-width="1.5" fill="none" rx="1"/></svg>
-                          </button>
-                        </div>
-          </div>
-          <div class="preview-wrap" id="preview-wrap">
-            <div id="preview-frame" class="pdf-document" style="display:none" role="region" tabindex="0" aria-label="Compiled PDF preview" data-i18n-attr="aria-label:editor.compiledPreview"></div>
-            <div class="preview-empty" id="preview-empty">
-              <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="60" height="60" x="2" y="2" fill="none" stroke="currentColor" stroke-width="1.5" rx="4"/><path d="M20 20h24v24H20z" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M32 12l8 8M40 12l-8 8" class="ico" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-              <p data-i18n="editor.emptyPreview">Compile to see the preview</p>
-            </div>
-            <div class="preview-controls" id="preview-controls">
-              <button type="button" class="pc-btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out" data-i18n-attr="title:editor.zoomOut;aria-label:editor.zoomOut">−</button>
-              <span class="pc-zoom" id="pc-zoom">100%</span>
-              <button type="button" class="pc-btn" id="btn-zoom-in" title="Zoom in" aria-label="Zoom in" data-i18n-attr="title:editor.zoomIn;aria-label:editor.zoomIn">+</button>
-              <span class="pc-sep">|</span>
-              <button type="button" class="pc-btn" id="btn-page-prev" title="Previous page" aria-label="Previous page" data-i18n-attr="title:editor.prevPage;aria-label:editor.prevPage">‹</button>
-              <span class="pc-page" id="pc-page">1 / 1</span>
-              <button type="button" class="pc-btn" id="btn-page-next" title="Next page" aria-label="Next page" data-i18n-attr="title:editor.nextPage;aria-label:editor.nextPage">›</button>
-              <button type="button" class="pc-btn" id="btn-download" title="Download PDF" aria-label="Download PDF" data-i18n-attr="title:editor.downloadPdf;aria-label:editor.downloadPdf">↓</button>
-            </div>
-            <!-- Slide presentation stage -->
-            <div class="presentation-stage" id="presentation-stage" role="region" aria-label="Slide presentation display" hidden></div>
-            <!-- Slide presentation overlay -->
-            <div class="slide-overlay" id="slide-overlay" role="region" aria-label="Slide presentation" hidden>
-              <button type="button" class="slide-nav slide-prev" id="slide-prev" title="Previous slide" aria-label="Previous slide">‹</button>
-              <span class="slide-counter" id="slide-counter">1 / 1</span>
-              <button type="button" class="slide-nav slide-next" id="slide-next" title="Next slide" aria-label="Next slide">›</button>
-              <button type="button" class="slide-exit" id="slide-exit" title="Exit presentation" aria-label="Exit presentation">✕</button>
-            </div>
-          </div>
-        </section>
-      </div>
-      <section class="editor-status-strip" aria-label="Editor status" data-i18n-attr="aria-label:editor.status">
-        <div class="wrap wrap-wide foot-editor-status">
-          <div class="status-left">
-            <span class="status-item" id="status-compile">Compiled in 0s</span>
-            <span class="status-dot" aria-hidden="true"></span>
-            <button type="button" class="status-item status-errors" id="status-errors" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation errors" data-i18n-attr="aria-label:editor.viewErrors">0 errors</button>
-            <span class="status-dot" aria-hidden="true"></span>
-            <button type="button" class="status-item status-warnings" id="status-warnings" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation warnings" data-i18n-attr="aria-label:editor.viewWarnings">0 warnings</button>
-          </div>
-          <div class="status-right">
-            <span class="status-item"><span class="sr-only" data-i18n="editor.compiler">Compiler</span><span data-i18n="editor.compilerName">XeLaTeX (Tectonic WASM)</span></span>
-            <span class="status-dot" aria-hidden="true"></span>
-            <span class="status-item" id="status-enc">UTF-8</span>
-            <span class="status-dot" aria-hidden="true"></span>
-            <span class="status-item" id="status-cursor">Ln 1, Col 1</span>
-          </div>
+          </aside>
+          <div class="divider divider-sidebar" id="divider-sidebar" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabindex="0"></div>
         </div>
-      </section>
+
+        <div class="editor-detail">
+          <header class="editor-top-toolbar">
+            <div class="tb-sidebar-slot" id="tb-sidebar-slot"></div>
+            <div class="tb-leading">
+              <div class="tb-titles">
+                <div class="tb-title" id="editor-doc-title" data-i18n="editor.docTitle">main.tex</div>
+                <div class="tb-subtitle"><span class="preview-status" id="preview-status" role="status" aria-live="polite" data-i18n="editor.idle">Idle</span></div>
+              </div>
+            </div>
+            <div class="tb-spacer"></div>
+            <div class="editor-toolbar tb-trailing">
+              <button type="button" class="tb-btn tb-compile" id="btn-compile" title="Compile" aria-label="Compile" data-i18n-attr="title:editor.compile;aria-label:editor.compile">
+                <svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.6-6.8c.6-.4.6-1.3 0-1.7L9.6 4.3C8.9 3.9 8 4.4 8 5.2Z" fill="currentColor"/></svg>
+                <span class="ed-spinner" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="ed-glass-circle tb-btn tb-history" id="btn-history" title="Undo last edit" aria-label="Undo last edit" aria-keyshortcuts="Control+Z Meta+Z" disabled data-i18n-attr="title:editor.undo;aria-label:editor.undo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="ed-glass-capsule tb-btn tb-present" id="btn-toolbar-present" title="Presentation mode" aria-label="Presentation mode" aria-pressed="false" data-i18n-attr="title:editor.present;aria-label:editor.present" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 18V6A1.5 1.5 0 0 1 4 4.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 8.8v6.4c0 .5.6.8 1 .5l4.8-3.2c.4-.3.4-.8 0-1.1L11 8.3c-.4-.3-1 0-1 .5Z" fill="currentColor"/></svg>
+                <span data-i18n="editor.present">Present</span>
+              </button>
+              <div class="ed-glass-capsule tb-group" role="group" aria-label="Editor tools">
+                <button type="button" class="tb-btn tb-toggle tb-autocompile" id="btn-autocompile" title="Auto-compile" aria-label="Auto-compile" aria-pressed="false" data-i18n-attr="title:editor.autoCompile;aria-label:editor.autoCompile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.4 2.5 5.2 13.2c-.4.5 0 1.1.6 1.1h5.3l-1.5 7c-.2.8.8 1.2 1.3.6l8-10.6c.4-.5 0-1.2-.6-1.2h-5.3l1.6-7c.2-.7-.8-1.2-1.2-.6Z" fill="currentColor"/></svg>
+                </button>
+                <button type="button" class="tb-btn tb-toggle tb-split tb-active" id="btn-split" title="Split view" aria-label="Split view" aria-pressed="true" data-i18n-attr="title:editor.split;aria-label:editor.split">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 2.8h7.8l4.2 4.2v12.5a1.7 1.7 0 0 1-1.7 1.7H6.5a1.7 1.7 0 0 1-1.7-1.7V4.5a1.7 1.7 0 0 1 1.7-1.7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v4.3h4.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.8 11.2h8.4v6.3H7.8z" fill="currentColor"/></svg>
+                </button>
+                <button type="button" class="tb-btn tb-toggle tb-download" id="btn-toolbar-download" title="Download PDF" aria-label="Download PDF" data-i18n-attr="title:editor.downloadPdf;aria-label:editor.downloadPdf" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button type="button" class="tb-btn tb-toggle tb-issues" id="btn-toolbar-issues" title="Compilation output" aria-label="Compilation output" aria-controls="compile-panel" aria-expanded="false" data-i18n-attr="title:editor.compilationOutput;aria-label:editor.compilationOutput">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 4.2 2.9 17.4c-.8 1.3.2 2.9 1.7 2.9h14.8c1.5 0 2.5-1.6 1.7-2.9L13.7 4.2c-.8-1.3-2.6-1.3-3.4 0Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 9v4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 15.6a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z" fill="currentColor"/></svg>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <div class="editor-tabs">
+            <div class="tab-list" role="tablist" aria-label="Open files" data-i18n-attr="aria-label:editor.openFileTabs"></div>
+          </div>
+
+          <div class="editor-work">
+            <div class="editor-split">
+              <section class="editor-source-pane" aria-label="LaTeX source editor" data-i18n-attr="aria-label:editor.sourcePane">
+                <div class="editor-code-wrap" id="editor-code-wrap" role="tabpanel" tabindex="-1">
+                  <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
+                  <textarea id="editor-source" spellcheck="true" autocorrect="off" autocapitalize="off" wrap="soft" class="editor-textarea" placeholder="\documentclass{article}
+\begin{document}
+Hello, world!
+\end{document}" aria-label="LaTeX source — main.tex"></textarea>
+                  <div id="editor-drop-caret" class="editor-drop-caret" hidden aria-hidden="true"></div>
+                </div>
+              </section>
+
+              <div class="divider divider-preview" id="divider-preview" role="separator" aria-orientation="vertical" aria-label="Resize preview" tabindex="0"></div>
+
+              <section class="editor-preview-pane" aria-label="PDF preview" data-i18n-attr="aria-label:editor.previewPane">
+                <div class="preview-wrap" id="preview-wrap">
+                  <div id="preview-frame" class="pdf-document" style="display:none" role="region" tabindex="0" aria-label="Compiled PDF preview" data-i18n-attr="aria-label:editor.compiledPreview"></div>
+                  <div class="preview-empty" id="preview-empty">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 2.8h7.8l4.2 4.2v12.5a1.7 1.7 0 0 1-1.7 1.7H6.5a1.7 1.7 0 0 1-1.7-1.7V4.5a1.7 1.7 0 0 1 1.7-1.7Z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v4.3h4.3M8.3 11.5h7.4M8.3 14.5h7.4M8.3 17.5h4.6" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <p class="preview-empty-title" data-i18n="editor.emptyPreview">Compile to see the preview</p>
+                  </div>
+                  <div class="preview-controls ed-glass-capsule" id="preview-controls">
+                    <button type="button" class="pc-btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out" data-i18n-attr="title:editor.zoomOut;aria-label:editor.zoomOut">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <span class="pc-zoom" id="pc-zoom">100%</span>
+                    <button type="button" class="pc-btn" id="btn-zoom-in" title="Zoom in" aria-label="Zoom in" data-i18n-attr="title:editor.zoomIn;aria-label:editor.zoomIn">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+                    </button>
+                    <span class="pc-sep" aria-hidden="true"></span>
+                    <button type="button" class="pc-btn" id="btn-page-prev" title="Previous page" aria-label="Previous page" data-i18n-attr="title:editor.prevPage;aria-label:editor.prevPage">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5 9 12l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <span class="pc-page" id="pc-page">1 / 1</span>
+                    <button type="button" class="pc-btn" id="btn-page-next" title="Next page" aria-label="Next page" data-i18n-attr="title:editor.nextPage;aria-label:editor.nextPage">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6.5 15 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button type="button" class="pc-btn" id="btn-download" title="Download PDF" aria-label="Download PDF" data-i18n-attr="title:editor.downloadPdf;aria-label:editor.downloadPdf">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                  <!-- Slide presentation stage -->
+                  <div class="presentation-stage" id="presentation-stage" role="region" aria-label="Slide presentation display" hidden></div>
+                  <!-- Slide presentation overlay -->
+                  <div class="slide-overlay" id="slide-overlay" role="region" aria-label="Slide presentation" hidden>
+                    <button type="button" class="slide-nav slide-prev" id="slide-prev" title="Previous slide" aria-label="Previous slide">‹</button>
+                    <span class="slide-counter" id="slide-counter">1 / 1</span>
+                    <button type="button" class="slide-nav slide-next" id="slide-next" title="Next slide" aria-label="Next slide">›</button>
+                    <button type="button" class="slide-exit" id="slide-exit" title="Exit presentation" aria-label="Exit presentation">✕</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <section class="compile-panel" id="compile-panel" hidden aria-label="Compilation output" data-i18n-attr="aria-label:editor.compilationOutput">
+              <div class="compile-head">
+                <h3 data-i18n="editor.compilationOutput">Compilation output</h3>
+                <button type="button" class="compile-close" id="btn-close-compile" title="Close compilation output" aria-label="Close compilation output" data-i18n-attr="title:editor.closeOutput;aria-label:editor.closeOutput">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+              <pre id="compile-output" role="log" tabindex="0" aria-live="polite" aria-relevant="additions"></pre>
+            </section>
+          </div>
+
+          <section class="editor-status-strip" aria-label="Editor status" data-i18n-attr="aria-label:editor.status">
+            <div class="foot-editor-status">
+              <div class="status-left">
+                <span class="ed-capsule ed-glass-capsule status-compile-capsule" data-state="idle">
+                  <span class="status-state-icon" aria-hidden="true">
+                    <svg class="ico-state-idle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 2.6"/></svg>
+                    <svg class="ico-state-ok" viewBox="0 0 24 24"><path fill-rule="evenodd" fill="currentColor" d="M12 2.5a9.5 9.5 0 1 1 0 19 9.5 9.5 0 0 1 0-19Zm4.2 6.2a.9.9 0 0 0-1.3.1l-4 5.1-1.9-1.9a.9.9 0 0 0-1.3 1.3l2.6 2.6c.4.4 1 .3 1.3-.1l4.7-5.9a.9.9 0 0 0-.1-1.2Z"/></svg>
+                    <svg class="ico-state-err" viewBox="0 0 24 24"><path fill-rule="evenodd" fill="currentColor" d="M8.4 2.5h7.2l5 5v9l-5 5H8.4l-5-5v-9l5-5Zm.9 5.4a.9.9 0 0 0-1.3 1.3L10.7 12 8 14.8a.9.9 0 1 0 1.3 1.3l2.7-2.8 2.8 2.8a.9.9 0 0 0 1.3-1.3L13.3 12l2.8-2.8a.9.9 0 1 0-1.3-1.3L12 10.7 9.3 7.9Z"/></svg>
+                    <span class="ed-spinner tiny"></span>
+                  </span>
+                  <span class="status-item" id="status-compile">Compiled in 0s</span>
+                </span>
+                <span class="ed-capsule ed-glass-capsule status-counts-capsule">
+                  <span class="status-pair" id="status-pair-errors">
+                    <svg class="status-count-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" fill="currentColor" d="M8.4 2.5h7.2l5 5v9l-5 5H8.4l-5-5v-9l5-5Zm.9 5.4a.9.9 0 0 0-1.3 1.3L10.7 12 8 14.8a.9.9 0 1 0 1.3 1.3l2.7-2.8 2.8 2.8a.9.9 0 0 0 1.3-1.3L13.3 12l2.8-2.8a.9.9 0 1 0-1.3-1.3L12 10.7 9.3 7.9Z"/></svg>
+                    <button type="button" class="status-item status-errors" id="status-errors" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation errors" data-i18n-attr="aria-label:editor.viewErrors">0 errors</button>
+                  </span>
+                  <span class="status-pair" id="status-pair-warnings">
+                    <svg class="status-count-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" fill="currentColor" d="M10.3 4.2 2.9 17.4c-.8 1.3.2 2.9 1.7 2.9h14.8c1.5 0 2.5-1.6 1.7-2.9L13.7 4.2c-.8-1.3-2.6-1.3-3.4 0ZM11 9a1 1 0 0 1 2 0l-.2 4.8a.8.8 0 0 1-1.6 0L11 9Zm1 6.4a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></svg>
+                    <button type="button" class="status-item status-warnings" id="status-warnings" aria-controls="compile-panel" aria-expanded="false" aria-label="View compilation warnings" data-i18n-attr="aria-label:editor.viewWarnings">0 warnings</button>
+                  </span>
+                </span>
+                <div class="source-status" id="source-status" aria-live="polite" aria-atomic="true">Ready</div>
+              </div>
+              <div class="status-right">
+                <span class="ed-capsule ed-glass-capsule ed-dim status-item status-compiler"><span class="sr-only" data-i18n="editor.compiler">Compiler</span><span data-i18n="editor.compilerName">XeLaTeX (Tectonic WASM)</span></span>
+                <span class="ed-capsule ed-glass-capsule ed-dim status-item" id="status-enc">UTF-8</span>
+                <span class="ed-capsule ed-glass-capsule ed-dim ed-mono-digits status-item" id="status-cursor">Ln 1, Col 1</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
-    <section class="compile-panel" id="compile-panel" hidden aria-label="Compilation output" style="margin:0 20px" data-i18n-attr="aria-label:editor.compilationOutput">
-      <div class="compile-head"><h3 data-i18n="editor.compilationOutput">Compilation output</h3></div>
-      <pre id="compile-output" role="log" tabindex="0" aria-live="polite" aria-relevant="additions"></pre>
-    </section>
   </div>
-</div>
+</section>
 </main>
 
 <footer class="foot">
@@ -1816,6 +1985,26 @@ Hello, world!
     'editor.openFileTabs': 'Arquivos abertos',
     'editor.files': 'Arquivos',
     'editor.outline': 'Estrutura',
+    'editor.mathSymbols': 'Símbolos Matemáticos',
+    'editor.searchSymbols': 'Buscar símbolos matemáticos…',
+    'editor.clearSearch': 'Limpar busca',
+    'editor.noMatchingSymbols': 'Nenhum símbolo encontrado.',
+    'editor.symbolsHint': 'Clique para inserir no cursor ou arraste para o editor.',
+    'editor.symCat.greekLower': 'Gregas Minúsculas',
+    'editor.symCat.greekUpper': 'Gregas Maiúsculas',
+    'editor.symCat.binaryOps': 'Operadores Binários',
+    'editor.symCat.relations': 'Relações e Comparações',
+    'editor.symCat.setsLogic': 'Conjuntos e Lógica',
+    'editor.symCat.arrows': 'Setas',
+    'editor.symCat.bigOps': 'Grandes Operadores e Cálculo',
+    'editor.symCat.delimiters': 'Delimitadores e Parênteses',
+    'editor.symCat.structures': 'Frações, Raízes e Estruturas',
+    'editor.symCat.accents': 'Acentos e Decorações',
+    'editor.symCat.dots': 'Pontos e Reticências',
+    'editor.symCat.geometryMisc': 'Geometria e Diversos',
+    'editor.symCat.functions': 'Funções Padrão',
+    'editor.symCat.alphabets': 'Alfabetos e Conjuntos Numéricos',
+    'editor.symCat.linguistic': 'Símbolos Linguísticos',
     'editor.addFile': 'Criar arquivo',
     'editor.addFileAria': 'Criar arquivo',
     'editor.newFileName': 'Nome do arquivo',
@@ -1853,6 +2042,11 @@ Hello, world!
     'editor.emptyPreview': 'Compile para ver a pré-visualização',
     'editor.zoomOut': 'Diminuir zoom',
     'editor.zoomIn': 'Aumentar zoom',
+    'editor.prevPage': 'Página anterior',
+    'editor.nextPage': 'Próxima página',
+    'editor.toggleSidebar': 'Alternar barra lateral',
+    'editor.autoCompile': 'Compilação automática',
+    'editor.closeOutput': 'Fechar saída da compilação',
     'editor.downloadPdf': 'Baixar PDF',
     'editor.compilationOutput': 'Saída da compilação',
     'editor.status': 'Status do editor',
@@ -1902,6 +2096,10 @@ Hello, world!
     'shots.project': 'O projeto inteiro numa janela só: os arquivos, o código e o PDF compilando ao vivo ao lado.',
     'shots.welcomeAlt': 'A janela de boas-vindas do GabeTeX com os projetos recentes, rótulos coloridos e filtros.',
     'shots.welcome': 'A janela de boas-vindas, com rótulos coloridos e filtros.',
+    'shots.symbolsOpenAlt': 'A tabela de símbolos matemáticos e linguísticos aberta na barra lateral esquerda com busca e prévia do comando.',
+    'shots.symbolsOpen': 'Clique em Σ no topo da barra lateral para abrir as 15 categorias: busque por nome, comando ou pacote, veja os pacotes exigidos e clique ou arraste para qualquer linha.',
+    'shots.templatesAlt': 'Janela de Novo Projeto exibindo os nove modelos — incluindo Livro, Relatório e Pôster — e a lista de arquivos gerados.',
+    'shots.templates': 'A janela Novo Projeto com todos os nove modelos — incluindo Livro, Relatório e Pôster — e a prévia dos arquivos criados.',
     'shots.syncAlt': 'O GabeTeX indo de uma palavra no PDF para a mesma palavra no código LaTeX, que recebe um breve destaque.',
     'shots.sync': 'No GabeTeX: um clique duplo no PDF abriu o arquivo da seção exatamente naquela palavra. Com Seguir o cursor no PDF, a pré-visualização também acompanha você.',
     'ideas.title': 'Feito para o jeito como matemáticos escrevem.',
@@ -1945,6 +2143,14 @@ Hello, world!
     'compile.2t': 'Erros e avisos do log do TeX e do ChkTeX aparecem sublinhados onde acontecem, mesmo dentro de um arquivo de seção, e ficam reunidos na lista de Problemas.',
     'compile.3': 'Pacotes que faltam, instalados',
     'compile.3t': 'Quando falta um pacote, o GabeTeX oferece instalá-lo com o tlmgr e só pede a senha de administrador quando é realmente preciso.',
+    'symbols.title': 'Símbolos matemáticos e linguísticos sempre à mão.',
+    'symbols.lead': 'Abra o painel Σ na barra lateral para explorar 15 categorias e 470 símbolos — clique para inserir ou arraste direto para o código. Delimitadores matemáticos e <code>\\usepackage</code> faltantes são inseridos sozinhos.',
+    'symbols.smartTitle': 'Feito para matemática e prosa.',
+    'symbols.smartText': 'Busque por nome, comando ou pacote, insira <code>\\log_{}</code> já com o subscrito de base pronto e use os Símbolos Linguísticos para inserir aspas curvas estilo PDF diretamente em modo texto.',
+    'templates.title': 'Comece com um modelo pronto.',
+    'templates.text': 'Crie um novo projeto a partir de nove modelos embutidos — Artigo, Artigo com Seções, Tese, Apresentação Beamer, Notas de Matemática, Lista de Exercícios, Livro, Relatório e Pôster — com preâmbulo, bibliografia e estrutura prontos para compilar.',
+    'templates.metaTitle': 'Veja cada arquivo antes de criar.',
+    'templates.metaText': 'Preencha título, autor e pasta de destino, confira exatamente quais arquivos o modelo cria e comece a escrever na hora.',
     'labels.title': 'Rótulos para seus projetos.',
     'labels.text': 'Dê rótulos coloridos aos projetos na janela de boas-vindas, filtre a lista com um clique e faça buscas quando ela crescer. Projetos com rótulo nunca saem da lista de recentes.',
     'detach.title': 'O PDF na sua própria tela.',
@@ -1974,6 +2180,12 @@ Hello, world!
     'more.11t': 'Palavras e páginas do documento inteiro e de cada seção, na barra de status e no sumário.',
     'more.12': 'Paleta de comandos',
     'more.12t': '<kbd>⇧⌘P</kbd> encontra qualquer comando pelo nome. Defina seus próprios atalhos nos Ajustes e complete com <kbd>Tab</kbd>.',
+    'more.13': 'Símbolos matemáticos e linguísticos',
+    'more.13t': '15 categorias (470 símbolos, incluindo aspas linguísticas e <code>\\log_{}</code> com subscrito de base), clique ou arrastar e soltar, delimitação <code>$…$</code> / <code>\\[…\\]</code> e importação automática de <code>\\usepackage</code>.',
+    'more.14': 'Modelos de projeto',
+    'more.14t': 'Nove modelos prontos para compilar em Novo Projeto: Artigo, Artigo com Seções, Tese, Beamer, Notas de Matemática, Lista de Exercícios, Livro, Relatório e Pôster.',
+    'more.15': 'Pares e ambientes inteligentes',
+    'more.15t': 'Fecha automaticamente <code>{ }</code>, <code>( )</code>, <code>[ ]</code>, <code>$ $</code>, <code>\\( \\)</code>, <code>\\[ \\]</code> e <code>\\begin{env}</code> ao digitar <code>}</code>, e apaga o par completo com Backspace ou Delete.',
     'inst.title': 'Instale em três passos.',
     'inst.lead': 'Para Macs com Apple Silicon e macOS 26 ou posterior. No Linux ou no Windows, <a href="#install-other">vá direto para essa edição</a>.',
     'inst.1': 'Abra o GabeTeX.dmg',
@@ -2087,6 +2299,26 @@ Hello, world!
     'editor.openFileTabs': 'Open files',
     'editor.files': 'Files',
     'editor.outline': 'Outline',
+    'editor.mathSymbols': 'Math symbols',
+    'editor.searchSymbols': 'Search math symbols…',
+    'editor.clearSearch': 'Clear search',
+    'editor.noMatchingSymbols': 'No matching symbols.',
+    'editor.symbolsHint': 'Click to insert at cursor or drag into the editor.',
+    'editor.symCat.greekLower': 'Greek Lowercase',
+    'editor.symCat.greekUpper': 'Greek Uppercase',
+    'editor.symCat.binaryOps': 'Binary Operators',
+    'editor.symCat.relations': 'Relations & Comparisons',
+    'editor.symCat.setsLogic': 'Sets & Logic',
+    'editor.symCat.arrows': 'Arrows',
+    'editor.symCat.bigOps': 'Big Operators & Calculus',
+    'editor.symCat.delimiters': 'Delimiters & Brackets',
+    'editor.symCat.structures': 'Fractions, Roots & Structures',
+    'editor.symCat.accents': 'Accents & Decorations',
+    'editor.symCat.dots': 'Dots & Ellipses',
+    'editor.symCat.geometryMisc': 'Geometry & Misc',
+    'editor.symCat.functions': 'Standard Functions',
+    'editor.symCat.alphabets': 'Math Alphabets & Fonts',
+    'editor.symCat.linguistic': 'Linguistic Symbols',
     'editor.addFile': 'Create file',
     'editor.addFileAria': 'Create file',
     'editor.newFileName': 'File name',
@@ -2124,6 +2356,11 @@ Hello, world!
     'editor.emptyPreview': 'Compile to see the preview',
     'editor.zoomOut': 'Zoom out',
     'editor.zoomIn': 'Zoom in',
+    'editor.prevPage': 'Previous page',
+    'editor.nextPage': 'Next page',
+    'editor.toggleSidebar': 'Toggle sidebar',
+    'editor.autoCompile': 'Auto-compile',
+    'editor.closeOutput': 'Close compilation output',
     'editor.downloadPdf': 'Download PDF',
     'editor.compilationOutput': 'Compilation output',
     'editor.status': 'Editor status',
@@ -2459,27 +2696,43 @@ Hello, world!
   }
   /* filter release notes to show only the section matching the page language */
   function filterNotesByLanguage(html, lang) {
-    var targetLang = lang === 'pt' ? 'Português' : 'English';
-    var otherLang = lang === 'pt' ? 'English' : 'Português';
     var doc = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html');
     var box = doc.body.firstChild;
-    var started = lang === 'en';
+    function isPtHeading(text) {
+      return /(?:^|\b|\()(?:portugu[eê]s|pt-br)(?:\b|\)|$)/i.test(text);
+    }
+    function isEnHeading(text) {
+      return !isPtHeading(text) && (/^english\b/i.test(text) || /^gabetex\s+v?\d/i.test(text));
+    }
+    var hasLangMarker = false;
+    [].slice.call(box.querySelectorAll('h1,h2,h3,h4,h5,h6')).forEach(function (h) {
+      var t = h.textContent.trim();
+      if (isPtHeading(t) || /^english\b/i.test(t)) hasLangMarker = true;
+    });
+    if (!hasLangMarker) return html;
+    var started = lang !== 'pt';
     var parts = [];
     [].slice.call(box.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && node.tagName === 'HR') return;
       if (node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)) {
         var text = node.textContent.trim();
-        if (text.toLowerCase() === targetLang.toLowerCase() || text.indexOf(targetLang) === 0) {
+        var matchTarget = lang === 'pt' ? isPtHeading(text) : isEnHeading(text);
+        var matchOther = lang === 'pt' ? isEnHeading(text) : isPtHeading(text);
+        if (matchTarget) {
           started = true;
-        } else if (text.toLowerCase() === otherLang.toLowerCase() || text.indexOf(otherLang) === 0) {
+          if (/^gabetex\s+v?\d/i.test(text)) parts.push(node.outerHTML);
+        } else if (matchOther) {
           started = false;
         } else if (started) {
           parts.push(node.outerHTML);
         }
       } else if (started) {
-        parts.push(node.outerHTML);
+        if (node.nodeType === 1) parts.push(node.outerHTML);
+        else if (node.nodeType === 3) parts.push(esc(node.textContent));
       }
     });
-    return parts.join('');
+    var out = parts.join('').trim();
+    return out ? out : html;
   }
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -2905,6 +3158,7 @@ Hello, world!
   if ('requestIdleCallback' in window) requestIdleCallback(loadHeroVersion, { timeout: 2500 }); else setTimeout(loadHeroVersion, 600);
 })();
 </script>
+<script src="assets/math-symbols.js"></script>
 <script src="assets/editor.js"></script>
 </body>
 </html>
